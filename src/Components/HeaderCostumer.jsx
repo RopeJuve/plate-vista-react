@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import LoginModal from "./LoginModal";
 
-function Header({ toggleDarkMode }) {
+function HeaderCostumer({ toggleDarkMode }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
@@ -22,10 +22,10 @@ function Header({ toggleDarkMode }) {
         >
           Toggle Dark Mode
         </button>
-      </div>
+    </div>
       {isModalOpen && <LoginModal onClose={() => setIsModalOpen(false)} />}
     </header>
   );
 }
 
-export default Header;
+export default HeaderCostumer;
