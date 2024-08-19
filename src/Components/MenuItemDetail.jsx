@@ -19,7 +19,7 @@ function MenuItemDetail({ item, onClose }) {
           Close
         </button>
         <img
-          src={item.imageUrl}
+          src={item.image}
           alt={item.title}
           className="h-64 w-full object-cover rounded-lg mb-4"
         />

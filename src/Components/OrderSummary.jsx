@@ -6,7 +6,7 @@ function OrderSummary() {
 
   // Calculate the total price
   const totalPrice = cartItems.reduce((total, item) => {
-    const priceNumber = parseFloat(item.price.replace("$", ""));
+    const priceNumber = parseFloat(item.price);
     return total + priceNumber;
   }, 0);
 
