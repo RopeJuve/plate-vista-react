@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 
 function LoginModal({ onClose }) {
   const [isLogin, setIsLogin] = useState(true);
+  const [username, setUsername] = useState(''); // Added state for username
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -9,10 +10,10 @@ function LoginModal({ onClose }) {
     e.preventDefault();
     if (isLogin) {
       // Handle login logic
-      console.log('Logging in with:', email, password);
+      console.log('Logging in with:', username, password);
     } else {
       // Handle signup logic
-      console.log('Signing up with:', email, password);
+      console.log('Signing up with:', username, email, password);
     }
     onClose(); // Close the modal after submit
   };
@@ -24,6 +25,19 @@ function LoginModal({ onClose }) {
           {isLogin ? 'Login' : 'Create Account'}
         </h2>
         <form onSubmit={handleSubmit}>
+          {!isLogin && (
+            <div className="mb-4">
+              <label className="block text-gray-700 dark:text-gray-300 mb-2">Username</label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                placeholder="Enter your username"
+              />
+            </div>
+          )}
           <div className="mb-4">
             <label className="block text-gray-700 dark:text-gray-300 mb-2">Email</label>
             <input
@@ -32,6 +46,7 @@ function LoginModal({ onClose }) {
               onChange={(e) => setEmail(e.target.value)}
               required
               className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+              placeholder="Enter your email"
             />
           </div>
           <div className="mb-4">
@@ -42,6 +57,7 @@ function LoginModal({ onClose }) {
               onChange={(e) => setPassword(e.target.value)}
               required
               className="w-full p-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+              placeholder="Enter your password"
             />
           </div>
           <button
