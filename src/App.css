@@ -1,0 +1,170 @@
+/* General Layout */
+.container {
+  display: flex;
+  flex-direction: column; /* Stack items vertically by default */
+  padding: 20px;
+  max-width: 100%;
+}
+
+.w-3/4, .w-1/4 {
+  width: 100%; /* Make both containers take full width on mobile */
+}
+
+/* Logo Styling */
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms, transform 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+  transform: scale(1.05);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+/* Logo Spin Animation */
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+/* Card Styling */
+.card {
+  padding: 2em;
+  background-color: #1f2937;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 300ms, box-shadow 300ms;
+}
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Text for Links */
+.read-the-docs {
+  color: #888;
+  font-size: 0.9em;
+}
+
+/* Transition Effects for Page Navigation */
+.fade-enter {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+.fade-enter-active {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 500ms ease-in, transform 500ms ease-in;
+}
+
+.fade-exit {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.fade-exit-active {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 500ms ease-out, transform 500ms ease-out;
+}
+
+/* Button Styling */
+button {
+  background-color: #3b82f6;
+  color: #ffffff;
+  padding: 0.75em 1.5em;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 300ms, transform 300ms;
+}
+button:hover {
+  background-color: #2563eb;
+  transform: scale(1.05);
+}
+
+button:active {
+  transform: scale(0.95);
+}
+
+/* Footer Styling */
+footer {
+  padding: 20px;
+  text-align: center;
+  color: #888;
+  font-size: 0.9em;
+  border-top: 1px solid #2d3748;
+  background-color: #1f2937;
+  color: #fff;
+}
+
+/* Footer Links */
+footer a {
+  color: #3b82f6;
+  text-decoration: none;
+}
+footer a:hover {
+  text-decoration: underline;
+}
+
+/* Media Queries for Responsiveness */
+@media (max-width: 768px) {
+  .container {
+    padding: 10px;
+  }
+
+  .logo {
+    height: 4em;
+  }
+
+  .card {
+    padding: 1.5em;
+  }
+
+  /* Make Footer Items Centered */
+  footer {
+    text-align: center;
+  }
+
+  /* Adjust Navigation and Sidebar for Mobile */
+  .menu-nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  
+
+/* Footer Adjustments */
+footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  background-color: #1f2937;
+  color: #fff;
+  text-align: center;
+}
+
+/* Sidebar Adjustments */
+.sidebar {
+  padding: 10px;
+  background-color: #2d3748;
+  color: #fff;
+  margin-top: 10px;
+}

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import MenuItem from "./MenuItem";
-import MenuItemDetail from "./MenuItemDetail";
+import MenuItemDetail from "./MenuDetail";
 
 function MenuGrid() {
   const menuItems = [
