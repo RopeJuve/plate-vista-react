@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import MenuItem from "./MenuItem";
 import MenuItemDetail from "./MenuItemDetail";
+import { fetchData } from "../services/fetchData";
 
 function MenuGrid() {
-  const menuItems = [
+  /*   const menuItems = [
     {
       title: "Chicken Alfredo",
       price: "$21.49",
@@ -49,7 +50,21 @@ function MenuGrid() {
       imageUrl: "https://via.placeholder.com/300x200", // Replace with your actual image URL
     },
     // Add more items as needed
-  ];
+  ]; */
+
+  const [menuItems, setMenuItems] = useState([]);
+  const url = `${import.meta.env.VITE_VERCEL_API_URL}/menu-items`;
+  useEffect(() => {
+    // Fetch menu items from an API and set the state
+    const fetchMenuItems = async () => {
+      const { data } = await fetchData(
+        `${url}`
+      );
+      console.log(url);
+      setMenuItems(data);
+    };
+    fetchMenuItems();
+  }, []);
 
   const [selectedItem, setSelectedItem] = useState(null);
 
@@ -64,13 +79,13 @@ function MenuGrid() {
   return (
     <div className="relative">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-        {menuItems.map((item, index) => (
+        {menuItems?.map((item, index) => (
           <div key={index} onClick={() => handleItemClick(item)}>
             <MenuItem
-              title={item.title}
-              price={item.price}
-              calories={item.calories}
-              imageUrl={item.imageUrl}
+              title={item?.title}
+              price={item?.price}
+              calories={item?.calories}
+              imageUrl={item?.image}
             />
           </div>
         ))}
