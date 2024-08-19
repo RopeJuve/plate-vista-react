@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import HeaderCostumer from "../Components/HeaderCostumer";
 import MenuNav from "../Components/MenuNav";
 import MenuGrid from "../Components/MenuGrid";
-import Cart from "..//Components/Cart";
+import Cart from "../Components/Cart";
 import OrderSummary from "../Components/OrderSummary";
 import Checkout from "../Components/Checkout";
 import OrderConfirmation from "../Components/OrderConfirmation";

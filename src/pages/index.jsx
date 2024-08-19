@@ -10,3 +10,5 @@ export { default as TotalIncome } from './TotalIncome'
 export { default as TotalOrders } from './TotalOrders'
 export { default as BestEmployees } from './BestEmployees'
 export { default as Costumer } from './Costumer'
+export { default as Kanban } from './Kanban'
+

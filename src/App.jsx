@@ -4,16 +4,35 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { FiSettings } from "react-icons/fi";
 import { TooltipComponent } from "@syncfusion/ej2-react-popups";
 
-import Login from './components/Auth/Login';
-import Register from './components/Auth/Register';
+import Login from "./components/AdminComponents/Auth/Login";
+import Register from "./components/AdminComponents/Auth/Register";
 
-import { Navbar, Footer, Sidebar, ThemeSettings } from "./components";
-import { Overview, BestEmployees, TotalOrders, TotalIncome, TrendingDishes, DailySales, Calendar, Employees, Menu, Orders, Tables, Costumer } from "./pages";
+import {
+  Navbar,
+  Footer,
+  Sidebar,
+  ThemeSettings,
+} from "./components/AdminComponents";
+import {
+  Overview,
+  BestEmployees,
+  TotalOrders,
+  TotalIncome,
+  TrendingDishes,
+  DailySales,
+  Calendar,
+  Employees,
+  Menu,
+  Orders,
+  Tables,
+  Costumer,
+  Kanban,
+} from "./pages";
 
+import { useStateContext } from "./contexts/ContextProvider";
 
 function App() {
-
-  const activeMenu = true;
+  const { activeMenu } = useStateContext();
 
   return (
     <div>
@@ -39,44 +58,49 @@ function App() {
               <Sidebar />
             </div>
           )}
-          <div className={
-            activeMenu ? 'dark:bg-main-bg bg-main-bg min-h-screen md:ml-72 w-full' :
-              'dark:bg-main-bg bg-main-bg min-h-screen w-full flex-2'
-          }>
+          <div
+            className={
+              activeMenu
+                ? "dark:bg-main-bg bg-main-bg min-h-screen md:ml-72 w-full"
+                : "dark:bg-main-bg bg-main-bg min-h-screen w-full flex-2"
+            }
+          >
             <div className="fixed md:static bg-main-bg dark:bg-main-dark-bg navbar w-full">
               <Navbar />
             </div>
-          </div>
-          <div>
-            <Routes>
-              {/* Dashboard */}
-              <Route path="/" element={<Overview />} />
-              <Route path="/overview" element={<Overview />} />
 
-              {/* Pages */}
-              <Route path="/menu" element={<Menu />} />
-              <Route path="/orders" element={<Orders />} />
-              <Route path="/Tables" element={<Tables />} />
-              <Route path="/Employees" element={<Employees />} />
+            <div>
+              <Routes>
+                
+                {/* Dashboard */}
+                <Route path="/" element={<Overview />} />
+                <Route path="/overview" element={<Overview />} />
 
-              {/* Auth */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
+                {/* Pages */}
+                <Route path="/menu" element={<Menu />} />
+                <Route path="/orders" element={<Orders />} />
+                <Route path="/Tables" element={<Tables />} />
+                <Route path="/Employees" element={<Employees />} />
+                
+                {/* Auth */}
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
 
-              {/* Apps */}
-              <Route path="/calendar" element={<Calendar />} />
+                {/* Apps */}
+                <Route path="/calendar" element={<Calendar />} />
+                <Route path="/kanban" element={<Kanban />} />
 
-              {/* Costumer */}
-              <Route path="/costumer" element={<Costumer />} />
+                {/* Costumer */}
+                <Route path="/costumer" element={<Costumer />} />
 
-
-              {/* Charts */}
-              <Route path="/dailysales" element={<DailySales />} /> {/* Line Chart */}
-              <Route path="/trendingdishes" element={<TrendingDishes />} /> {/* Pie Chart */}
-              <Route path="/totalincome" element={<TotalIncome />} /> {/* Column Chart */}
-              <Route path="/totalorders" element={<TotalOrders />} /> {/* Stacked Bar Chart */}
-              <Route path="/bestemployees" element={<BestEmployees />} /> {/* Bar Chart */}
-            </Routes>
+                {/* Charts */}
+                <Route path="/dailysales" element={<DailySales />} />{/* Line Chart */}
+                <Route path="/trendingdishes" element={<TrendingDishes />}/>{/* Pie Chart */}
+                <Route path="/totalincome" element={<TotalIncome />} /> {/* Column Chart */}
+                <Route path="/totalorders" element={<TotalOrders />} /> {/* Stacked Bar Chart */}
+                <Route path="/bestemployees" element={<BestEmployees />} /> {/* Bar Chart */}
+              </Routes>
+            </div>
           </div>
         </div>
       </BrowserRouter>

@@ -1,11 +1,11 @@
 import React from 'react'
 
-const Button = () => {
+const Bar = () => {
   return (
     <div>
-      Button
+      Bar
     </div>
   )
 }
 
-export default Button
+export default Bar

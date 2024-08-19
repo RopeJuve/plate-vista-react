@@ -1,11 +1,11 @@
 import React from 'react'
 
-const Navbar = () => {
+const Pie = () => {
   return (
     <div>
-      Navbar
+      Pie
     </div>
   )
 }
 
-export default Navbar
+export default Pie
