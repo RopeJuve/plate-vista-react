@@ -9,4 +9,3 @@ const TotalIncome = () => {
 }
 
 export default TotalIncome
-TotalIncome
