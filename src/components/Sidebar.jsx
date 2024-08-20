@@ -41,7 +41,7 @@ const Sidebar = () => {
                 <p className="text-gray-400 m-3 mt-4 uppercase">{item.title}</p>
                 {item.links.map((link) => (
                   <NavLink
-                    to={`/${link.name}`}
+                    to={`/admin/${link.name}`}
                     key={link.name}
                     onClick={() => {}}
                     className={({ isActive }) =>
