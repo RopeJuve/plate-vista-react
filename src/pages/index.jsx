@@ -16,3 +16,6 @@ export { default as Pie } from './Charts/Pie'
 export { default as Bar } from './Charts/Bar'
 export { default as Stacked } from '../components/AdminComponents/Charts/Stacked';
 
+export { default as AdminDashboard } from './AdminDashboard'
+export { default as PrivateRoute } from './PrivateRoute'
+export { default as BarPage } from './BarPage'
