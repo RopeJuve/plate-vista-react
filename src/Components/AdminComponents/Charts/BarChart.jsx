@@ -1,11 +1,11 @@
 import React from 'react'
 
-const Navbar = () => {
+const BarChart = () => {
   return (
     <div>
-      Navbar
+      Bar
     </div>
   )
 }
 
-export default Navbar
+export default BarChart
