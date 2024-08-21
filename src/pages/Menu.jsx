@@ -1,34 +1,28 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { DialogComponent } from "@syncfusion/ej2-react-popups";
-import { TextBox } from "@syncfusion/ej2-react-inputs";
-import { menuItems as initialMenuItems } from "../data/data";
+import { TextBoxComponent, TextAreaComponent } from "@syncfusion/ej2-react-inputs";
+import { fetchMenuItems, updateMenuItem, addMenuItem, deleteMenuItem, fetchCategories } from "../services/menuDataFetch";
 
 const Menu = () => {
   const [dialogVisible, setDialogVisible] = useState(false);
   const [isAddingNewItem, setIsAddingNewItem] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
-  const [editInfo, setEditInfo] = useState({
-    title: "",
-    price: "",
-    num_sold: "",
-    in_stock: "",
-    discount: "",
-    label: "",
-    description: '',
-    image: '',
-  });
-  const [newItemInfo, setNewItemInfo] = useState({
-    title: "",
-    price: "",
-    num_sold: "",
-    in_stock: "",
-    discount: "",
-    label: "",
-    description: '',
-    image: '',
-  });
+  const [editInfo, setEditInfo] = useState({ title: "", price: "", category: "", description: "", image: "" });
+  const [newItemInfo, setNewItemInfo] = useState({ title: "", price: 0, category: "", description: "", image: "" });
+  const [menuItems, setMenuItems] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("");
 
-  const [menuItems, setMenuItems] = useState(initialMenuItems);
+  useEffect(() => {
+    // Fetch menu items and categories when component mounts
+    fetchMenuItems()
+      .then((response) => setMenuItems(response.data))
+      .catch((error) => console.error("Error fetching menu items:", error));
+    
+    fetchCategories()
+      .then((response) => setCategories(response.data))
+      .catch((error) => console.error("Error fetching categories:", error));
+  }, []);
 
   const openDialog = (item) => {
     setSelectedItem(item);
@@ -53,10 +47,20 @@ const Menu = () => {
     setEditInfo({ ...editInfo, [name]: value });
   };
 
-  const handleSave = () => {
-    // Save logic here
-    console.log("Updated Info:", editInfo);
-    closeDialog();
+  const handleSave = async () => {
+    if (selectedItem) {
+      try {
+        const response = await updateMenuItem(selectedItem._id, editInfo);
+        const updatedMenuItems = menuItems.map((item) =>
+          item._id === selectedItem._id ? response.data : item
+        );
+        setMenuItems(updatedMenuItems);
+        setEditInfo({ title: "", price: "", category: "", description: "", image: "" });
+        setDialogVisible(false);
+      } catch (error) {
+        console.error("Error saving item:", error);
+      }
+    }
   };
 
   const handleNewItemChange = (e) => {
@@ -64,65 +68,91 @@ const Menu = () => {
     setNewItemInfo({ ...newItemInfo, [name]: value });
   };
 
-  const handleAddNewItem = () => {
-    setMenuItems([...menuItems, newItemInfo]);
-    setNewItemInfo({
-      title: "",
-      price: "",
-      num_sold: "",
-      in_stock: "",
-      discount: "",
-      label: "",
-      description: '',
-      image: '',
-    });
-    setIsAddingNewItem(false);
+  const handleAddNewItem = async () => {
+    try {
+      const response = await addMenuItem(newItemInfo);
+      setMenuItems([...menuItems, response.data]);
+      setNewItemInfo({ title: "", price: 0, category: "", description: "", image: "" });
+      setIsAddingNewItem(false);
+    } catch (error) {
+      console.error("Error adding new item:", error);
+    }
   };
 
+  const handleDelete = async (itemToDelete) => {
+    try {
+      await deleteMenuItem(itemToDelete._id);
+      const updatedMenuItems = menuItems.filter((item) => item._id !== itemToDelete._id);
+      setMenuItems(updatedMenuItems);
+    } catch (error) {
+      console.error("Error deleting item:", error);
+    }
+  };
+
+  const handleCategoryClick = (category) => {
+    setSelectedCategory(category);
+  };
+
+  const filteredMenuItems = menuItems.filter(item =>
+    selectedCategory ? item.category === selectedCategory : true
+  );
+
   return (
-    <div className="flex justify-center p-8">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 m-12">
-        <div className="e-card e-card-horizontal rounded-lg shadow-lg flex items-center justify-center bg-gray-200 cursor-pointer hover:bg-gray-300 transition-colors">
+    <div className="flex flex-col p-8">
+      {/* New Navbar for categories */}
+      <div className="mb-4">
+        <div className="flex overflow-x-auto bg-gray-200 p-2 rounded-md shadow-md">
+          {categories.map((category, index) => (
+            <button
+              key={index}
+              onClick={() => handleCategoryClick(category)}
+              className={`px-4 py-2 rounded-md mx-2 text-sm font-semibold ${selectedCategory === category ? 'bg-blue-500 text-white' : 'bg-white text-gray-700'} hover:bg-blue-100`}
+            >
+              {category}
+            </button>
+          ))}
           <button
-            className="p-4 text-center text-lg font-semibold text-gray-700"
-            onClick={openAddNewItemDialog}
+            onClick={() => setSelectedCategory("")}
+            className={`px-4 py-2 rounded-md mx-2 text-sm font-semibold ${selectedCategory === "" ? 'bg-blue-500 text-white' : 'bg-white text-gray-700'} hover:bg-blue-100`}
           >
-            Add New Item
+            All
           </button>
         </div>
-        {menuItems.map((item, index) => (
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 m-12">
+        <div
+          onClick={openAddNewItemDialog}
+          className="e-card e-card-horizontal rounded-lg shadow-lg flex items-center justify-center bg-gray-200 cursor-pointer hover:bg-gray-300 transition-colors"
+        >
+          <button className="p-4 text-center text-lg font-semibold text-gray-700">Add New Item</button>
+        </div>
+        {filteredMenuItems.map((item, index) => (
           <div
             className="e-card e-card-horizontal rounded-lg shadow-lg overflow-hidden"
             key={index}
           >
-            <div className="e-card-image">Image</div>
+            <div className="e-card-image">
+              <img src={item.image} alt={item.title} style={{ width: "100%", height: "auto" }} />
+            </div>
             <div className="e-card-stacked">
               <div className="e-card-header">
                 <div className="e-card-header-caption">
                   <div className="e-card-title">Title: {item.title}</div>
                   <div className="e-card-sub-title">Price: {item.price}</div>
-                  <div className="e-card-sub-title">Sold: {item.num_sold}</div>
-                  <div className="e-card-sub-title">
-                    In Stock: {item.in_stock}
-                  </div>
-                  <div className="e-card-sub-title">
-                    Discount: {item.discount}
-                  </div>
-                  <div className="e-card-sub-title">Label: {item.label}</div>
+                  <div className="e-card-sub-title">Category: {item.category}</div>
                 </div>
               </div>
-              <div className="e-card-content">
-                A short description of the dish, A short description of the
-                dish, A short description of the dish
-              </div>
+              <div className="e-card-content">{item.description}</div>
               <div className="e-card-actions">
                 <button className="e-btn e-outline e-primary" onClick={() => openDialog(item)}>Edit</button>
-                <button className="e-btn e-outline e-primary">Delete</button>
+                <button className="e-btn e-outline e-primary" onClick={() => handleDelete(item)}>Delete</button>
               </div>
             </div>
           </div>
         ))}
       </div>
+
       {dialogVisible && (
         <DialogComponent
           header="Edit Item Information"
@@ -131,19 +161,13 @@ const Menu = () => {
           showCloseIcon={true}
           close={closeDialog}
           buttons={[
-            {
-              click: handleSave,
-              buttonModel: { content: "Save", isPrimary: true },
-            },
-            {
-              click: closeDialog,
-              buttonModel: { content: "Cancel" },
-            },
+            { click: handleSave, buttonModel: { content: "Save", isPrimary: true } },
+            { click: closeDialog, buttonModel: { content: "Cancel" } },
           ]}
         >
           <div style={{ padding: "10px" }}>
             <div style={{ marginBottom: "10px" }}>
-              <input
+              <TextBoxComponent
                 name="title"
                 value={editInfo.title}
                 placeholder="Title"
@@ -152,52 +176,26 @@ const Menu = () => {
               />
             </div>
             <div style={{ marginBottom: "10px" }}>
-              <input
+              <TextBoxComponent
                 name="price"
                 value={editInfo.price}
                 placeholder="Price"
                 onChange={handleChange}
+                type="number"
                 style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
               />
             </div>
             <div style={{ marginBottom: "10px" }}>
-              <input
-                name="num_sold"
-                value={editInfo.num_sold}
-                placeholder="Number Sold"
+              <TextBoxComponent
+                name="category"
+                value={editInfo.category}
+                placeholder="Category"
                 onChange={handleChange}
                 style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
               />
             </div>
             <div style={{ marginBottom: "10px" }}>
-              <input
-                name="in_stock"
-                value={editInfo.in_stock}
-                placeholder="In Stock"
-                onChange={handleChange}
-                style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
-              />
-            </div>
-            <div style={{ marginBottom: "10px" }}>
-              <input
-                name="discount"
-                value={editInfo.discount}
-                placeholder="Discount"
-                onChange={handleChange}
-                style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
-              />
-            </div>
-            <div style={{ marginBottom: "10px" }}>
-              <input
-                name="label"
-                value={editInfo.label}
-                placeholder="Label"
-                onChange={handleChange}
-                style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
-              />
-            </div>
-            <div style={{ marginBottom: "10px" }}>
-              <textarea
+              <TextAreaComponent
                 name="description"
                 value={editInfo.description}
                 placeholder="Description"
@@ -208,6 +206,7 @@ const Menu = () => {
           </div>
         </DialogComponent>
       )}
+
       {isAddingNewItem && (
         <DialogComponent
           header="Add New Item"
@@ -216,19 +215,22 @@ const Menu = () => {
           showCloseIcon={true}
           close={closeAddNewItemDialog}
           buttons={[
-            {
-              click: handleAddNewItem,
-              buttonModel: { content: "Add", isPrimary: true },
-            },
-            {
-              click: closeAddNewItemDialog,
-              buttonModel: { content: "Cancel" },
-            },
+            { click: handleAddNewItem, buttonModel: { content: "Add", isPrimary: true } },
+            { click: closeAddNewItemDialog, buttonModel: { content: "Cancel" } },
           ]}
         >
           <div style={{ padding: "10px" }}>
             <div style={{ marginBottom: "10px" }}>
-              <input
+              <TextBoxComponent
+                name="image"
+                value={newItemInfo.image}
+                placeholder="Image"
+                onChange={handleNewItemChange}
+                style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
+              />
+            </div>
+            <div style={{ marginBottom: "10px" }}>
+              <TextBoxComponent
                 name="title"
                 value={newItemInfo.title}
                 placeholder="Title"
@@ -237,52 +239,26 @@ const Menu = () => {
               />
             </div>
             <div style={{ marginBottom: "10px" }}>
-              <input
+              <TextBoxComponent
                 name="price"
                 value={newItemInfo.price}
                 placeholder="Price"
                 onChange={handleNewItemChange}
+                type="number"
                 style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
               />
             </div>
             <div style={{ marginBottom: "10px" }}>
-              <input
-                name="num_sold"
-                value={newItemInfo.num_sold}
-                placeholder="Number Sold"
+              <TextBoxComponent
+                name="category"
+                value={newItemInfo.category}
+                placeholder="Category"
                 onChange={handleNewItemChange}
                 style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
               />
             </div>
             <div style={{ marginBottom: "10px" }}>
-              <input
-                name="in_stock"
-                value={newItemInfo.in_stock}
-                placeholder="In Stock"
-                onChange={handleNewItemChange}
-                style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
-              />
-            </div>
-            <div style={{ marginBottom: "10px" }}>
-              <input
-                name="discount"
-                value={newItemInfo.discount}
-                placeholder="Discount"
-                onChange={handleNewItemChange}
-                style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
-              />
-            </div>
-            <div style={{ marginBottom: "10px" }}>
-              <input
-                name="label"
-                value={newItemInfo.label}
-                placeholder="Label"
-                onChange={handleNewItemChange}
-                style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
-              />
-            </div>
-            <div style={{ marginBottom: "10px" }}>
-              <textarea
+              <TextAreaComponent
                 name="description"
                 value={newItemInfo.description}
                 placeholder="Description"

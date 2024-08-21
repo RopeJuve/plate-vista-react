@@ -1,22 +1,33 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 const Register = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const navigate = useNavigate();
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
-    // TODO: Add registration logic here
-    if (password === confirmPassword) {
-      console.log('Register:', { username, email, password });
-      navigate('/overview'); // Redirect to Dashboard after registration 
-      // navigate('/login'); // Redirect to Login after registration, Which one of these two should we use?
-    } else {
-      alert('Passwords do not match!');
+  
+    if (password) {
+      const employeeData = {
+        employee: username,
+        email: email,
+        password: password,
+        position: 'bar',
+      };
+  
+      try {
+        const response = await axios.post(`${import.meta.env.VITE_RENDER_API_URL}/employee`, employeeData);
+        console.log('Registration successful:', response.data);
+         navigate('/admin/login');
+         
+      } catch (error) {
+        console.error('Registration failed:', error);
+        alert('Registration failed. Please try again.');
+      }
     }
   };
 
@@ -55,16 +66,6 @@ const Register = () => {
             className="border border-color p-2 w-full dark:bg-main-dark-bg dark:text-gray-100"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block mb-2 text-gray-600 dark:text-gray-300">Confirm Password</label>
-          <input
-            type="password"
-            className="border border-color p-2 w-full dark:bg-main-dark-bg dark:text-gray-100"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
           />
         </div>
 

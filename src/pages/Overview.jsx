@@ -42,6 +42,7 @@ const DropDown = ({ currentMode }) => (
 );
 
 const Overview = () => {
+  const { currentColor } = useStateContext();
   return (
     <div className="mt-24">
       <div className="flex flex-wrap lg:flex-nowrap justify-center">
@@ -127,13 +128,13 @@ const Overview = () => {
           </div>
           <div className="mt-4">
             <SparkLine
-              currentColor="blue"
+              currentColor={currentColor}
               id="column-sparkLine"
               height="100px"
               type="Column"
               data={SparklineAreaData}
               width="320"
-              color="rgb(242, 252, 253)"
+              color={currentColor}
             />
           </div>
         </div>

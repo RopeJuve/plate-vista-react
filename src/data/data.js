@@ -22,26 +22,32 @@ export const links = [
     links: [
       {
         name: "Overview",
+        label: "Overview",
         icon: FiBarChart2,
       },
       {
-        name: "Daily Sales",
+        name: "DailySales",
+        label: "Daily Sales",
         icon: FiTrendingUp,
       },
       {
-        name: "Total Income",
+        name: "TotalIncome",
+        label: "Total Income",
         icon: FiPieChart,
       },
       {
-        name: "Trending Dishes",
+        name: "TrendingDishes",
+        label: "Trending Dishes",
         icon: GiHotMeal,
       },
       {
-        name: "Total Orders",
+        name: "TotalOrders",
+        label: "Total Orders",
         icon: AiOutlineShoppingCart,
       },
       {
-        name: "Best Employees",
+        name: "BestEmployees",
+        label: "Best Employees",
         icon: FaMedal,
       },
     ],
@@ -51,18 +57,22 @@ export const links = [
     links: [
       {
         name: "Menu",
+        label: "Menu",
         icon: MdRestaurantMenu,
       },
       {
         name: "Orders",
+        label: "Orders",
         icon: AiOutlineFileText,
       },
       {
         name: "Tables",
+        label: "Tables",
         icon: MdOutlineTableRestaurant,
       },
       {
         name: "Employees",
+        label: "Employees",
         icon: IoMdPeople,
       },
     ],
@@ -72,15 +82,18 @@ export const links = [
     links: [
       {
         name: "Calendar",
+        label: "Calendar",
         icon: AiOutlineCalendar,
       },
       {
         name: "Kanban",
+        label: "Kanban",
         icon: BsKanban,
       },
     ],
   },
 ];
+
 
 export const lineChartData = [
   [
@@ -533,6 +546,99 @@ export const earningData = [
   },
 ];
 
+export const pieChartData = [
+  { x: 'Chicken Alfredo', y: 18, text: '18%' },
+  { x: 'Pizza Margherita', y: 8, text: '8%' },
+  { x: 'Berliner Kindl', y: 15, text: '15%' },
+  { x: 'Apple Pie', y: 11, text: '11%' },
+  { x: 'T-bone Steak', y: 18, text: '18%' },
+  { x: 'Black Angus Steak', y: 14, text: '14%' },
+  { x: 'Oysters', y: 16, text: '16%' },
+];
+
+
+
+export const barChartData = [
+  [
+    { x: 'Mon', y: 23 },
+    { x: 'Tue', y: 27 },
+    { x: 'Wed', y: 26 },
+    { x: 'Thu', y: 30 },
+    { x: 'Fri', y: 22 },
+  ],
+  [
+    { x: 'Mon', y: 46 },
+    { x: 'Tue', y: 26 },
+    { x: 'Wed', y: 12 },
+    { x: 'Thu', y: 32 },
+    { x: 'Fri', y: 11 },
+  ],
+  [
+    { x: 'Mon', y: 47 },
+    { x: 'Tue', y: 24 },
+    { x: 'Wed', y: 11 },
+    { x: 'Thu', y: 25 },
+    { x: 'Fri', y: 18 },
+  ],
+];
+
+export const barCustomSeries = [
+  {
+    dataSource: barChartData[0],
+    xName: 'x',
+    yName: 'y',
+    name: 'Peter Orders',
+    type: 'Column',
+    marker: {
+      dataLabel: {
+        visible: true,
+        position: 'Top',
+        font: { fontWeight: '600', color: '#ffffff' },
+      },
+    },
+  },
+  {
+    dataSource: barChartData[1],
+    xName: 'x',
+    yName: 'y',
+    name: 'Robert Orders',
+    type: 'Column',
+    marker: {
+      dataLabel: {
+        visible: true,
+        position: 'Top',
+        font: { fontWeight: '600', color: '#ffffff' },
+      },
+    },
+  },
+  {
+    dataSource: barChartData[2],
+    xName: 'x',
+    yName: 'y',
+    name: 'AliS Orders',
+    type: 'Column',
+    marker: {
+      dataLabel: {
+        visible: true,
+        position: 'Top',
+        font: { fontWeight: '600', color: '#ffffff' },
+      },
+    },
+  },
+];
+
+export const barPrimaryXAxis = {
+  valueType: 'Category',
+  interval: 1,
+  majorGridLines: { width: 0 },
+};
+export const barPrimaryYAxis = {
+  majorGridLines: { width: 0 },
+  majorTickLines: { width: 0 },
+  lineStyle: { width: 0 },
+  labelStyle: { color: 'transparent' },
+};
+
 export const medicalproBranding = {
   data: [
     {
@@ -716,8 +822,8 @@ export const stackedCustomSeries = [
   { dataSource: stackedChartData[0],
     xName: 'x',
     yName: 'y',
-    name: 'Budget',
-    type: 'StackingColumn',
+    name: 'Drinks',
+    type: 'StackingBar',
     background: 'blue',
 
   },
@@ -725,8 +831,8 @@ export const stackedCustomSeries = [
   { dataSource: stackedChartData[1],
     xName: 'x',
     yName: 'y',
-    name: 'Expense',
-    type: 'StackingColumn',
+    name: 'Salads',
+    type: 'StackingBar',
     background: 'red',
 
   },
@@ -2126,4 +2232,31 @@ export const kanbanGrid = [
   { headerText: 'Done',
     keyField: 'Close',
     allowToggle: true },
+];
+
+export const themeColors = [
+  {
+    name: 'blue-theme',
+    color: '#1A97F5',
+  },
+  {
+    name: 'green-theme',
+    color: '#03C9D7',
+  },
+  {
+    name: 'purple-theme',
+    color: '#7352FF',
+  },
+  {
+    name: 'red-theme',
+    color: '#FF5C8E',
+  },
+  {
+    name: 'indigo-theme',
+    color: '#1E4DB7',
+  },
+  {
+    color: '#FB9678',
+    name: 'orange-theme',
+  },
 ];
