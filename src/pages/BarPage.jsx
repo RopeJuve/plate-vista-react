@@ -1,8 +1,13 @@
-import  { useState } from 'react';
-import useWebSocket, { ReadyState } from 'react-use-websocket';
+import { useState } from "react";
+import useWebSocket, { ReadyState } from "react-use-websocket";
+import BarHeader from "../Components/BarComponents/BarHeader";
+import OrderDetails from "../Components/BarComponents/OrderDetails";
+import Categories from "../Components/BarComponents/Categories";
+import BarMenuItems from "../Components/BarComponents/BarMenuItems";
 
 const BarPage = () => {
-  const [inputMessage, setInputMessage] = useState('');
+  const [category, setCategory] = useState("beer");
+  /*  const [inputMessage, setInputMessage] = useState('');
   const [messages, setMessages] = useState([]);
 
   // Connect to the WebSocket server
@@ -32,13 +37,20 @@ const BarPage = () => {
     [ReadyState.CLOSING]: 'Closing',
     [ReadyState.CLOSED]: 'Closed',
     [ReadyState.UNINSTANTIATED]: 'Uninstantiated',
-  }[readyState];
+  }[readyState]; */
 
   return (
-    <div>
-        {messages.map((message, index) => <div key={index}>
-            
+    <div className=" bg-main-dark-bg text-gray-100 h-screen overflow-hidden">
+      <BarHeader />
+      <div className="max-w-3xl mx-auto grid grid-cols-6 mt-3 h-[85%] gap-3">
+        <OrderDetails />
+        <Categories setCategory={setCategory} />
+        <BarMenuItems category={category} />
+      </div>
+      {/*    {messages.map((message, index) => <div key={index}>
+            <p>{message.payload.user}</p>
         </div>)}
+        {lastMessage && <p>Last message: {lastMessage.data}</p>}
         <button onClick={() => sendMessage(JSON.stringify({ type: "newOrder", payload: {
             user: "66ba503049336701f9a6076e",
             menuItems: [
@@ -47,7 +59,11 @@ const BarPage = () => {
                     quantity: 1
                 }
             ]
-        } }))}>Send Message</button>
+        } }))}>Send Message</button> */}
+      {/* BarHeader */}
+      {/* OrderDetails */}
+      {/* Category */}
+      {/* MenuItems */}
     </div>
   );
 };
