@@ -1,8 +1,7 @@
 import "./index.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Costumer } from "./pages";
 import AdminDashboard from "./components/AdminComponents/AdminDashboard";
-import { Costumer, AdminDashboard, PrivateRoute, BarPage } from "./pages";
+import { Costumer, PrivateRoute, BarPage } from "./pages";
 
 function App() {
   return (
