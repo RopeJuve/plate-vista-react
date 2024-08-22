@@ -17,3 +17,17 @@ export const postData = async (url, data) => {
     console.log(err);
   }
 };
+
+export const fetchUserData = async (url, token, logout) => {
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response;
+  } catch (err) {
+    console.log(err);
+    logout();
+  }
+};
