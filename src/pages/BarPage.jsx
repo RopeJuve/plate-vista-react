@@ -3,14 +3,13 @@ import BarHeader from "../Components/BarComponents/BarHeader";
 import OrderDetails from "../Components/BarComponents/OrderDetails";
 import Categories from "../Components/BarComponents/Categories";
 import BarMenuItems from "../Components/BarComponents/BarMenuItems";
-import { useWebSocketContext } from "../contexts/WebSocketContext";
+
 import { useOutletContext } from "react-router-dom";
 
 const BarPage = () => {
   const { userData } = useOutletContext();
-  console.log(userData)
+  console.log(userData);
   const [category, setCategory] = useState("beer");
-  const { sendMessage, messages, readyState } = useWebSocketContext();
   return (
     <div className=" bg-main-dark-bg text-gray-100 h-screen overflow-hidden">
       <BarHeader />
