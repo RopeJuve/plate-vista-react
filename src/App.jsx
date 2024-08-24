@@ -1,8 +1,8 @@
 import "./index.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import AdminDashboard from "./components/AdminComponents/AdminDashboard";
+import AdminDashboard from "./Components/AdminComponents/AdminDashboard";
 import { PrivateRoute, BarPage } from "./pages";
-import Login from "./components/AdminComponents/Auth/Login";
+import Login from "./Components/AdminComponents/Auth/Login";
 import { OrderProvider } from "./contexts/OrderContext";
 
 function App() {
