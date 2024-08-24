@@ -1,15 +1,14 @@
-import React from 'react'
-
+import React from 'react';
 import Line from './Charts/Line';
 import Header from '../components/AdminComponents/Header';
 
 const DailySales = () => (
-  <div className="m-4 md:m-10 mt-24 p-10 bg-white dark:bg-secondary-dark-bg rounded-3xl">
-    <Header category="Chart" title="Daily Sales" />
-    <div className="w-full">
+  <div className="m-4 md:m-10 mt-24 p-10 bg-white dark:bg-d-main-bg rounded-3xl shadow-lg transition-colors duration-300 ease-in-out">
+    <Header title="Daily Sales" />
+    <div className="w-full mt-8">
       <Line />
     </div>
   </div>
 );
 
-export default DailySales
+export default DailySales;

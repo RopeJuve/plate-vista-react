@@ -7,8 +7,8 @@ import { Header } from '../components/AdminComponents';
 
 const Kanban = () => {
   return (
-    <div className="m-2 md:m-10 mt-24 p-2 md:p-10 bg-white rounded-3xl">
-      <Header title="Kanban" category='App'/>
+    <div className="m-2 md:m-10 mt-24 p-2 md:p-10 bg-white dark:bg-d-main-bg rounded-3xl">
+      <Header title="Kanban" />
       <KanbanComponent
       id='kanban'
       dataSource={kanbanData}

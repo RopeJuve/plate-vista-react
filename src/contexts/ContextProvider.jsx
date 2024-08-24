@@ -1,5 +1,6 @@
 import { Search } from '@syncfusion/ej2-react-dropdowns';
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { fetchOrders } from '../services/orderDataFetch';
 
 const StateContext = createContext();
 
@@ -16,6 +17,7 @@ export const ContextProvider = ({ children }) => {
   const [themeSettings, setThemeSettings] = useState(false);
   const [activeMenu, setActiveMenu] = useState(true);
   const [isClicked, setIsClicked] = useState(initialState);
+  const [totalOrders, setTotalOrders] = useState(0);
 
   const setMode = (e) => {
     setCurrentMode(e.target.value);
@@ -33,8 +35,20 @@ export const ContextProvider = ({ children }) => {
 
   const handleClick = (clicked) => setIsClicked({ ...initialState, [clicked]: true });
 
+  useEffect(() => {
+    fetchOrders()
+      .then(response => {
+        const orders = response.data;
+        setTotalOrders(orders.length);
+      })
+      .catch(error => {
+        console.error('Error fetching orders:', error);
+      });
+  }, []);
+
+
   return (
-    <StateContext.Provider value={{ currentColor, currentMode, activeMenu, screenSize, setScreenSize, handleClick, isClicked, initialState, setIsClicked, setActiveMenu, setMode, setColor, themeSettings, setThemeSettings }}>
+    <StateContext.Provider value={{ currentColor, currentMode, activeMenu, screenSize, setScreenSize, handleClick, isClicked, initialState, setIsClicked, setActiveMenu, setMode, setColor, themeSettings, setThemeSettings, totalOrders }}>
       {children}
     </StateContext.Provider>
   );

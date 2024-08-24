@@ -4,14 +4,15 @@ import { IoRestaurantOutline } from "react-icons/io5";
 import { MdOutlineCancel } from "react-icons/md";
 import { TooltipComponent } from "@syncfusion/ej2-react-popups";
 import { IoRestaurant } from "react-icons/io5";
-
 import { useStateContext } from "../../contexts/ContextProvider";
+import mainlogoLight from "./../../data/mainlogoLight.svg";
+import mainlogoDark from "./../../data/mainlogoDark.svg";
 
 import { links } from "../../data/data";
 
 const Sidebar = () => {
 
-  const { activeMenu, setActiveMenu, screenSize, currentColor } = useStateContext();
+  const { activeMenu, setActiveMenu, screenSize, currentColor, currentMode } = useStateContext();
   const handleCloseSidebar = () => {
     if (activeMenu && screenSize <= 900) {
       setActiveMenu(false);
@@ -26,13 +27,13 @@ const Sidebar = () => {
     <div className="ml-3 h-screen md:overflow-hidden overflow-auto md:hover:overflow-auto pb-10">
       {activeMenu && (
         <>
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center ">
             <Link
-              to="/"
+              to="/admin"
               onClick={handleCloseSidebar}
               className="items-center gap-3 ml-3 mt-4 flex text-xl font-extrabold tracking-tight dark:text-white text-slate-900"
             >
-              <IoRestaurantOutline /> <span>platevista</span>
+              <img  src={currentMode === "Dark" ? mainlogoLight : mainlogoDark} style={{ width: '200px', height: '100px' }} />
             </Link>
             <TooltipComponent content="Close Menu" position="BottomCenter">
               <button

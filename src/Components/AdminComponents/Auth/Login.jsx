@@ -1,3 +1,6 @@
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import axios from 'axios';
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -13,13 +16,10 @@ const Login = () => {
     e.preventDefault();
 
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_VERCEL_API_URL}/auth/employee/login`,
-        {
-          employee: username,
-          password: password,
-        }
-      );
+      const response = await axios.post(`${import.meta.env.VITE_VERCEL_API_URL}/auth/employee/login`, {
+        employee: username,
+        password: password,
+      });
 
       if (response.status === 200) {
         const authHeader = response.headers.get("authorization");
@@ -44,51 +44,42 @@ const Login = () => {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-main-bg dark:bg-main-dark-bg">
-      <form
-        onSubmit={handleLogin}
-        className="bg-white dark:bg-secondary-dark-bg p-6 rounded shadow-md w-400"
+      <form 
+        onSubmit={handleLogin} 
+        className="bg-white dark:bg-secondary-dark-bg p-8 rounded-2xl shadow-md w-96"
       >
-        <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-gray-100">
-          Login
-        </h2>
-
-        <div className="mb-4">
-          <label className="block mb-2 text-gray-600 dark:text-gray-300">
-            Username
-          </label>
+        <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100 text-center">Login</h2>
+        
+        <div className="mb-6">
+          <label className="block mb-2 text-gray-600 dark:text-gray-300">Username</label>
           <input
             type="text"
             name="employee"
-            className="border border-color p-2 w-full dark:bg-main-dark-bg dark:text-gray-100"
+            className="border border-color p-3 w-full rounded-md dark:bg-main-dark-bg dark:text-gray-100"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
           />
         </div>
-
-        <div className="mb-4">
-          <label className="block mb-2 text-gray-600 dark:text-gray-300">
-            Password
-          </label>
+        
+        <div className="mb-6">
+          <label className="block mb-2 text-gray-600 dark:text-gray-300">Password</label>
           <input
             type="password"
-            className="border border-color p-2 w-full dark:bg-main-dark-bg dark:text-gray-100"
+            className="border border-color p-3 w-full rounded-md dark:bg-main-dark-bg dark:text-gray-100"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
         </div>
-
-        <button
-          type="submit"
-          className="bg-blue-500 text-white py-2 px-4 rounded w-full"
+        
+        <button 
+          type="submit" 
+          className="bg-dark-yellow-bg hover:bg-yellow-600 text-white py-3 px-6 rounded-md w-full"
         >
           Login
         </button>
-
-        <p className="mt-4 text-gray-600 dark:text-gray-300">
-          Don't have an account?{" "}
-          <a href="/register" className="text-blue-500">
-            Register
-          </a>
+        
+        <p className="mt-6 text-gray-600 dark:text-gray-300 text-center">
+          Don't have an account? <Link to="/register" className="text-dark-yellow-bg hover:underline">Register</Link>
         </p>
       </form>
     </div>
