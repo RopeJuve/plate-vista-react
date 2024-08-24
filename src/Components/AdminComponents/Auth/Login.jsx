@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { useAuth } from "../../../contexts/AuthContext";
 
 const Login = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -17,10 +22,23 @@ const Login = () => {
       });
 
       if (response.status === 200) {
-        navigate('/admin/overview');
+        const authHeader = response.headers.get("authorization");
+        const token = authHeader.split(" ")[1];
+        login(token, response.data.position);
+        if (response.data.position === "admin") {
+          navigate("/admin/overview");
+        } else if (
+          response.data.position === "bar" ||
+          response.data.position === "kitchen"
+        ) {
+          navigate("/bar");
+        }
       }
     } catch (error) {
-      console.error('Login failed:', error.response ? error.response.data : error.message);
+      console.error(
+        "Login failed:",
+        error.response ? error.response.data : error.message
+      );
     }
   };
 

@@ -75,25 +75,27 @@ const AdminDashboard = () => {
                   
                   {/* Dashboard */}
                   <Route path="/" element={<Overview />} />
-                  <Route path="/overview" element={<Overview />} />
+                  <Route path="overview" element={<Overview />} />
   
                   {/* Pages */}
-                  <Route path="/menu" element={<Menu />} />
-                  <Route path="/orders" element={<Orders />} />
-                  <Route path="/tables" element={<Tables />} />
-                  <Route path="/employees" element={<Employees />} />
+                  <Route path="menu" element={<Menu />} />
+                  <Route path="orders" element={<Orders />} />
+                  <Route path="Tables" element={<Tables />} />
+                  <Route path="Employees" element={<Employees />} />
                   
+                  {/* Auth */}
+                  <Route path="register" element={<Register />} />
   
                   {/* Apps */}
-                  <Route path="/calendar" element={<Calendar />} />
-                  <Route path="/kanban" element={<Kanban />} />
+                  <Route path="calendar" element={<Calendar />} />
+                  <Route path="kanban" element={<Kanban />} />
   
                   {/* Charts */}
-                  <Route path="/dailysales" element={<DailySales />} />{/* Line Chart */}
-                  <Route path="/trendingdishes" element={<TrendingDishes />}/>{/* Pie Chart */}
-                  <Route path="/totalincome" element={<TotalIncome />} /> {/* Column Chart */}
-                  <Route path="/totalorders" element={<TotalOrders />} /> {/* Stacked Bar Chart */}
-                  <Route path="/bestemployees" element={<BestEmployees />} /> {/* Bar Chart */}
+                  <Route path="dailysales" element={<DailySales />} />{/* Line Chart */}
+                  <Route path="trendingdishes" element={<TrendingDishes />}/>{/* Pie Chart */}
+                  <Route path="totalincome" element={<TotalIncome />} /> {/* Column Chart */}
+                  <Route path="totalorders" element={<TotalOrders />} /> {/* Stacked Bar Chart */}
+                  <Route path="bestemployees" element={<BestEmployees />} /> {/* Bar Chart */}
                 </Routes>
               </div>
               <Footer />
