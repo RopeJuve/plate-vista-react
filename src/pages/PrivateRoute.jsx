@@ -1,17 +1,32 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Outlet } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import { fetchUserData } from "../services/fetchData";
 
+const PrivateRoute = ({ allowedRoles }) => {
+  const { authToken, logout, user } = useAuth();
+  const [userData, setUserData] = useState(null);
+  const role = user;
+  const navigate = useNavigate();
 
-const PrivateRoute = ({ component: Component, allowedRoles, ...rest }) => {
-    const auth = true;// need to implement auth
-    const role = 'admin';// need to implement role
-    const navigate = useNavigate();
-    //if we have token in the context fetch the GETauth/user API (useEffect) and get the role of the user
-    if(!auth && !allowedRoles.includes(role)) {
-        navigate('/login');
+  useEffect(() => {
+    if (!authToken && !allowedRoles.includes(role)) {
+      navigate("/");
+      return;
     }
+    const fetchData = async () => {
+      const { data } = await fetchUserData(
+        `${import.meta.env.VITE_VERCEL_API_URL}/auth/user`,
+        authToken,
+        logout
+      );
+      console.log(data.user);
+      setUserData(data);
+    };
+    fetchData();
+  }, [authToken, role, logout, allowedRoles, navigate]);
 
-
-    return <Component {...rest} />;
+  return <Outlet context={{ userData }} />;
 };
 
 export default PrivateRoute;

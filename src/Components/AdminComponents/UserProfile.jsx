@@ -5,15 +5,16 @@ import { userProfileData } from '../../data/data';
 import { useStateContext } from '../../contexts/ContextProvider';
 import avatar from '../../data/avatar.jpg';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 const UserProfile = () => {
   const { currentColor, setIsClicked, initialState } = useStateContext();
+  const { logout } = useAuth(); 
   const navigate = useNavigate();
 
   const handleLogout = () => {
     
-    navigate('/admin/login');
-
+    logout();
     setIsClicked(initialState);
   };
 

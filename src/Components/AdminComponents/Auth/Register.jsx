@@ -20,7 +20,7 @@ const Register = () => {
       };
   
       try {
-        const response = await axios.post(`${import.meta.env.VITE_RENDER_API_URL}/employee`, employeeData);
+        const response = await axios.post(`${import.meta.env.VITE_VERCEL_API_URL}/employee`, employeeData);
         console.log('Registration successful:', response.data);
          navigate('/admin/login');
          
