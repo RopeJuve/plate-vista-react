@@ -11,7 +11,7 @@ const OrderDetails = () => {
     useWebSocketContext();
     console.log(messages, lastMessage?.data)
   const { menuItems } = useOrder();
-  console.log(userData?.id)
+ 
 
   useEffect(() => {
     if (userData) {
@@ -55,12 +55,6 @@ const OrderDetails = () => {
       </span>
       <span className="text-center text-white"> {messages[0]?.type} </span>
       <div className=" text-center bg-main-dark-bg p-2 flex-grow flex flex-col justify-between">
-  {/*       {messages.length !== 0 && (
-          <div className="flex justify-between p-2">
-            <p>{messages[0]?.payload.menuItems[0].product.title}</p>
-            <p>{messages[0]?.payload.menuItems[0].quantity}</p>
-          </div>
-        )} */}
         {menuItems.length !== 0 &&
           menuItems.map((menuItem) => (
             <div key={`${menuItem._id}`} className="flex justify-between p-2">
