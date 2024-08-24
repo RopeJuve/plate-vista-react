@@ -1,5 +1,5 @@
 import React from 'react'
-import Stacked from '../components/AdminComponents/Charts/Stacked';
+import{ Stacked }from './index.jsx';
 import Header from '../components/AdminComponents/Header';
 
 const TotalOrders = () => {
