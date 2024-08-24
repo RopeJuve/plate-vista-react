@@ -14,7 +14,7 @@ const Login = () => {
 
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_RENDER_API_URL}/auth/employee/login`,
+        `${import.meta.env.VITE_VERCEL_API_URL}/auth/employee/login`,
         {
           employee: username,
           password: password,

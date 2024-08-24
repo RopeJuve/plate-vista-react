@@ -6,11 +6,13 @@ const WebSocketContext = createContext();
 export const WebSocketProvider = ({ children }) => {
   const [messages, setMessages] = useState([]);
   const [tableNum, setTableNum] = useState(1);
+  const [userId, setUserId] = useState(null);
 
-  const { sendMessage, lastMessage, readyState } = useWebSocket(
+  const { sendMessage, lastMessage, readyState} = useWebSocket(
     `${import.meta.env.VITE_WS_API_URL}`,
     {
-      queryParams: { tableNum },
+      queryParams: { tableNum, userId },
+      sheared: true,
       onOpen: () => console.log("Connected to WebSocket"),
       onClose: () => console.log("WebSocket connection closed"),
       onError: (event) => console.error("WebSocket error:", event),
@@ -24,7 +26,7 @@ export const WebSocketProvider = ({ children }) => {
 
   return (
     <WebSocketContext.Provider
-      value={{ sendMessage, messages, readyState, lastMessage }}
+      value={{ sendMessage, messages, readyState, lastMessage, setTableNum, setUserId }}
     >
       {children}
     </WebSocketContext.Provider>
