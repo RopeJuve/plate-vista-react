@@ -12,7 +12,7 @@ const UserProfile = () => {
 
   const handleLogout = () => {
     
-    navigate('/admin/login');
+    navigate('/');
 
     setIsClicked(initialState);
   };
@@ -64,7 +64,7 @@ const UserProfile = () => {
           </div>
         ))}
       </div>
-      <div className="mt-5">
+      <div className="mt-5 hover:drop-shadow-xl">
         <Button
           color="white"
           bgColor={currentColor}

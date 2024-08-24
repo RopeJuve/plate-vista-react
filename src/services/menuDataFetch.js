@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const apiUrl = import.meta.env.VITE_RENDER_API_URL;
+const apiUrl = import.meta.env.VITE_VERCEL_API_URL;
 
 export const fetchMenuItems = () => {
   return axios.get(`${apiUrl}/menu-items`);

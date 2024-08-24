@@ -1,6 +1,6 @@
 import React from "react";
 
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { FiSettings } from "react-icons/fi";
 import { TooltipComponent } from "@syncfusion/ej2-react-popups";
 
@@ -61,11 +61,11 @@ const AdminDashboard = () => {
             <div
               className={
                 activeMenu
-                  ? "dark:bg-main-bg bg-main-bg min-h-screen md:ml-72 w-full"
-                  : "dark:bg-main-bg bg-main-bg min-h-screen w-full flex-2"
+                  ? "dark:bg-d-main-bg bg-main-bg min-h-screen md:ml-72 w-full"
+                  : "dark:bg-d-main-bg bg-main-bg min-h-screen w-full flex-2"
               }
             >
-              <div className="fixed md:static bg-main-bg dark:bg-main-dark-bg navbar w-full">
+              <div className="fixed md:static bg-main-bg dark:bg-secondary-dark-bg navbar w-full">
                 <Navbar />
               </div>
   
@@ -80,12 +80,9 @@ const AdminDashboard = () => {
                   {/* Pages */}
                   <Route path="/menu" element={<Menu />} />
                   <Route path="/orders" element={<Orders />} />
-                  <Route path="/Tables" element={<Tables />} />
-                  <Route path="/Employees" element={<Employees />} />
+                  <Route path="/tables" element={<Tables />} />
+                  <Route path="/employees" element={<Employees />} />
                   
-                  {/* Auth */}
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
   
                   {/* Apps */}
                   <Route path="/calendar" element={<Calendar />} />
@@ -99,6 +96,7 @@ const AdminDashboard = () => {
                   <Route path="/bestemployees" element={<BestEmployees />} /> {/* Bar Chart */}
                 </Routes>
               </div>
+              <Footer />
             </div>
           </div>
       </div>

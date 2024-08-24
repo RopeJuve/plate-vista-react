@@ -196,8 +196,8 @@ export const LinePrimaryYAxis = {
   labelFormat: '{value}',
   rangePadding: 'None',
   minimum: 0,
-  maximum: 100,
-  interval: 20,
+  maximum: 50,
+  interval: 5,
   lineStyle: { width: 0 },
   majorTickLines: { width: 0 },
   minorTickLines: { width: 0 },
@@ -208,6 +208,7 @@ export const bestEmployees = [
   {
     icon: BsPerson,
     revenue: "+$2000",
+    iconColor: '#33373E',
     desc: "Johnathan Doe",
     pcColor: "green-600",
     iconBg: '#E5FAFB',
@@ -215,6 +216,7 @@ export const bestEmployees = [
   {
     icon: BsPerson,
     revenue: "+$3000",
+    iconColor: '#33373E',
     desc: "Peter Doe",
     pcColor: "green-600",
     iconBg: 'rgb(235, 250, 242)',
@@ -222,6 +224,7 @@ export const bestEmployees = [
   {
     icon: BsPerson,
     revenue: "+$4000",
+    iconColor: '#33373E',
     desc: "Robert Doe",
     pcColor: "green-600",
     iconBg: 'rgb(254, 201, 15)',
@@ -229,6 +232,7 @@ export const bestEmployees = [
   {
     icon: BsPerson,
     revenue: "+$5000",
+    iconColor: '#33373E',
     desc: "Jane Doe",
     pcColor: "green-600",
     iconBg: 'rgb(255, 244, 229)',
@@ -236,13 +240,15 @@ export const bestEmployees = [
   {
     icon: BsPerson,
     revenue: "+$5000",
+    iconColor: '#33373E',
     desc: "Janette Doe",
     pcColor: "green-600",
-    iconBg: 'rgb(255, 244, 229)',
+    iconBg: 'rgb(254, 201, 15)',
   },
   {
     icon: BsPerson,
     revenue: "+$5000",
+    iconColor: '#33373E',
     desc: "Petar Doe",
     pcColor: "green-600",
     iconBg: 'rgb(255, 244, 229)',
@@ -250,9 +256,10 @@ export const bestEmployees = [
   {
     icon: BsPerson,
     revenue: "+$5000",
+    iconColor: '#33373E',
     desc: "AliS Doe",
     pcColor: "green-600",
-    iconBg: 'rgb(255, 244, 229)',
+    iconBg: 'rgb(254, 201, 15)',
   },
 ];
 
@@ -520,7 +527,7 @@ export const earningData = [
     amount: '10',
     title: 'Trending Dishes',
     name: "Chicken Alfredo",
-    iconColor: '#03C9D7',
+    iconColor: '#33373E',
     iconBg: '#E5FAFB',
     pcColor: 'red-600',
     bgColor: '#4bd391',
@@ -529,7 +536,7 @@ export const earningData = [
     icon: FaDollarSign,
     amount: '4,396',
     title: 'Total Income',
-    iconColor: 'rgb(255, 244, 229)',
+    iconColor: '#33373E',
     iconBg: 'rgb(254, 201, 15)',
     pcColor: 'green-600',
     bgColor: '#d58ce6',
@@ -539,7 +546,7 @@ export const earningData = [
     amount: '4236,39',
     percentage: '+38%',
     title: 'Total Orders',
-    iconColor: 'rgb(228, 106, 118)',
+    iconColor: '#33373E',
     iconBg: 'rgb(255, 244, 229)',
     pcColor: 'green-600',
     bgColor: '#ff7a67',
@@ -798,22 +805,32 @@ export const ecomPieChartData = [
 
 export const stackedChartData = [
   [
-    { x: 'Jan', y: 111.1 },
-    { x: 'Feb', y: 127.3 },
-    { x: 'Mar', y: 143.4 },
-    { x: 'Apr', y: 159.9 },
-    { x: 'May', y: 159.9 },
-    { x: 'Jun', y: 159.9 },
-    { x: 'July', y: 159.9 },
+    { x: 'Mon', y: 111.1 },
+    { x: 'Tue', y: 127.3 },
+    { x: 'Wed', y: 143.4 },
+    { x: 'Thu', y: 159.9 },
+    { x: 'Fri', y: 159.9 },
   ],
   [
-    { x: 'Jan', y: 111.1 },
-    { x: 'Feb', y: 127.3 },
-    { x: 'Mar', y: 143.4 },
-    { x: 'Apr', y: 159.9 },
-    { x: 'May', y: 159.9 },
-    { x: 'Jun', y: 159.9 },
-    { x: 'July', y: 159.9 },
+    { x: 'Mon', y: 150.1 },
+    { x: 'Tue', y: 120.3 },
+    { x: 'Wed', y: 163.4 },
+    { x: 'Thu', y: 129.9 },
+    { x: 'Fri', y: 129.9 },
+  ],
+  [
+    { x: 'Mon', y: 110.1 },
+    { x: 'Tue', y: 140.3 },
+    { x: 'Wed', y: 123.4 },
+    { x: 'Thu', y: 169.9 },
+    { x: 'Fri', y: 149.9 },
+  ],
+  [
+    { x: 'Mon', y: 100.1 },
+    { x: 'Tue', y: 130.3 },
+    { x: 'Wed', y: 127.4 },
+    { x: 'Thu', y: 159.9 },
+    { x: 'Fri', y: 189.9 },
   ],
 ];
 
@@ -836,12 +853,28 @@ export const stackedCustomSeries = [
     background: 'red',
 
   },
+  { dataSource: stackedChartData[2],
+    xName: 'x',
+    yName: 'y',
+    name: 'Main Course',
+    type: 'StackingBar',
+    background: 'yellow',
+
+  },
+  { dataSource: stackedChartData[3],
+    xName: 'x',
+    yName: 'y',
+    name: 'Desserts',
+    type: 'StackingBar',
+    background: 'pink',
+
+  },
 
 ];
 
 export const stackedPrimaryXAxis = {
-  majorGridLines: { width: 0 },
   minorGridLines: { width: 0 },
+  majorGridLines: { width: 0 },
   majorTickLines: { width: 0 },
   minorTickLines: { width: 0 },
   interval: 1,
@@ -852,8 +885,8 @@ export const stackedPrimaryXAxis = {
 
 export const stackedPrimaryYAxis = {
   lineStyle: { width: 0 },
-  minimum: 100,
-  maximum: 400,
+  minimum: 0,
+  maximum: 800,
   interval: 100,
   majorTickLines: { width: 0 },
   majorGridLines: { width: 1 },
