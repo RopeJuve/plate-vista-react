@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { DropDownListComponent } from "@syncfusion/ej2-react-dropdowns";
-import { dropdownData, SparklineAreaData } from "../data/data";
+import { dropdownData } from "../data/data";
 import { SparkLine } from "../components/AdminComponents";
-import { bestEmployees, earningData } from "../data/data";
+import { bestEmployees, earningData, categorizedData, chartData } from "../data/data";
 import { fetchOrders } from "../services/orderDataFetch";
 import { useStateContext } from "../contexts/ContextProvider";
 import { LinePrimaryXAxis, LinePrimaryYAxis } from "../data/data";
@@ -34,61 +34,29 @@ const Overview = () => {
         // Here I sum all orders
         const income = orders.reduce((acc, order) => acc + (order.totalPrice || 0), 0);
         setTotalIncome(income.toFixed(2));
-
-        // Have to put this eventually in the data.js file
-        const categorizedData = {
-          Beverages: [],
-          "Main Food": [],
-          Desserts: []
-        };
+        
 
         orders.forEach(order => {
           order.menuItems.forEach(item => {
-            const category = item.product.category.toLowerCase();
+            const category = item?.product?.category?.toLowerCase() || '';
             const date = new Date(order.createdAt);
 
-            if (["beer", "cold drinks", "hot drinks", "wine"].includes(category)) {
-              console.log("Beverages", item.quantity);
-              categorizedData.Beverages.push({ x: date, y: item.product.numSold });
-            } else if (["burgers", "pizza", "salads"].includes(category)) {
-              categorizedData["Main Food"].push({ x: date, y: item.product.numSold });
-            } else if (category === "desserts") {
+            if (["beer", "wine"].includes(category)) {
+              categorizedData["Alcoholic Beverages"].push({ x: date, y: item.product.numSold });
+            } else if (["hot drinks", "cold drinks"].includes(category)) {
+              categorizedData["Non-Alcoholic Beverages"].push({ x: date, y: item.product.numSold });
+            } else if (["pizza", "burgers"].includes(category)) {
+              categorizedData["Main Course"].push({ x: date, y: item.product.numSold });
+            } else if (category === "salads") {
+              categorizedData.Salads.push({ x: date, y: item.product.numSold });
+            }else if (category === "desserts") {
               categorizedData.Desserts.push({ x: date, y: item.product.numSold });
             }
           });
         });
         console.log(categorizedData);
 
-        // Have to put this eventually in the data.js file
-        const chartData = [
-          {
-            dataSource: categorizedData.Beverages,
-            xName: "x",
-            yName: "y",
-            name: "Beverages",
-            width: "2",
-            marker: { visible: true, width: 10, height: 10 },
-            type: "Line",
-          },
-          {
-            dataSource: categorizedData["Main Food"],
-            xName: "x",
-            yName: "y",
-            name: "Main Food",
-            width: "2",
-            marker: { visible: true, width: 10, height: 10 },
-            type: "Line",
-          },
-          {
-            dataSource: categorizedData.Desserts,
-            xName: "x",
-            yName: "y",
-            name: "Desserts",
-            width: "2",
-            marker: { visible: true, width: 10, height: 10 },
-            type: "Line",
-          }
-        ];
+        
         setLineChartData(chartData);
       })
       .catch(error => {
