@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { DropDownListComponent } from "@syncfusion/ej2-react-dropdowns";
 import { dropdownData } from "../data/data";
 import { SparkLine } from "../Components/AdminComponents";
-import { bestEmployees, earningData, categorizedData, chartData } from "../data/data";
-import { fetchOrders } from "../services/orderDataFetch";
+import { bestEmployees, earningData } from "../data/data";
 import { useStateContext } from "../contexts/ContextProvider";
 import { LinePrimaryXAxis, LinePrimaryYAxis } from "../data/data";
+import { useFetchOrdersForCharts } from "../utils/fetchOrdersForCharts";
+import { useNavigate } from "react-router-dom"
 
 
 const DropDown = ({ currentMode }) => (
@@ -24,46 +25,13 @@ const DropDown = ({ currentMode }) => (
 
 const Overview = () => {
   const { currentColor, currentMode, totalOrders } = useStateContext();
-  const [totalIncome, setTotalIncome] = useState(0);
-  const [lineChartData, setLineChartData] = useState([]);
+  const { lineChartData, totalIncome } = useFetchOrdersForCharts();
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchOrders()
-      .then(response => {
-        const orders = response.data;
-        // Here I sum all orders
-        const income = orders.reduce((acc, order) => acc + (order.totalPrice || 0), 0);
-        setTotalIncome(income.toFixed(2));
-        
+  const handleNavigateToTotalIncome = () => {
+    navigate('/admin/TotalIncome');}
 
-        orders.forEach(order => {
-          order.menuItems.forEach(item => {
-            const category = item?.product?.category?.toLowerCase() || '';
-            const date = new Date(order.createdAt);
-
-            if (["beer", "wine"].includes(category)) {
-              categorizedData["Alcoholic Beverages"].push({ x: date, y: item.product.numSold });
-            } else if (["hot drinks", "cold drinks"].includes(category)) {
-              categorizedData["Non-Alcoholic Beverages"].push({ x: date, y: item.product.numSold });
-            } else if (["pizza", "burgers"].includes(category)) {
-              categorizedData["Main Course"].push({ x: date, y: item.product.numSold });
-            } else if (category === "salads") {
-              categorizedData.Salads.push({ x: date, y: item.product.numSold });
-            }else if (category === "desserts") {
-              categorizedData.Desserts.push({ x: date, y: item.product.numSold });
-            }
-          });
-        });
-        console.log(categorizedData);
-
-        
-        setLineChartData(chartData);
-      })
-      .catch(error => {
-        console.error('Error fetching orders:', error);
-      });
-  }, []);
-
+  
   const updatedEarningData = earningData.map((item) => {
     if (item.title === "Total Orders") {
       return { ...item, amount: totalOrders };
@@ -80,9 +48,10 @@ const Overview = () => {
         <div className="flex m-3 flex-wrap justify-center gap-4 items-center w-full">
           {updatedEarningData.map((item) => (
             <div
+              onClick={handleNavigateToTotalIncome}
               key={item.title}
               className="h-54 p-8 pt-9 rounded-2xl w-72 md:w-400 relative"
-              style={{ backgroundColor: item.bgColor, color: item.textColor }}
+              style={{ backgroundColor: item.bgColor, color: item.textColor, cursor: 'pointer' }}
             >
               <div className="flex items-start">
                 <button
@@ -105,6 +74,7 @@ const Overview = () => {
         </div>
       </div>
 
+      {/* Best Employees and Daily Sales */}
       <div className="flex flex-wrap lg:flex-nowrap justify-center p-4 gap-4">
         {/* Best Employees */}
         <div className="bg-white dark:text-gray-200 dark:bg-secondary-dark-bg p-6 rounded-2xl">
@@ -159,6 +129,5 @@ const Overview = () => {
     </div>
   );
 };
-
 
 export default Overview;

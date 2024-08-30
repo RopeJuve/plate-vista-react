@@ -12,7 +12,6 @@ const Orders = () => {
   useEffect(() => {
     fetchOrders()
       .then((response) => {
-        // Here I check if data is coming from the API
         console.log("API response data:", response.data);
 
         const transformedOrders = response.data.map((order) => {
