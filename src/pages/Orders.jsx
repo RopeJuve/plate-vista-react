@@ -18,8 +18,8 @@ const Orders = () => {
         const transformedOrders = response.data.map((order) => {
  
           const menuItemsDetails = order.menuItems.map((item) => ({
-            title: item.product.title,
-            quantity: item.quantity,
+            title: item.product?.title,
+            quantity: item?.quantity,
           }));
 
           const totalQuantity = menuItemsDetails.reduce((acc, item) => acc + item.quantity, 0);
