@@ -1,6 +1,5 @@
 import React from 'react'
-import Header from '../../components/AdminComponents/Header';
-import LineChart from '../../components/AdminComponents/Charts/LineChart';
+import LineChart from '../../Components/AdminComponents/Charts/LineChart';
 
 
 const Line = () => (

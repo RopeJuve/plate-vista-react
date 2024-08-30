@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { DropDownListComponent } from "@syncfusion/ej2-react-dropdowns";
 import { dropdownData } from "../data/data";
-import { SparkLine } from "../components/AdminComponents";
+import { SparkLine } from "../Components/AdminComponents";
 import { bestEmployees, earningData, categorizedData, chartData } from "../data/data";
 import { fetchOrders } from "../services/orderDataFetch";
 import { useStateContext } from "../contexts/ContextProvider";

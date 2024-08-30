@@ -3,7 +3,7 @@ import { ScheduleComponent, ViewsDirective, ViewDirective, Day, Week, WorkWeek, 
 import { DatePickerComponent } from '@syncfusion/ej2-react-calendars';
 
 import { scheduleData } from '../data/data';
-import { Header } from '../components/AdminComponents';
+import { Header } from '../Components/AdminComponents';
 
 const Calendar = () => {
   return (

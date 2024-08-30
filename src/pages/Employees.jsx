@@ -9,7 +9,7 @@ import {
   Page,
   Toolbar,
 } from "@syncfusion/ej2-react-grids";
-import { Header } from "../components/AdminComponents";
+import { Header } from "../Components/AdminComponents";
 import { fetchEmployees } from "../services/employeeDataFetch";
 import { useNavigate } from "react-router-dom";
 import { ButtonComponent } from "@syncfusion/ej2-react-buttons";

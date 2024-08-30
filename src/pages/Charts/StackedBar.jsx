@@ -1,5 +1,5 @@
 import React from 'react'
-import StackedBarChart from '../../components/AdminComponents/Charts/StackedBarChart'; 
+import StackedBarChart from '../../Components/AdminComponents/Charts/StackedBarChart'; 
 
 const StackedBar = () => {
   return (

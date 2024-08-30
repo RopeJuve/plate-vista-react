@@ -1,7 +1,7 @@
 import React from 'react'
 
-import Header from '../../components/AdminComponents/Header';
-import PieChart from '../../components/AdminComponents/Charts/PieChart';
+import Header from '../../Components/AdminComponents/Header';
+import PieChart from '../../Components/AdminComponents/Charts/PieChart';
 
 import { pieChartData } from '../../data/data';
 

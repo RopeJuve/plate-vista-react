@@ -1,6 +1,6 @@
 import React from 'react'
 import { ChartComponent, SeriesCollectionDirective, SeriesDirective, Inject, Legend, Tooltip, Category, DataLabel, ColumnSeries } from '@syncfusion/ej2-react-charts';
-import Header from '../../components/AdminComponents/Header';
+import Header from '../../Components/AdminComponents/Header';
 import { barCustomSeries, barPrimaryXAxis, barPrimaryYAxis } from '../../data/data';
 import { useStateContext } from '../../contexts/ContextProvider';
 

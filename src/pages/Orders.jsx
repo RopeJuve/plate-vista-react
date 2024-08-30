@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { GridComponent, ColumnsDirective, ColumnDirective, Page, Inject,Search, Sort, Toolbar } from "@syncfusion/ej2-react-grids";
 import { useStateContext } from "../contexts/ContextProvider";
 import { fetchOrders } from "../services/orderDataFetch";
-import { Header } from "../components/AdminComponents";
+import { Header } from "../Components/AdminComponents";
 import { DropDownButtonComponent } from '@syncfusion/ej2-react-splitbuttons';
 
 const Orders = () => {

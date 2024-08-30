@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MdOutlineTableRestaurant } from "react-icons/md";
 import { fetchTables } from '../services/tableDataFetch';
-import { Header } from '../components/AdminComponents';
+import { Header } from '../Components/AdminComponents';
 
 const Tables = () => {
   const [tables, setTables] = useState([]);
