@@ -169,7 +169,7 @@ export const LinePrimaryYAxis = {
   rangePadding: 'None',
   minimum: 0,
   maximum: 50,
-  interval: 5,
+  interval: 10,
   lineStyle: { width: 0 },
   majorTickLines: { width: 0 },
   minorTickLines: { width: 0 },
@@ -224,14 +224,6 @@ export const bestEmployees = [
     desc: "Petar Doe",
     pcColor: "green-600",
     iconBg: 'rgb(255, 244, 229)',
-  },
-  {
-    icon: BsPerson,
-    revenue: "+$5000",
-    iconColor: '#33373E',
-    desc: "AliS Doe",
-    pcColor: "green-600",
-    iconBg: 'rgb(254, 201, 15)',
   },
 ];
 
@@ -394,7 +386,7 @@ export const barCustomSeries = [
     dataSource: barChartData[2],
     xName: 'x',
     yName: 'y',
-    name: 'AliS Orders',
+    name: 'John Orders',
     type: 'Column',
     marker: {
       dataLabel: {

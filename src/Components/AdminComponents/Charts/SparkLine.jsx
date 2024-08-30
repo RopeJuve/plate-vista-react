@@ -26,4 +26,5 @@ const SparkLine = ({ data }) => {
   );
 };
 
+
 export default SparkLine;
