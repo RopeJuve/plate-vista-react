@@ -10,11 +10,8 @@ const PrivateRoute = ({ allowedRoles }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
+
     const fetchData = async () => {
-      if (!authToken && !allowedRoles.includes(role)) {
-        navigate("/");
-        return;
-      }
       const { data } = await fetchUserData(
         `${import.meta.env.VITE_VERCEL_API_URL}/auth/user`,
         authToken,
@@ -23,7 +20,11 @@ const PrivateRoute = ({ allowedRoles }) => {
       console.log(data.user);
       setUserData(data);
     };
-    fetchData();
+    if (!authToken) {
+      navigate("/");
+    }else{
+      fetchData();
+    }
   }, [authToken, role, logout, allowedRoles, navigate]);
 
   return <Outlet context={{ userData }} />;
