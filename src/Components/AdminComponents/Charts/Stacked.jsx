@@ -1,7 +1,7 @@
 import React from 'react'
 import { ChartComponent, SeriesCollectionDirective, SeriesDirective, Inject, Legend, Category, StackingBarSeries, Tooltip } from '@syncfusion/ej2-react-charts';
 import { stackedCustomSeries, stackedPrimaryXAxis, stackedPrimaryYAxis } from '../../../data/data';
-import Header from '../../../components/AdminComponents/Header'
+import Header from '../../../Components/AdminComponents/Header'
 
 const Stacked = ({ width, height }) => {
   return (
