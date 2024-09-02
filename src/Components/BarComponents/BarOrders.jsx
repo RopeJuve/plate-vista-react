@@ -11,7 +11,7 @@ const BarOrders = ({ title }) => {
       const messageData = JSON.parse(lastMessage.data);
       if (messageData.type === "orderSuccess") {
         console.log(messageData);
-        setOrder([...orders, messageData.payload]);
+        setOrder(messageData.payload.orders);
       }
     }
   }, [lastMessage]);
@@ -26,11 +26,10 @@ const BarOrders = ({ title }) => {
         },
       })
     );
-    setOrder(orders.map((order) => order._id !== orderId));
   };
   console.log(orders);
   return (
-    <div className="col-span-2 bg-secondary-dark-bg rounded-lg flex flex-col justify-between">
+    <div className="col-span-2 bg-secondary-dark-bg rounded-lg flex flex-col justify-between overflow-scroll">
       <h2 className="text-xl text-center uppercase font-semibold bg-secondary-dark-bg pb-1">
         {title}
       </h2>
@@ -40,7 +39,7 @@ const BarOrders = ({ title }) => {
             ? orders
                 ?.filter((item) => item?.orderStatus === "Pending")
                 .map((item) => (
-                  <div className="border p-3 space-y-1 rounded-lg">
+                  <div key={item._id} className="border p-3 space-y-1 rounded-lg">
                     <span className="text-[0.785rem] tracking-wider">
                       {item?.orderStatus}
                     </span>
@@ -66,7 +65,7 @@ const BarOrders = ({ title }) => {
             : orders
                 ?.filter((item) => item?.orderStatus === "Processing")
                 .map((item) => (
-                  <div className="border p-3 space-y-1 rounded-lg">
+                  <div key={item._id} className="border p-3 space-y-1 rounded-lg">
                     <span className="text-[0.785rem] tracking-wider">
                       {item.orderStatus}
                     </span>
