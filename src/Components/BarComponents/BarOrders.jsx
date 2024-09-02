@@ -29,7 +29,7 @@ const BarOrders = ({ title }) => {
   };
   console.log(orders);
   return (
-    <div className="col-span-2 bg-secondary-dark-bg rounded-lg flex flex-col justify-between">
+    <div className="col-span-2 bg-secondary-dark-bg rounded-lg flex flex-col justify-between overflow-scroll">
       <h2 className="text-xl text-center uppercase font-semibold bg-secondary-dark-bg pb-1">
         {title}
       </h2>

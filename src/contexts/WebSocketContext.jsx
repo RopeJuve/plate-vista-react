@@ -6,7 +6,7 @@ const WebSocketContext = createContext();
 export const WebSocketProvider = ({ children }) => {
   const [messages, setMessages] = useState([]);
   const [tableNum, setTableNum] = useState(1);
-  const [userId, setUserId] = useState(null);
+  const [userId, setUserId] = useState('');
 
   const { sendMessage, lastMessage, readyState} = useWebSocket(
     `${import.meta.env.VITE_WS_API_URL}`,
@@ -18,7 +18,7 @@ export const WebSocketProvider = ({ children }) => {
       onError: (event) => console.error("WebSocket error:", event),
       onMessage: (event) => {
         const messageData = JSON.parse(event.data);
-        setMessages((prevMessages) => [...prevMessages, messageData]);
+        setMessages(messageData);
       },
       shouldReconnect: (closeEvent) => true,
     }
