@@ -1,6 +1,6 @@
 import React from "react";
-import Stacked from "../components/AdminComponents/Charts/Stacked";
-import Header from "../components/AdminComponents/Header";
+import Stacked from "../Components/AdminComponents/Charts/Stacked";
+import Header from "../Components/AdminComponents/Header";
 
 const TotalOrders = () => {
   return (
