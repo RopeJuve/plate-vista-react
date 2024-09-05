@@ -48,7 +48,7 @@ const Employees = () => {
       <div className="mt-2 flex justify-between mb-2">
         <button
           className="e-btn e-outline"
-          onClick={() => navigate("/register")}
+          onClick={() => navigate("/admin/register")}
           style={{
             borderColor: currentColor,
             color: currentColor,
