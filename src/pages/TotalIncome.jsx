@@ -1,6 +1,6 @@
 import React from 'react';
 import Line from './Charts/Line';
-import Header from '../Components/AdminComponents/Header';
+import Header from '../components/AdminComponents/Header';
 import { useFetchOrdersForCharts } from "../utils/fetchOrdersForCharts";
 
 const TotalIncome = () => {

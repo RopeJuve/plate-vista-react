@@ -1026,3 +1026,14 @@ export const themeColors = [
     name: 'orange-theme',
   },
 ];
+
+// Table Colors
+export const tableColors = [
+  "rgb(75, 211, 145)",
+  "rgb(213, 140, 230)",
+  "rgb(255, 122, 103)",
+  "rgb(102, 153, 255)",
+  "rgb(255, 189, 68)",
+  "rgb(144, 224, 239)",
+  "rgb(255, 105, 180)",
+];
