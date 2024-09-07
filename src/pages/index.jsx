@@ -17,3 +17,4 @@ export { default as Stacked } from '../Components/AdminComponents/Charts/Stacked
 export { default as PrivateRoute } from './PrivateRoute'
 export { default as BarPage } from './BarPage'
 export { default as Customer } from './Customer'
+export { default as QRCodeGenerator } from './QRCodeGenerator'

@@ -3,8 +3,6 @@ import React from "react";
 import { Routes, Route } from "react-router-dom";
 import { FiSettings } from "react-icons/fi";
 import { TooltipComponent } from "@syncfusion/ej2-react-popups";
-
-import Login from "./Auth/Login";
 import Register from "./Auth/Register";
 
 import {
@@ -26,6 +24,7 @@ import {
   Orders,
   Tables,
   Kanban,
+  QRCodeGenerator,
 } from "../../pages";
 
 import { useStateContext } from "../../contexts/ContextProvider";
@@ -89,6 +88,7 @@ const AdminDashboard = () => {
                   {/* Apps */}
                   <Route path="calendar" element={<Calendar />} />
                   <Route path="kanban" element={<Kanban />} />
+                  <Route path="QRCodeGenerator" element={<QRCodeGenerator />} />
   
                   {/* Charts */}
                   <Route path="dailysales" element={<DailySales />} />{/* Line Chart */}
