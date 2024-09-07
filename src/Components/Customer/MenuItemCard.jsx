@@ -14,8 +14,8 @@ const MenuItemCard = ({ item }) => {
       </div>
       <div className="flex flex-col gap-1 flex-grow">
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-lg">{item.title}</h3>
-          <p className="font-semibold text-lg">{item.price}€</p>
+          <h3 className="font-semibold text-base flex-shrink-0">{item.title}</h3>
+          <p className="font-semibold text-base">{item.price}€</p>
         </div>
         <p className="text-gray-500 text-[0.725rem] text-pretty max-w-[85%]">
           {showMore

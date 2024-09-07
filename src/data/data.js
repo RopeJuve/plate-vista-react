@@ -2,6 +2,7 @@ import React from "react";
 import { FiBarChart2, FiTrendingUp, FiPieChart, FiCreditCard, FiStar, FiShoppingCart } from "react-icons/fi";
 import { FaMedal } from "react-icons/fa";
 import { GiHotMeal } from "react-icons/gi";
+import { MdOutlineQrCode2 } from "react-icons/md";
 import { AiOutlineFileText, AiOutlineCalendar, AiOutlineShoppingCart } from "react-icons/ai";
 import { FaBowlFood } from "react-icons/fa6";
 import { BsPerson, BsCurrencyDollar, BsShield, BsChatLeft, BsKanban } from "react-icons/bs";
@@ -83,6 +84,11 @@ export const links = [
         name: "Kanban",
         label: "Kanban",
         icon: BsKanban,
+      },
+      {
+        name: "QRCodeGenerator",
+        label: "QRCode Generator",
+        icon: MdOutlineQrCode2,
       },
     ],
   },
