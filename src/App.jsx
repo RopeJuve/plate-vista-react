@@ -1,7 +1,7 @@
 import "./index.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AdminDashboard from "./Components/AdminComponents/AdminDashboard";
-import { PrivateRoute, BarPage } from "./pages";
+import { PrivateRoute, BarPage, Customer } from "./pages";
 import Login from "./Components/AdminComponents/Auth/Login";
 import { OrderProvider } from "./contexts/OrderContext";
 
@@ -29,6 +29,7 @@ function App() {
               <Route path="" element={<BarPage />} />
               {/* Add nested routes here if necessary */}
             </Route>
+            <Route path="/table/:tableId" element={<Customer />} />
           </Routes>
         </BrowserRouter>
       </OrderProvider>
