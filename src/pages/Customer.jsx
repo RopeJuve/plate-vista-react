@@ -5,6 +5,8 @@ import MenuItemsList from "../Components/Customer/MenuItemsList";
 import { Footer } from "../Components/AdminComponents";
 import { fetchData } from "../services/fetchData";
 import SkeletonList from "../Components/Customer/SkeletonList";
+import { CartProvider } from "../contexts/CartContext";
+import Cart from "../Components/Customer/Cart";
 
 const Customer = () => {
   const [selectedCategory, setSelectedCategory] = useState("beer");
@@ -29,16 +31,22 @@ const Customer = () => {
     getItems();
   }, [selectedCategory]);
   return (
-    <div className="max-w-screen-xl mx-auto">
-      <NavBarCustomer />
-      <CategoriesCustomer
-        selectedCategory={selectedCategory}
-        setSelectedCategory={setSelectedCategory}
-      />
-      <SkeletonList itemsCount={10} isLoading={isLoading} />
-      <MenuItemsList items={items} isLoading={isLoading}/>
-      <Footer />
-    </div>
+    <CartProvider>
+      <div className=" bg-slate-50">
+      <div className="max-w-screen-xl mx-auto">
+        <NavBarCustomer />
+        <CategoriesCustomer
+          selectedCategory={selectedCategory}
+          setSelectedCategory={setSelectedCategory}
+        />
+        <SkeletonList itemsCount={10} isLoading={isLoading} />
+        <MenuItemsList items={items} isLoading={isLoading} />
+        <Cart />
+        <Footer />
+      </div>
+      </div>
+    </CartProvider>
+    
   );
 };
 

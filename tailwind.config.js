@@ -44,7 +44,7 @@ module.exports = {
         "hero-pattern": "url('https://i.ibb.co/MkvLDfb/Rectangle-4389.png')",
       },
       gridTemplateColumns: {
-        card: "repeat(auto-fill,minmax(22.8rem,1fr))",
+        card: "repeat(auto-fill,minmax(18.75rem,1fr))",
       },
     },
   },
