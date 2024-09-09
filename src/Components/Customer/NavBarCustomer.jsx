@@ -1,8 +1,10 @@
 import Logo from "../../data/mainlogoDark.svg";
 import { RxHamburgerMenu } from "react-icons/rx";
 import { BsSearch } from "react-icons/bs";
+import { useState } from "react";
 
 const NavBarCustomer = () => {
+  const [search, setSearch] = useState("");
   return (
     <>
       <div className="px-6 flex items-center justify-between">
@@ -12,9 +14,16 @@ const NavBarCustomer = () => {
         </div>
       </div>
       <div className="w-full px-6">
-        <div className="flex items-center gap-2 border border-black rounded-xl p-2">
-            <BsSearch className="w-6 h-6" />
-            <input className="flex-grow outline-none" type="text" name="search" value="" placeholder="Search for meals"/>
+        <div className="flex items-center gap-2 border border-black rounded-xl p-1">
+          <BsSearch className="w-5 h-5" />
+          <input
+            className="flex-grow outline-none bg-transparent"
+            type="text"
+            name="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search for meals"
+          />
         </div>
       </div>
     </>
