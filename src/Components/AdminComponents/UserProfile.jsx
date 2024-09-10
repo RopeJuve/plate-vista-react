@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
 const UserProfile = () => {
+  const { user } = useAuth();
   const { currentColor, setIsClicked, initialState } = useStateContext();
   const { logout } = useAuth(); 
   const navigate = useNavigate();
@@ -27,7 +28,7 @@ const UserProfile = () => {
   return (
     <div className="nav-item absolute right-1 top-16 bg-white dark:bg-[#42464D] p-8 rounded-lg w-96">
       <div className="flex justify-between items-center">
-        <p className="font-semibold text-lg dark:text-gray-200">User Profile</p>
+        <p className="font-semibold text-lg dark:text-gray-200">Admin Profile</p>
         <Button
           icon={<MdOutlineCancel />}
           color="rgb(153, 171, 180)"
@@ -44,8 +45,8 @@ const UserProfile = () => {
           alt="user-profile"
         />
         <div>
-          <p className="font-semibold text-xl dark:text-gray-200"> Petar Petrov </p>
-          <p className="text-gray-500 text-sm dark:text-gray-400">  Administrator </p>
+          <p className="font-semibold text-xl dark:text-gray-200">{user}</p>
+          <p className="text-gray-500 text-sm dark:text-gray-400">Administrator</p>
           <p className="text-gray-500 text-sm font-semibold dark:text-gray-400"> info@platevista.com</p>
         </div>
       </div>
