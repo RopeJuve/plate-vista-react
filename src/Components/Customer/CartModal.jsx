@@ -39,7 +39,7 @@ const CartModal = ({ closeModal }) => {
       JSON.stringify({
         type: "newOrder",
         payload: {
-          user: user?.user.id || null,
+          user:null,
           menuItems: menuItemsForSend,
         },
       })
@@ -82,7 +82,7 @@ const CartModal = ({ closeModal }) => {
         </div>
 
         {selectedTab === "cart" && (
-          <div className="mt-4">
+          <div className="mt-4 max-h-[50vh] overflow-hidden">
             {cart.map((item) => (
               <div
                 key={item._id}
@@ -100,7 +100,7 @@ const CartModal = ({ closeModal }) => {
           </div>
         )}
         {selectedTab === "bill" && (
-          <div className="mt-4">
+          <div className="mt-4 max-h-[50vh] overflow-y-scroll ">
             {orders.map((order) => (
               <div key={order._id}>
                 {order.menuItems.map((menuItem) => (
@@ -119,10 +119,12 @@ const CartModal = ({ closeModal }) => {
                 ))}
               </div>
             ))}
-            <div className="flex justify-between items-center mt-4">
-              <h3 className="text-xl font-semibold">Total</h3>
-              <h3 className="font-semibold">{totalOrderPrice.toFixed(2)}€</h3>
-            </div>
+          </div>
+        )}
+        {selectedTab === "bill" && (
+          <div className="flex justify-between items-center mt-4">
+            <h3 className="text-xl font-semibold">Total</h3>
+            <h3 className="font-semibold">{totalOrderPrice.toFixed(2)}€</h3>
           </div>
         )}
         {selectedTab === "cart" && (
