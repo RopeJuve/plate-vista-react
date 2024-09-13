@@ -1,7 +1,7 @@
 import React from "react";
 import { DropDownListComponent } from "@syncfusion/ej2-react-dropdowns";
 import { dropdownData } from "../data/data";
-import { SparkLine } from "../Components/AdminComponents";
+import LineChart from "../Components/AdminComponents/Charts/LineChart";
 import { bestEmployees, earningData } from "../data/data";
 import { useStateContext } from "../contexts/ContextProvider";
 import { LinePrimaryXAxis, LinePrimaryYAxis } from "../data/data";
@@ -135,7 +135,7 @@ const Overview = () => {
             <DropDown currentMode={currentMode} />
           </div>
           <div className="mt-4">
-            <SparkLine
+            <LineChart
               id="line-chart"
               height="400px"
               primaryXAxis={LinePrimaryXAxis}
