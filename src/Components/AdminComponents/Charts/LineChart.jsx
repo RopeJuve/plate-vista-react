@@ -1,10 +1,24 @@
 import React from 'react';
-import { ChartComponent, SeriesCollectionDirective, SeriesDirective, Inject, LineSeries, DateTime, Legend, Tooltip } from '@syncfusion/ej2-react-charts';
+import {
+  ChartComponent,
+  SeriesCollectionDirective,
+  SeriesDirective,
+  Inject,
+  LineSeries,
+  DateTime,
+  Legend,
+  Tooltip
+} from '@syncfusion/ej2-react-charts';
 import { LinePrimaryXAxis, LinePrimaryYAxis } from '../../../data/data';
 import { useStateContext } from '../../../contexts/ContextProvider';
 
 const LineChart = ({ data }) => {
   const { currentMode } = useStateContext();
+
+  const sortedData = data.map(series => ({
+    ...series,
+    dataSource: series.dataSource.sort((a, b) => new Date(a.x) - new Date(b.x))
+  }));
 
   return (
     <ChartComponent
@@ -18,8 +32,15 @@ const LineChart = ({ data }) => {
     >
       <Inject services={[LineSeries, DateTime, Legend, Tooltip]} />
       <SeriesCollectionDirective>
-        {data.map((item, index) => (
-          <SeriesDirective key={index} {...item} />
+        {sortedData.map((item, index) => (
+          <SeriesDirective
+            key={index}
+            type="Line"
+            dataSource={item.dataSource}
+            xName="x"
+            yName="y"
+            name={item.name}
+          />
         ))}
       </SeriesCollectionDirective>
     </ChartComponent>

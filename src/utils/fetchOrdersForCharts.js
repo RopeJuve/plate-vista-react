@@ -15,6 +15,10 @@ export const useFetchOrdersForCharts = () => {
         const income = orders.reduce((acc, order) => acc + (order.totalPrice || 0), 0);
         setTotalIncome(income.toFixed(2));
 
+        Object.keys(categorizedData).forEach(category => {
+          categorizedData[category] = [];
+        });
+
        
         orders.forEach(order => {
           order.menuItems.forEach(item => {
@@ -22,20 +26,25 @@ export const useFetchOrdersForCharts = () => {
             const date = new Date(order.createdAt);
 
             if (["beer", "wine"].includes(category)) {
-              categorizedData["Alcoholic Beverages"].push({ x: date, y: item.product.numSold });
+              categorizedData["Alcoholic Beverages"].push({ x: date, y: item.quantity });
             } else if (["hot drinks", "cold drinks"].includes(category)) {
-              categorizedData["Non-Alcoholic Beverages"].push({ x: date, y: item.product.numSold });
+              categorizedData["Non-Alcoholic Beverages"].push({ x: date, y: item.quantity });
             } else if (["pizza", "burgers"].includes(category)) {
-              categorizedData["Main Course"].push({ x: date, y: item.product.numSold });
+              categorizedData["Main Course"].push({ x: date, y: item.quantity });
             } else if (category === "salads") {
-              categorizedData.Salads.push({ x: date, y: item.product.numSold });
+              categorizedData.Salads.push({ x: date, y: item.quantity });
             } else if (category === "desserts") {
-              categorizedData.Desserts.push({ x: date, y: item.product.numSold });
+              categorizedData.Desserts.push({ x: date, y: item.quantity });
             }
           });
         });
 
-        setLineChartData(chartData);
+        const sortedData = Object.keys(categorizedData).map(category => ({
+          name: category,
+          dataSource: categorizedData[category].sort((a, b) => new Date(a.x) - new Date(b.x))
+        }));
+
+        setLineChartData(sortedData);
       })
       .catch(error => {
         console.error('Error fetching orders:', error);
