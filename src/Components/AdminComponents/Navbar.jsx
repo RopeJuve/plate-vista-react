@@ -5,10 +5,9 @@ import { MdKeyboardArrowDown } from "react-icons/md";
 import { TooltipComponent } from "@syncfusion/ej2-react-popups";
 
 import avatar from "../../data/avatar.jpg";
-
 import { Notification, UserProfile, Searchbar } from ".";
-
 import { useStateContext } from "../../contexts/ContextProvider";
+import { useAuth } from "../../contexts/AuthContext"; // Importing useAuth to access the logged-in user
 
 const NavButton = ({ title, customFunc, icon, color, dotColor }) => (
   <TooltipComponent content={title} position="BottomCenter">
@@ -28,6 +27,7 @@ const NavButton = ({ title, customFunc, icon, color, dotColor }) => (
 );
 
 const Navbar = () => {
+  const { user } = useAuth();
   const {
     activeMenu,
     setActiveMenu,
@@ -85,11 +85,11 @@ const Navbar = () => {
             className="flex items-center gap-2 cursor-pointer p-1 hover:bg-light-gray rounded-lg"
             onClick={() => handleClick("userProfile")}
           >
-            <img src={avatar} className="w-8 h-8 rounded-full" />
+            <img src={avatar} className="w-8 h-8 rounded-full" alt="user avatar" />
             <p>
               <span className="text-gray-400 text-14">Hi,</span>{" "}
               <span className="text-gray-400 font-bold ml-1 text-14">
-                Peter
+                {user ? user : 'Guest'}
               </span>
             </p>
             <MdKeyboardArrowDown className="text-gray-400 text-14" />
