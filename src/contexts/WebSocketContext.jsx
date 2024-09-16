@@ -26,7 +26,7 @@ export const WebSocketProvider = ({ children }) => {
 
   return (
     <WebSocketContext.Provider
-      value={{ sendMessage, messages, readyState, lastMessage, setTableNum, setUserId }}
+      value={{ sendMessage, messages, readyState, lastMessage,tableNum, setTableNum, setUserId }}
     >
       {children}
     </WebSocketContext.Provider>
