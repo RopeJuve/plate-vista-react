@@ -39,7 +39,10 @@ const BarOrders = ({ title }) => {
             ? orders
                 ?.filter((item) => item?.orderStatus === "Pending")
                 .map((item) => (
-                  <div key={item._id} className="border p-3 space-y-1 rounded-lg">
+                  <div
+                    key={item._id}
+                    className="border p-3 space-y-1 rounded-lg"
+                  >
                     <span className="text-[0.785rem] tracking-wider">
                       {item?.orderStatus}
                     </span>
@@ -65,7 +68,10 @@ const BarOrders = ({ title }) => {
             : orders
                 ?.filter((item) => item?.orderStatus === "Processing")
                 .map((item) => (
-                  <div key={item._id} className="border p-3 space-y-1 rounded-lg">
+                  <div
+                    key={item._id}
+                    className="border p-3 space-y-1 rounded-lg"
+                  >
                     <span className="text-[0.785rem] tracking-wider">
                       {item.orderStatus}
                     </span>
@@ -73,6 +79,17 @@ const BarOrders = ({ title }) => {
                     <span className="text-[0.785rem] font-semibold opacity-80">
                       {timeSinceOrder(item.updatedAt)}
                     </span>
+                    <div>
+                      <button
+                        className="bg-green-500 text-white rounded-lg px-2 py-1"
+                        onClick={() => handleAcceptOrder(item._id, "Completed")}
+                      >
+                        Complete
+                      </button>
+                      <button className="bg-red-500 text-white rounded-lg px-2 py-1">
+                        Reject
+                      </button>
+                    </div>
                   </div>
                 ))}
         </ul>

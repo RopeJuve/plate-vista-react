@@ -2,13 +2,17 @@ import Logo from "../../data/mainlogoDark.svg";
 import { RxHamburgerMenu } from "react-icons/rx";
 import { BsSearch } from "react-icons/bs";
 import { useState } from "react";
+import TableIcon from "./TableIcon";
 
-const NavBarCustomer = () => {
+const NavBarCustomer = ({ tableNum, connectionStatus}) => {
   const [search, setSearch] = useState("");
   return (
     <>
       <div className="px-6 flex items-center justify-between">
-        <img src={Logo} style={{ width: "200px", height: "100px" }} />
+        <div className="flex items-center gap-6">
+          <img src={Logo} style={{ width: "200px", height: "100px" }} />
+          <TableIcon tableNum={tableNum} connectionStatus={connectionStatus} />
+        </div>
         <div className="w-[1.5rem] h-[1.rem] cursor-pointer">
           <RxHamburgerMenu className="w-full h-full" />
         </div>
