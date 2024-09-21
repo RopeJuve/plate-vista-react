@@ -15,6 +15,10 @@ import { useStateContext } from '../../../contexts/ContextProvider';
 const LineChart = ({ data }) => {
   const { currentMode } = useStateContext();
 
+  if (!data || data.length === 0) {
+    return <div>Loading</div>;
+  }
+
   const sortedData = data.map(series => ({
     ...series,
     dataSource: series.dataSource.sort((a, b) => new Date(a.x) - new Date(b.x))
