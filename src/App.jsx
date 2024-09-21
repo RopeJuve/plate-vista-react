@@ -2,9 +2,9 @@ import "./index.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AdminDashboard from "./Components/AdminComponents/AdminDashboard";
 import { PrivateRoute, BarPage, Customer } from "./pages";
-import Login from "./components/AdminComponents/Auth/Login";
+import Login from "./Components/AdminComponents/Auth/Login";
 import { OrderProvider } from "./contexts/OrderContext";
-import Register from "./components/AdminComponents/Auth/Register";
+import Register from "./Components/AdminComponents/Auth/Register";
 
 function App() {
   return (
