@@ -2,8 +2,9 @@ import "./index.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AdminDashboard from "./Components/AdminComponents/AdminDashboard";
 import { PrivateRoute, BarPage, Customer } from "./pages";
-import Login from "./Components/AdminComponents/Auth/Login";
+import Login from "./components/AdminComponents/Auth/Login";
 import { OrderProvider } from "./contexts/OrderContext";
+import Register from "./components/AdminComponents/Auth/Register";
 
 function App() {
   return (
@@ -12,6 +13,9 @@ function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Login />} />
+
+            {/* Register Route */}
+            <Route path="/register" element={<Register />} />
             {/* Admin Routes */}
             <Route
               path="/admin/*"
