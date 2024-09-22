@@ -18,7 +18,8 @@ export const WebSocketProvider = ({ children }) => {
       onError: (event) => console.error("WebSocket error:", event),
       onMessage: (event) => {
         const messageData = JSON.parse(event.data);
-        setMessages(messageData);
+        console.log(messageData)
+        setMessages((prev) => [...prev, messageData]);
       },
       shouldReconnect: (closeEvent) => true,
     }

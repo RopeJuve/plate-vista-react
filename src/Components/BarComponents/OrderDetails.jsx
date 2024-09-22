@@ -6,7 +6,7 @@ import { MdOutlineKeyboardArrowDown } from "react-icons/md";
 
 const OrderDetails = () => {
   const { userData } = useOutletContext();
-  const { sendMessage, readyState, lastMessage, setUserId } =
+  const { sendMessage, readyState, lastMessage, setUserId, tableNum, messages } =
     useWebSocketContext();
   const { menuItems, clearOrder } = useOrder();
   const [orders, setOrders] = useState([]);
@@ -16,12 +16,36 @@ const OrderDetails = () => {
       setUserId(userData.user.id);
     }
     if (lastMessage) {
-      const messageData = JSON.parse(lastMessage?.data);
-      if (messageData?.type === "orderSuccess") {
-        setOrders(messageData.payload.orders);
+      try {
+        const messageData = JSON.parse(lastMessage.data);
+        if (messageData?.type === "orderSuccess") {
+          const tableMessages = messages.filter(message => 
+            message.tableNum === tableNum.toString() && 
+            message.type === "orderSuccess"
+          );
+          if (tableMessages.length > 0) {
+            const latestMessage = tableMessages[tableMessages.length - 1];
+            if (latestMessage?.payload?.orders) {
+              setOrders(prevOrders => {
+                const newOrders = latestMessage.payload.orders;
+                if (JSON.stringify(prevOrders) !== JSON.stringify(newOrders)) {
+                  return newOrders;
+                }
+                return prevOrders;
+              });
+            } else {
+              console.log("No orders found in the latest message for table:", tableNum);
+            }
+          } else {
+            console.log("No order messages found for table:", tableNum);
+          }
+        }
+      } catch (error) {
+        console.error("Error processing message:", error);
       }
     }
   }, [userData, lastMessage]);
+  console.log(orders);
 
   const handleSendMessages = () => {
     const menuItemsForSend = menuItems.map((item) => {
@@ -48,7 +72,7 @@ const OrderDetails = () => {
     }));
   };
 
-  const total = orders.reduce((acc, item) => acc + item.totalPrice, 0);
+  const total = orders?.reduce((acc, item) => acc + item.totalPrice, 0);
 
   return (
     <div className="col-span-2 bg-secondary-dark-bg rounded-lg flex flex-col justify-between">
@@ -67,8 +91,8 @@ const OrderDetails = () => {
         ></span>
       </div>
       <div className=" bg-main-dark-bg p-2 flex-grow flex flex-col justify-between gap-1 h-[70vh] overflow-y-scroll">
-        {orders.length !== 0 &&
-          orders.map((order) => (
+        {orders?.length !== 0 &&
+          orders?.map((order) => (
             <div
               key={order._id}
               className={`${
@@ -90,7 +114,7 @@ const OrderDetails = () => {
               </div>
               {visibleOrders[order._id] && (
                 <div>
-                  {order.menuItems.map((menuItem) => (
+                  {order?.menuItems?.map((menuItem) => (
                     <div
                       key={menuItem._id}
                       className="flex gap-4 items-center py-2"
@@ -110,7 +134,7 @@ const OrderDetails = () => {
               )}
             </div>
           ))}
-        {menuItems.length !== 0 &&
+        {menuItems?.length !== 0 &&
           menuItems.map((menuItem) => (
             <div key={`${menuItem._id}`} className="flex justify-between p-2">
               <p>{menuItem.title}</p>
@@ -120,12 +144,12 @@ const OrderDetails = () => {
       </div>
       <div className="flex justify-between p-2 flex-grow items-end">
         <p>Total</p>
-        <p>{`${total.toFixed(2)}€`}</p>
+        <p>{`${total?.toFixed(2)}€`}</p>
       </div>
       <button
         className="bg-blue-500 text-white w-full p-2 rounded-lg"
         onClick={handleSendMessages}
-        disabled={menuItems.length === 0}
+        disabled={menuItems?.length === 0}
       >
         Place Order
       </button>

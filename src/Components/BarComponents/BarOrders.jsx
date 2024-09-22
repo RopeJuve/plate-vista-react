@@ -10,7 +10,6 @@ const BarOrders = ({ title }) => {
     if (lastMessage) {
       const messageData = JSON.parse(lastMessage.data);
       if (messageData.type === "orderSuccess") {
-        console.log(messageData);
         setOrder(messageData.payload.orders);
       }
     }
@@ -27,7 +26,6 @@ const BarOrders = ({ title }) => {
       })
     );
   };
-  console.log(orders);
   return (
     <div className="col-span-2 bg-secondary-dark-bg rounded-lg flex flex-col justify-between overflow-scroll">
       <h2 className="text-xl text-center uppercase font-semibold bg-secondary-dark-bg pb-1">
