@@ -9,7 +9,7 @@ import avatar from "../../data/avatar.jpg";
 import { Notification, UserProfile, Searchbar } from ".";
 
 import { useStateContext } from "../../contexts/ContextProvider";
-import { useAuth } from "../../contexts/AuthContext"; // Import useAuth to access user data
+import { useAuth } from "../../contexts/AuthContext";
 
 const NavButton = ({ title, customFunc, icon, color, dotColor }) => (
   <TooltipComponent content={title} position="BottomCenter">
@@ -40,7 +40,7 @@ const Navbar = () => {
     currentColor,
   } = useStateContext();
 
-  const { user } = useAuth(); // Get the logged-in user
+  const { user } = useAuth();
 
   useEffect(() => {
     const handleResize = () => setScreenSize(window.innerWidth);
@@ -92,7 +92,7 @@ const Navbar = () => {
             <p>
               <span className="text-gray-400 text-14">Hi,</span>{" "}
               <span className="text-gray-400 font-bold ml-1 text-14">
-                {user || "Guest"} {/* Display logged-in user's name or 'Guest' */}
+                {user || "Guest"}
               </span>
             </p>
             <MdKeyboardArrowDown className="text-gray-400 text-14" />

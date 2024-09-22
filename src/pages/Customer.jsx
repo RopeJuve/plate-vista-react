@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import NavBarCustomer from "../Components/Customer/NavBarCustomer";
 import CategoriesCustomer from "../Components/Customer/CategoriesCustomer";
 import MenuItemsList from "../Components/Customer/MenuItemsList";
-import { Footer } from "../Components/AdminComponents";
+import { Footer } from "../components/AdminComponents";
 import { fetchData } from "../services/fetchData";
 import SkeletonList from "../Components/Customer/SkeletonList";
 import { CartProvider } from "../contexts/CartContext";
@@ -38,21 +38,22 @@ const Customer = () => {
   }, [selectedCategory]);
   return (
     <CartProvider>
-      <div className=" bg-slate-50">
-        <div className="max-w-screen-xl mx-auto">
-          <NavBarCustomer tableNum={tableNum} connectionStatus={readyState} />
-          <CategoriesCustomer
-            selectedCategory={selectedCategory}
-            setSelectedCategory={setSelectedCategory}
-          />
+      <div className="bg-slate-50 flex flex-col h-screen">
+        <NavBarCustomer tableNum={tableNum} connectionStatus={readyState} />
+        <CategoriesCustomer
+          selectedCategory={selectedCategory}
+          setSelectedCategory={setSelectedCategory}
+        />
+        <div className="flex-grow overflow-hidden">
           <SkeletonList itemsCount={10} isLoading={isLoading} />
           <MenuItemsList items={items} isLoading={isLoading} />
-          <Cart />
-          <Footer />
         </div>
+        <Cart />
+        <Footer />
       </div>
     </CartProvider>
   );
+  
 };
 
 export default Customer;
