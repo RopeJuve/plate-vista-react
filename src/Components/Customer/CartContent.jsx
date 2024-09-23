@@ -6,7 +6,7 @@ import { PiSealCheck } from "react-icons/pi";
 const CartContent = ({ variant, orders, handleSendMessages }) => {
   const { cart, clearCart } = useCart();
   const price = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  const totalOrderPrice = orders.reduce(
+  const totalOrderPrice = orders?.reduce(
     (acc, order) => acc + order.totalPrice,
     0
   );
@@ -54,9 +54,9 @@ const CartContent = ({ variant, orders, handleSendMessages }) => {
       {variant === "bill" && (
         <>
           <div className="mt-4 max-h-[50vh] overflow-y-scroll">
-            {orders.map((order) => (
+            {orders?.map((order) => (
               <div key={order._id} className="px-1 mb-1 mr-1 rounded-lg border">
-                {order.menuItems.map((menuItem) => (
+                {order.menuItems?.map((menuItem) => (
                   <div
                     key={menuItem._id}
                     className="flex gap-4 items-center border-b border-gray-200 py-2"
@@ -70,17 +70,17 @@ const CartContent = ({ variant, orders, handleSendMessages }) => {
                     </p>
                   </div>
                 ))}
-                {order.orderStatus === "Pending" && (
+                {order?.orderStatus === "Pending" && (
                   <span className="inline-flex items-center gap-1 opacity-70 text-[0.725rem] italic text-yellow-500">
                     <LuAlarmClock /> {order.orderStatus}
                   </span>
                 )}
-                {order.orderStatus === "Processing" && (
+                {order?.orderStatus === "Processing" && (
                   <span className="inline-flex items-center gap-1 opacity-70 text-[0.725rem] italic text-blue-500">
                     <MdPendingActions /> {order.orderStatus}
                   </span>
                 )}
-                {order.orderStatus === "Completed" && (
+                {order?.orderStatus === "Completed" && (
                   <span className="inline-flex items-center gap-1 opacity-70 text-[0.725rem] italic text-green-500">
                     <PiSealCheck /> {order.orderStatus}
                   </span>
@@ -90,7 +90,7 @@ const CartContent = ({ variant, orders, handleSendMessages }) => {
           </div>
           <div className="flex justify-between items-center mt-4">
             <h3 className="text-xl font-semibold">Total</h3>
-            <h3 className="font-semibold">{totalOrderPrice.toFixed(2)}€</h3>
+            <h3 className="font-semibold">{totalOrderPrice?.toFixed(2)}€</h3>
           </div>
           <button
             className="bg-blue-400 text-white w-full py-2 mt-6 rounded-lg"

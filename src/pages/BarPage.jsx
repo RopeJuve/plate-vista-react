@@ -19,10 +19,6 @@ const BarPage = () => {
         <BarMenuItems category={category} />
         <BarOrders title='Accepted' />
       </div>
-      {/* BarHeader */}
-      {/* OrderDetails */}
-      {/* Category */}
-      {/* MenuItems */}
     </div>
   );
 };

@@ -1,22 +1,47 @@
 import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import { useCart } from "../../contexts/CartContext";
 import { useWebSocketContext } from "../../contexts/WebSocketContext";
 import CartContent from "./CartContent";
 
 const CartModal = ({ closeModal }) => {
-  const { sendMessage, lastMessage } = useWebSocketContext();
+  const { tableId } = useParams();
+  const { sendMessage, lastMessage, messages } = useWebSocketContext();
   const { clearCart, cart } = useCart();
   const [selectedTab, setSelectedTab] = useState("cart");
   const [orders, setOrders] = useState([]);
-
+  console.log(tableId);
   useEffect(() => {
     if (lastMessage) {
-      const messageData = JSON.parse(lastMessage?.data);
-      if (messageData?.type === "orderSuccess") {
-        setOrders(messageData.payload.orders);
+      try {
+        const messageData = JSON.parse(lastMessage.data);
+        if (messageData?.type === "orderSuccess") {
+          const tableMessages = messages.filter(message => 
+            message.tableNum === tableId.toString() && 
+            message.type === "orderSuccess"
+          );
+          if (tableMessages.length > 0) {
+            const latestMessage = tableMessages[tableMessages.length - 1];
+            if (latestMessage?.payload?.orders) {
+              setOrders(prevOrders => {
+                const newOrders = latestMessage.payload.orders;
+                if (JSON.stringify(prevOrders) !== JSON.stringify(newOrders)) {
+                  return newOrders;
+                }
+                return prevOrders;
+              });
+            } else {
+              console.log("No orders found in the latest message for table:", tableId);
+            }
+          } else {
+            console.log("No order messages found for table:", tableId);
+          }
+        }
+      } catch (error) {
+        console.error("Error processing message:", error);
       }
     }
-  }, [lastMessage]);
+  }, [lastMessage, messages]);
   console.log(orders);
 
   const changeTab = (tab) => {
