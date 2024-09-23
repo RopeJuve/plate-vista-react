@@ -38,21 +38,22 @@ const Customer = () => {
   }, [selectedCategory]);
   return (
     <CartProvider>
-      <div className=" bg-slate-50">
-        <div className="max-w-screen-xl mx-auto">
-          <NavBarCustomer tableNum={tableNum} connectionStatus={readyState} />
-          <CategoriesCustomer
-            selectedCategory={selectedCategory}
-            setSelectedCategory={setSelectedCategory}
-          />
+      <div className="bg-slate-50 flex flex-col h-screen">
+        <NavBarCustomer tableNum={tableNum} connectionStatus={readyState} />
+        <CategoriesCustomer
+          selectedCategory={selectedCategory}
+          setSelectedCategory={setSelectedCategory}
+        />
+        <div className="flex-grow overflow-hidden">
           <SkeletonList itemsCount={10} isLoading={isLoading} />
           <MenuItemsList items={items} isLoading={isLoading} />
-          <Cart />
-          <Footer />
         </div>
+        <Cart />
+        <Footer />
       </div>
     </CartProvider>
   );
+  
 };
 
 export default Customer;
