@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import NavBarCustomer from "../Components/Customer/NavBarCustomer";
 import CategoriesCustomer from "../Components/Customer/CategoriesCustomer";
 import MenuItemsList from "../Components/Customer/MenuItemsList";
-import { Footer } from "../components/AdminComponents";
+import { Footer } from "../Components/AdminComponents";
 import { fetchData } from "../services/fetchData";
 import SkeletonList from "../Components/Customer/SkeletonList";
 import { CartProvider } from "../contexts/CartContext";
