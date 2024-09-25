@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { MdOutlineAddShoppingCart } from "react-icons/md";
 import { useCart } from "../../contexts/CartContext";
+import { useStateContext } from "../../contexts/ContextProvider";
 
 const MenuItemCard = ({ item }) => {
   const [showMore, setShowMore] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const { addToCart } = useCart();
+  const { currentColor } = useStateContext();
+
   return (
     <div className="flex items-center gap-4 shadow-md rounded-lg py-4 px-2 bg-white">
       <div className="w-16 h-16 rounded-lg flex-shrink-0">
@@ -25,18 +28,22 @@ const MenuItemCard = ({ item }) => {
             ? item.description
             : `${item.description.substring(0, 35)}...`}
           <button
-            className="text-orange-400 ml-1 font-semibold"
+            className="ml-1 font-semibold"
             onClick={() => setShowMore(!showMore)}
+            style={{ color: currentColor }}
           >
             {showMore ? "Less" : "More"}
           </button>
         </p>
-        <button className="self-end w-6 h-6" onClick={() => addToCart({
-          ...item,
-          quantity,
-          price: item.price * quantity,
-        })}>
-          <MdOutlineAddShoppingCart className="w-full h-full text-orange-400" />
+        <button 
+          className="self-end w-6 h-6" 
+          onClick={() => addToCart({
+            ...item,
+            quantity,
+            price: item.price * quantity,
+          })}
+        >
+          <MdOutlineAddShoppingCart className="w-full h-full" style={{ color: currentColor }} />
         </button>
       </div>
     </div>
