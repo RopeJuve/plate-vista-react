@@ -2,8 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
-import { CartProvider } from "./CartContext"; // Import CartProvider
-
+import { CartProvider } from "./CartContext";
 import { ContextProvider } from "./contexts/ContextProvider";
 import { WebSocketProvider } from "./contexts/WebSocketContext";
 import { AuthProvider } from "./contexts/AuthContext";
