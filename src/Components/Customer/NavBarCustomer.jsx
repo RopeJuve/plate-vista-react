@@ -6,6 +6,7 @@ import TableIcon from "./TableIcon";
 import mainlogoLight from "../../data/mainlogoLight.svg";
 import mainlogoDark from "../../data/mainlogoDark.svg";
 import { fetchData } from "../../services/fetchData";
+import MenuItemCard from "./MenuItemCard";
 
 const NavBarCustomer = ({ tableNum, connectionStatus }) => {
   const [search, setSearch] = useState("");
@@ -55,19 +56,18 @@ const NavBarCustomer = ({ tableNum, connectionStatus }) => {
             name="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search for meals"
+            placeholder="Search for meals or ingredients"
           />
         </div>
-        {search && filteredMeals.length > 0 && (
-          <div className="mt-2 bg-white border border-gray-300 rounded-lg shadow-lg">
-            {filteredMeals.map(meal => (
-              <div key={meal._id} className="p-2 hover:bg-gray-100">
-                <h3 className="font-semibold">{meal.title}</h3>
-                <p className="text-sm text-gray-600">{meal.description}</p>
-              </div>
-            ))}
-          </div>
-        )}
+        <div className="mt-4 grid grid-cols-1 gap-4">
+          {search && filteredMeals.length > 0 ? (
+            filteredMeals.map(meal => (
+              <MenuItemCard key={meal._id} item={meal} />
+            ))
+          ) : (
+            search && <div className="text-gray-500">No results found</div>
+          )}
+        </div>
       </div>
     </>
   );
