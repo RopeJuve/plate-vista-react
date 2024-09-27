@@ -45,6 +45,7 @@ module.exports = {
       },
       gridTemplateColumns: {
         card: "repeat(auto-fill,minmax(18.75rem,1fr))",
+        table: "repeat(auto-fill,minmax(10rem,1fr))",
       },
     },
   },
