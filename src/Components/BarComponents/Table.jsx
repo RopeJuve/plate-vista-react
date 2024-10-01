@@ -1,13 +1,19 @@
 import table from "../../data/tableIcon.svg";
+import { useNavigate } from "react-router-dom";
 
 const Table = ({ tableNum, status }) => {
+  const navigate = useNavigate();
   const colors = {
-    free: "stroke-gray-400",
+    vacant: "stroke-gray-400",
     reserved: "text-yellow-500 stroke-yellow-700",
     occupied: "text-orange-500 stroke-orange-700",
   };
+
   return (
-    <div className="relative">
+    <div
+      className="relative"
+      onClick={() => navigate(`/bar/table/${tableNum}`)}
+    >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         className={`w-full  ${colors[status]}`}

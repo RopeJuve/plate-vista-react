@@ -62,11 +62,12 @@ const CartContent = ({ variant, orders, handleSendMessages }) => {
                     className="flex gap-4 items-center border-b border-gray-200 py-2"
                   >
                     <p className="w-2/3 font-semibold">
-                      {menuItem.product.title}
+                      {menuItem.product?.title}
                     </p>
                     <p className="flex-grow">{menuItem.quantity}</p>
                     <p className="font-semibold">
-                      {(menuItem.product.price * menuItem.quantity).toFixed(2)}€
+                      {(menuItem.product?.price * menuItem.quantity).toFixed(2)}
+                      €
                     </p>
                   </div>
                 ))}

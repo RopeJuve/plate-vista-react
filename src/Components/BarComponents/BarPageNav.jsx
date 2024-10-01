@@ -5,7 +5,7 @@ import { useWebSocketContext } from "../../contexts/WebSocketContext";
 import BarAvatar from "./BarAvatar";
 import { useAuth } from "../../contexts/AuthContext";
 
-const BarPageNav = () => {
+const BarPageNav = ({ selected, setSelected }) => {
   const { readyState } = useWebSocketContext();
   const { logout } = useAuth();
   return (
@@ -14,7 +14,7 @@ const BarPageNav = () => {
         <img src={Logo} alt="logo" className="h-10 w-26" />
         <Online status={readyState} />
       </div>
-      <NavTabs />
+      <NavTabs selected={selected} setSelected={setSelected} />
       <div className="flex items-center">
         <BarAvatar />
         <button

@@ -30,7 +30,7 @@ function App() {
               path="/bar"
               element={<PrivateRoute allowedRoles={["bar", "kitchen"]} />}
             >
-              <Route path="" element={<BarPageTableView/>} />
+              <Route path="" element={<BarPageTableView />} />
               <Route path="table/:tableId" element={<BarPage />} />
               {/* Add nested routes here if necessary */}
             </Route>
