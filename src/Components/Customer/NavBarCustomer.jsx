@@ -43,12 +43,16 @@ const NavBarCustomer = ({ tableNum, connectionStatus }) => {
           />
           <TableIcon tableNum={tableNum} connectionStatus={connectionStatus} />
         </div>
-        <div className="w-[1.5rem] h-[1.rem] cursor-pointer">
+        <div className={`w-[1.5rem] h-[1.rem] cursor-pointer ${
+        currentMode === "Dark" ? " text-white" : "bg-white text-black"
+      }`}>
           <RxHamburgerMenu className="w-full h-full" />
         </div>
       </div>
       <div className="w-full px-6">
-        <div className="flex items-center gap-2 border border-black rounded-xl p-1">
+        <div className={`flex items-center gap-2 border border-gray-500 rounded-xl p-1 ${
+        currentMode === "Dark" ? "bg-gray-500 text-white" : "bg-white text-black"
+      }`}>
           <BsSearch className="w-5 h-5" />
           <input
             className="flex-grow outline-none bg-transparent"

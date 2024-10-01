@@ -60,6 +60,7 @@ const Customer = () => {
           {themeSettings && <ThemeSettings />}
 
           <NavBarCustomer tableNum={tableNum} connectionStatus={readyState} />
+          {/* Commented this out below because I get the categories in the Customer Page in the UItwice otherwise */}
           <CategoriesCustomer
             selectedCategory={selectedCategory}
             setSelectedCategory={setSelectedCategory}

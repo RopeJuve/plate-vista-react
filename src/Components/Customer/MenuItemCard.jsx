@@ -7,10 +7,14 @@ const MenuItemCard = ({ item }) => {
   const [showMore, setShowMore] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const { addToCart } = useCart();
-  const { currentColor } = useStateContext();
+  const { currentColor, currentMode } = useStateContext();
 
   return (
-    <div className="flex items-center gap-4 shadow-md rounded-lg py-4 px-2 bg-white">
+    <div
+      className={`flex items-center gap-4 shadow-md rounded-lg py-4 px-2 ${
+        currentMode === "Dark" ? "bg-gray-500 text-white" : "bg-white text-black"
+      }`}
+    >
       <div className="w-16 h-16 rounded-lg flex-shrink-0">
         <img
           src={item.image}
@@ -23,7 +27,9 @@ const MenuItemCard = ({ item }) => {
           <h3 className="font-semibold text-base flex-shrink-0">{item.title}</h3>
           <p className="font-semibold text-base">{item.price}€</p>
         </div>
-        <p className="text-gray-500 text-[0.725rem] text-pretty max-w-[85%]">
+        <p className={`text-gray-500 text-[0.725rem] text-pretty max-w-[85%] ${
+        currentMode === "Dark" ? "bg-gray-500 text-white" : "bg-white text-black"
+      }`}>
           {showMore
             ? item.description
             : `${item.description.substring(0, 35)}...`}
@@ -51,3 +57,4 @@ const MenuItemCard = ({ item }) => {
 };
 
 export default MenuItemCard;
+
