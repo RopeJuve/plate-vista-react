@@ -4,7 +4,7 @@ import AdminDashboard from "./Components/AdminComponents/AdminDashboard";
 import { PrivateRoute, BarPage, Customer, BarPageTableView } from "./pages";
 import Login from "./Components/AdminComponents/Auth/Login";
 import { OrderProvider } from "./contexts/OrderContext";
-import Register from "./components/AdminComponents/Auth/Register";
+import Register from "./Components/AdminComponents/Auth/Register";
 
 function App() {
   return (
