@@ -1,4 +1,4 @@
-import table from "../../data/tableIcon.svg";
+
 import { useNavigate } from "react-router-dom";
 
 const Table = ({ tableNum, status }) => {
@@ -19,7 +19,7 @@ const Table = ({ tableNum, status }) => {
         className={`w-full  ${colors[status]}`}
         viewBox="0 0 100 100"
       >
-        <use href={`${table}#table`} />
+        <use href={`/tableIcon.svg#table`} />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
         <span className="text-sm text-black font-semibold">{`T${tableNum}`}</span>
