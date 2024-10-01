@@ -12,7 +12,7 @@ import { useWebSocketContext } from "../contexts/WebSocketContext";
 import { useStateContext } from "../contexts/ContextProvider";
 import { TooltipComponent } from "@syncfusion/ej2-react-popups";
 import { FiSettings } from "react-icons/fi";
-import ThemeSettings from "../components/AdminComponents/ThemeSettings";
+import ThemeSettings from "../Components/AdminComponents/ThemeSettings";
 
 const Customer = () => {
   const { tableNum, setTableNum, readyState } = useWebSocketContext();
