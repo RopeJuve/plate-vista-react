@@ -2,14 +2,17 @@ import { useState } from "react";
 import { useCart } from "../../contexts/CartContext";
 import { MdOutlineShoppingCart } from "react-icons/md";
 import CartModal from "./CartModal";
+import { useStateContext } from "../../contexts/ContextProvider"; 
 
 const Cart = () => {
   const { cart } = useCart();
   const [showCart, setShowCart] = useState(false);
+  const { currentColor } = useStateContext();
   return (
     <>
        <div
-          className="fixed bottom-[1rem] right-[0.5rem] z-50 w-10 h-10 rounded-full cursor-pointer bg-orange-400 p-7 shadow-red-400 shadow-lg"
+          className="fixed bottom-[1rem] right-[0.5rem] z-50 w-10 h-10 rounded-full cursor-pointer p-7 shadow-bg-light-gray shadow-lg"
+          style={{ background: currentColor }}
           onClick={() => setShowCart(!showCart)}
         >
           <MdOutlineShoppingCart className="text-white w-8 h-8 translate-x-[-50%] translate-y-[-50%] relative" />
