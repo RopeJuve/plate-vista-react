@@ -1,7 +1,7 @@
 import "./index.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import AdminDashboard from "./components/AdminComponents/AdminDashboard";
-import { PrivateRoute, BarPage, Customer } from "./pages";
+import AdminDashboard from "./Components/AdminComponents/AdminDashboard";
+import { PrivateRoute, BarPage, Customer, BarPageTableView } from "./pages";
 import Login from "./Components/AdminComponents/Auth/Login";
 import { OrderProvider } from "./contexts/OrderContext";
 import Register from "./components/AdminComponents/Auth/Register";
@@ -30,7 +30,8 @@ function App() {
               path="/bar"
               element={<PrivateRoute allowedRoles={["bar", "kitchen"]} />}
             >
-              <Route path="" element={<BarPage />} />
+              <Route path="" element={<BarPageTableView />} />
+              <Route path="table/:tableId" element={<BarPage />} />
               {/* Add nested routes here if necessary */}
             </Route>
             <Route path="/table/:tableId" element={<Customer />} />
