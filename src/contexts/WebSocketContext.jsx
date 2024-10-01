@@ -5,7 +5,7 @@ const WebSocketContext = createContext();
 
 export const WebSocketProvider = ({ children }) => {
   const [messages, setMessages] = useState([]);
-  const [tableNum, setTableNum] = useState(1);
+  const [tableNum, setTableNum] = useState('');
   const [userId, setUserId] = useState('');
 
   const { sendMessage, lastMessage, readyState} = useWebSocket(
