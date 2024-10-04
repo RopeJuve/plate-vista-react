@@ -31,25 +31,12 @@ const OrderDetails = () => {
         if (messageData?.type === "orderSuccess") {
           const tableMessages = messages.filter(
             (message) =>
-              message.tableNum === tableNum.toString() &&
+              Number(message.tableNum) === Number(tableId) &&
               message.type === "orderSuccess"
           );
           if (tableMessages.length > 0) {
             const latestMessage = tableMessages[tableMessages.length - 1];
-            if (latestMessage?.payload?.orders) {
-              setOrders((prevOrders) => {
-                const newOrders = latestMessage.payload.orders;
-                if (JSON.stringify(prevOrders) !== JSON.stringify(newOrders)) {
-                  return newOrders;
-                }
-                return prevOrders;
-              });
-            } else {
-              console.log(
-                "No orders found in the latest message for table:",
-                tableNum
-              );
-            }
+            setOrders(latestMessage.payload.orders);
           } else {
             console.log("No order messages found for table:", tableNum);
           }
@@ -58,8 +45,7 @@ const OrderDetails = () => {
         console.error("Error processing message:", error);
       }
     }
-  }, [userData, lastMessage]);
-  console.log(orders);
+  }, [userData, lastMessage, messages, tableId]);
 
   const handleSendMessages = () => {
     const menuItemsForSend = menuItems.map((item) => {

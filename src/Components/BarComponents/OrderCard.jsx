@@ -15,6 +15,7 @@ const OrderCard = ({ item, table, variant }) => {
         payload: {
           orderId,
           status,
+          tableNum: table,
         },
       })
     );
