@@ -10,29 +10,20 @@ const CartModal = ({ closeModal }) => {
   const { clearCart, cart } = useCart();
   const [selectedTab, setSelectedTab] = useState("cart");
   const [orders, setOrders] = useState([]);
-  console.log(tableId);
+
   useEffect(() => {
     if (lastMessage) {
       try {
         const messageData = JSON.parse(lastMessage.data);
         if (messageData?.type === "orderSuccess") {
-          const tableMessages = messages.filter(message => 
-            message.tableNum === tableId.toString() && 
-            message.type === "orderSuccess"
+          const tableMessages = messages.filter(
+            (message) =>
+             Number(message.tableNum) === Number(tableId) &&
+              message.type === "orderSuccess"
           );
           if (tableMessages.length > 0) {
             const latestMessage = tableMessages[tableMessages.length - 1];
-            if (latestMessage?.payload?.orders) {
-              setOrders(prevOrders => {
-                const newOrders = latestMessage.payload.orders;
-                if (JSON.stringify(prevOrders) !== JSON.stringify(newOrders)) {
-                  return newOrders;
-                }
-                return prevOrders;
-              });
-            } else {
-              console.log("No orders found in the latest message for table:", tableId);
-            }
+            setOrders(latestMessage.payload.orders);
           } else {
             console.log("No order messages found for table:", tableId);
           }
@@ -42,7 +33,6 @@ const CartModal = ({ closeModal }) => {
       }
     }
   }, [lastMessage, messages]);
-  console.log(orders);
 
   const changeTab = (tab) => {
     setSelectedTab(tab);
@@ -100,10 +90,18 @@ const CartModal = ({ closeModal }) => {
         </div>
 
         {selectedTab === "cart" && (
-          <CartContent variant="cart" orders={orders} handleSendMessages={handleSendMessages}/>
+          <CartContent
+            variant="cart"
+            orders={orders}
+            handleSendMessages={handleSendMessages}
+          />
         )}
         {selectedTab === "bill" && (
-          <CartContent variant="bill" orders={orders} handleSendMessages={handleSendMessages}/>
+          <CartContent
+            variant="bill"
+            orders={orders}
+            handleSendMessages={handleSendMessages}
+          />
         )}
       </div>
     </>

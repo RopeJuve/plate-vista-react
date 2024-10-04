@@ -45,6 +45,7 @@ const BarOrders = ({ title }) => {
                 .map((item) => {
                   return item.orders
                     .filter((order) => order.orderStatus === "Processing")
+                    .sort()
                     .map((order) => {
                       return (
                         <OrderCard
@@ -61,6 +62,7 @@ const BarOrders = ({ title }) => {
                 .map((item) => {
                   return item.orders
                     .filter((order) => order.orderStatus === "Completed")
+                    .sort()
                     .map((order) => {
                       return (
                         <OrderCard
