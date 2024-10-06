@@ -25,7 +25,7 @@ const Customer = () => {
 
   useEffect(() => {
     if (tableId) {
-      setTableNum(tableId);
+      setTableNum(Number(tableId));
     }
     const getItems = async () => {
       try {
