@@ -19,6 +19,10 @@ export const ContextProvider = ({ children }) => {
   const [isClicked, setIsClicked] = useState(initialState);
   const [totalOrders, setTotalOrders] = useState(0);
 
+  // I added new contexts for the search bar
+  const [categories, setCategories] = useState([]);
+  const [search, setSearch] = useState("");
+
   const setMode = (e) => {
     setCurrentMode(e.target.value);
     localStorage.setItem('themeMode', e.target.value);
@@ -48,7 +52,7 @@ export const ContextProvider = ({ children }) => {
 
 
   return (
-    <StateContext.Provider value={{ currentColor, currentMode, activeMenu, screenSize, setScreenSize, handleClick, isClicked, initialState, setIsClicked, setActiveMenu, setMode, setColor, themeSettings, setThemeSettings, totalOrders }}>
+    <StateContext.Provider value={{ currentColor, currentMode, activeMenu, screenSize, setScreenSize, handleClick, isClicked, initialState, setIsClicked, setActiveMenu, setMode, setColor, themeSettings, setThemeSettings, totalOrders,categories, setCategories, search, setSearch }}>
       {children}
     </StateContext.Provider>
   );

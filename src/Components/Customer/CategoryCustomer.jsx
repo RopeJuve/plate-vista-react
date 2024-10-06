@@ -1,9 +1,11 @@
+import { useStateContext } from "../../contexts/ContextProvider";
+
 const CategoryCustomer = ({
   category,
   setSelectedCategory,
   selectedCategory,
-  currentColor,
 }) => {
+  const { currentColor } = useStateContext();
   const categoryClass =
     selectedCategory === category
       ? `flex-grow px-4 py-2 rounded-md mx-2 text-sm font-semibold text-center text-white bg-orange-400 shadow-md`
@@ -16,7 +18,7 @@ const CategoryCustomer = ({
       onClick={(e) => setSelectedCategory(e.target.id)}
       style={{
         backgroundColor:
-          selectedCategory === category ? currentColor : undefined,
+          selectedCategory === category ? currentColor : "",
       }}
     >
       {category}
