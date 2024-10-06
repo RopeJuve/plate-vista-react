@@ -4,18 +4,19 @@ import OrderCard from "./OrderCard";
 
 const BarOrders = ({ title }) => {
   const [orders, setOrder] = useState([]);
-  const [table, setTable] = useState(null);
-  const { lastMessage } = useWebSocketContext();
+  const { lastMessage, messages } = useWebSocketContext();
   useEffect(() => {
     if (lastMessage) {
       const messageData = JSON.parse(lastMessage.data);
-      if (messageData.type === "orderSuccess") {
-        setTable(messageData.payload.tableNumber);
-        setOrder(messageData.payload.orders);
+      if (messageData.type === "allTables") {
+        const tables = messages[messages.length - 1];
+        if (tables.type === "allTables") {
+          setOrder(tables.payload);
+        }
       }
     }
-  }, [lastMessage]);
-
+  }, [lastMessage, messages]);
+  console.log(messages);
   return (
     <div className="bg-secondary-dark-bg rounded-lg flex flex-col justify-between overflow-scroll pl-1.5">
       <h2 className="text-xl text-center uppercase font-semibold bg-secondary-dark-bg pb-1">
@@ -25,33 +26,52 @@ const BarOrders = ({ title }) => {
         <div className="flex flex-col space-y-2">
           {title === "New Orders"
             ? orders
-                ?.filter((item) => item?.orderStatus === "Pending")
-                .map((item) => (
-                  <OrderCard key={item._id} item={item} table={table} />
-                ))
+                .map((item) => {
+                  return item.orders
+                    .filter((order) => order.orderStatus === "Pending")
+                    .map((order) => {
+                      return (
+                        <OrderCard
+                          key={order._id}
+                          item={order}
+                          table={item.tableNumber}
+                        />
+                      );
+                    });
+                })
                 .reverse()
             : title === "Accepted"
             ? orders
-                ?.filter((item) => item?.orderStatus === "Processing")
-                .map((item) => (
-                  <OrderCard
-                    key={item._id}
-                    item={item}
-                    table={table}
-                    variant="accepted"
-                  />
-                ))
+                .map((item) => {
+                  return item.orders
+                    .filter((order) => order.orderStatus === "Processing")
+                    .map((order) => {
+                      return (
+                        <OrderCard
+                          key={order._id}
+                          item={order}
+                          table={item.tableNumber}
+                          variant="accepted"
+                        />
+                      );
+                    });
+                })
                 .reverse()
             : orders
-                ?.filter((item) => item?.orderStatus === "Completed")
-                .map((item) => (
-                  <OrderCard
-                    key={item._id}
-                    item={item}
-                    table={table}
-                    variant="completed"
-                  />
-                ))
+                .map((item) => {
+                  return item.orders
+                    .filter((order) => order.orderStatus === "Completed")
+                    .map((order) => {
+                      return (
+                        <OrderCard
+                          key={order._id}
+                          item={order}
+                          table={item.tableNumber}
+                          variant="completed"
+                        />
+                      );
+                    });
+                })
                 .reverse()}
         </div>
       </div>

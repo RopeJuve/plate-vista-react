@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import NavBarCustomer from "../Components/Customer/NavBarCustomer";
 import CategoriesCustomer from "../Components/Customer/CategoriesCustomer";
 import MenuItemsList from "../Components/Customer/MenuItemsList";
@@ -19,16 +19,21 @@ const Customer = () => {
   const [selectedCategory, setSelectedCategory] = useState("beer");
   const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const { themeSettings, setThemeSettings, currentMode, currentColor } = useStateContext();
-  const location = useLocation();
+  const { themeSettings, setThemeSettings, currentMode, currentColor } =
+    useStateContext();
+  const { tableId } = useParams();
 
   useEffect(() => {
-    setTableNum(location.pathname.split("/")[2]);
+    if (tableId) {
+      setTableNum(tableId);
+    }
     const getItems = async () => {
       try {
         setIsLoading(true);
         const { data } = await fetchData(
-          `${import.meta.env.VITE_VERCEL_API_URL}/menu-items?category=${selectedCategory}`
+          `${
+            import.meta.env.VITE_VERCEL_API_URL
+          }/menu-items?category=${selectedCategory}`
         );
         setItems(data);
         setIsLoading(false);
