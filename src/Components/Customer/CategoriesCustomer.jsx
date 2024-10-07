@@ -31,7 +31,7 @@ const CategoriesCustomer = ({ selectedCategory, setSelectedCategory }) => {
         isLoading ? (
           <SkeletonList itemsCount={8} isLoading={isLoading} variant="category" />
         ) : (
-          <div className="px-6 mt-6 w-full overflow-x-auto">
+          <div className="px-6 mt-6 w-full pb-16 overflow-x-auto">
             <div className="grid grid-flow-row auto-rows-max grid-cols-card gap-3 p-2 rounded-md shadow-md">
               {categories.map((category, i) => (
                 <CategoryCustomer
