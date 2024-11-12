@@ -33,7 +33,7 @@ const Sidebar = () => {
               onClick={handleCloseSidebar}
               className="items-center gap-3 ml-3 mt-4 flex text-xl font-extrabold tracking-tight dark:text-white text-slate-900"
             >
-              <img  src={currentMode === "Dark" ? mainlogoLight : mainlogoDark} style={{ width: '200px', height: '100px' }} />
+              <img  src={currentMode === "Dark" ? mainlogoLight : mainlogoDark} style={{ width: '160px', height: '40px' }} />
             </Link>
             <TooltipComponent content="Close Menu" position="BottomCenter">
               <button
@@ -62,7 +62,7 @@ const Sidebar = () => {
                     }
                   >
                     <link.icon />
-                    <span>{link.name}</span>
+                    <span>{link.label}</span>
                   </NavLink>
                 ))}
               </div>

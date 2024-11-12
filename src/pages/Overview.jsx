@@ -1,7 +1,7 @@
 import React from "react";
 import { DropDownListComponent } from "@syncfusion/ej2-react-dropdowns";
 import { dropdownData } from "../data/data";
-import LineChart from "../Components/AdminComponents/Charts/LineChart";
+import LineChart from "../components/AdminComponents/Charts/LineChart";
 import { bestEmployees, earningData } from "../data/data";
 import { useStateContext } from "../contexts/ContextProvider";
 import { LinePrimaryXAxis, LinePrimaryYAxis } from "../data/data";

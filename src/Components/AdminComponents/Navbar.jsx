@@ -5,9 +5,10 @@ import { MdKeyboardArrowDown } from "react-icons/md";
 import { TooltipComponent } from "@syncfusion/ej2-react-popups";
 
 import avatar from "../../data/avatar.jpg";
+import mainlogoLight from "../../data/mainlogoLight.svg";
+import mainlogoDark from "../../data/mainlogoDark.svg";
 
 import { Notification, UserProfile, Searchbar } from ".";
-
 import { useStateContext } from "../../contexts/ContextProvider";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -38,6 +39,7 @@ const Navbar = () => {
     screenSize,
     setScreenSize,
     currentColor,
+    currentMode,
   } = useStateContext();
 
   const { user } = useAuth();
@@ -62,12 +64,25 @@ const Navbar = () => {
 
   return (
     <div className="flex justify-between p-2 md:mx-6 relative">
-      <NavButton
-        title="Menu"
-        customFunc={() => setActiveMenu((prevActiveMenu) => !prevActiveMenu)}
-        color={currentColor}
-        icon={<AiOutlineMenu />}
-      />
+      <div className="flex items-center gap-4">
+        {/* Always show AiOutlineMenu icon */}
+        <NavButton
+          title="Menu"
+          customFunc={() => setActiveMenu((prevActiveMenu) => !prevActiveMenu)}
+          color={currentColor}
+          icon={<AiOutlineMenu style={{ fontSize: "2rem" }} />}
+        />
+
+        {/* Only show logo when sidebar is not active */}
+        {!activeMenu && (
+          <img
+            src={currentMode === "Dark" ? mainlogoLight : mainlogoDark}
+            alt="Logo"
+            style={{ width: "150px", height: "50px" }} // Adjust size as needed
+            className="cursor-pointer" // Add cursor pointer for consistent UX
+          />
+        )}
+      </div>
 
       <div className="flex">
         <NavButton
