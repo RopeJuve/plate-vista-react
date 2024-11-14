@@ -65,7 +65,6 @@ const Navbar = () => {
   return (
     <div className="flex justify-between p-2 md:mx-6 relative">
       <div className="flex items-center gap-4">
-        {/* Always show AiOutlineMenu icon */}
         <NavButton
           title="Menu"
           customFunc={() => setActiveMenu((prevActiveMenu) => !prevActiveMenu)}
@@ -73,13 +72,12 @@ const Navbar = () => {
           icon={<AiOutlineMenu style={{ fontSize: "2rem" }} />}
         />
 
-        {/* Only show logo when sidebar is not active */}
         {!activeMenu && (
           <img
             src={currentMode === "Dark" ? mainlogoLight : mainlogoDark}
             alt="Logo"
-            style={{ width: "150px", height: "50px" }} // Adjust size as needed
-            className="cursor-pointer" // Add cursor pointer for consistent UX
+            style={{ width: "150px", height: "50px" }}
+            className="cursor-pointer"
           />
         )}
       </div>
