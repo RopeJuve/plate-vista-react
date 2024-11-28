@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useParams } from "react-router-dom";
 import Table1 from "../../../data/QrCodes/table-1-qr-code.png";
 import Table2 from "../../../data/QrCodes/table-2-qr-code.png";
 import Table3 from "../../../data/QrCodes/table-3-qr-code.png";
@@ -7,8 +7,10 @@ import Table4 from "../../../data/QrCodes/table-4-qr-code.png";
 import Table5 from "../../../data/QrCodes/table-5-qr-code.png";
 import axios from "axios";
 import { useAuth } from "../../../contexts/AuthContext";
+import { plateVistaConfig } from "../../../Config/plateVista.config";
 
 const Login = () => {
+  const { restaurantId } = useParams();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
@@ -19,24 +21,29 @@ const Login = () => {
 
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_VERCEL_API_URL}/auth/employee/login`,
+        `${plateVistaConfig.VITE_VERCEL_API_URL}/auth/employee/login`,
         {
           employee: username,
           password: password,
+        },
+        {
+          headers: {
+            "x-restaurant-id": restaurantId,
+          },
         }
       );
 
       if (response.status === 200) {
         const authHeader = response.headers.get("authorization");
         const token = authHeader.split(" ")[1];
-        login(token, response.data.position);
+        login(token, response.data.position, restaurantId);
         if (response.data.position === "admin") {
-          navigate("/admin");
+          navigate(`/admin`);
         } else if (
           response.data.position === "bar" ||
           response.data.position === "kitchen"
         ) {
-          navigate("/bar");
+          navigate(`/bar`);
         }
       }
     } catch (error) {

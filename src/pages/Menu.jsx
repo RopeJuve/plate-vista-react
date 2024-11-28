@@ -3,6 +3,7 @@ import { DialogComponent } from "@syncfusion/ej2-react-popups";
 import {
   TextBoxComponent,
   TextAreaComponent,
+  UploaderComponent,
 } from "@syncfusion/ej2-react-inputs";
 import { DropDownListComponent } from "@syncfusion/ej2-react-dropdowns";
 import {
@@ -13,10 +14,10 @@ import {
   fetchCategories,
 } from "../services/menuDataFetch";
 import { useStateContext } from "../contexts/ContextProvider";
-
+import { useAuth } from "../contexts/AuthContext";
 const Menu = () => {
   const { currentColor } = useStateContext();
-
+  const { restaurantId } = useAuth();
   const [dialogVisible, setDialogVisible] = useState(false);
   const [isAddingNewItem, setIsAddingNewItem] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -39,11 +40,11 @@ const Menu = () => {
   const [selectedCategory, setSelectedCategory] = useState("");
 
   useEffect(() => {
-    fetchMenuItems()
+    fetchMenuItems(restaurantId)
       .then((response) => setMenuItems(response.data))
       .catch((error) => console.error("Error fetching menu items:", error));
 
-    fetchCategories()
+    fetchCategories(restaurantId)
       .then((response) => setCategories(response.data))
       .catch((error) => console.error("Error fetching categories:", error));
   }, []);
@@ -67,17 +68,45 @@ const Menu = () => {
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setEditInfo({ ...editInfo, [name]: value });
+    const { name, value, files } = e.target;
+    console.log("name", name);
+    console.log("value", value);
+    console.log("files", files);
+    if (name === "image" && files && files[0]) {
+      setEditInfo((prev) => ({
+        ...prev,
+        image: files[0],
+      }));
+    } else {
+      setEditInfo((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   const handleSave = async () => {
     if (selectedItem) {
+      console.log("selectedItem", selectedItem);
+      console.log("editInfo", editInfo);
       try {
-        const response = await updateMenuItem(selectedItem._id, editInfo);
+        const formData = new FormData();
+
+        Object.keys(editInfo).forEach((key) => {
+          if (key === "image" && !editInfo.image) return;
+          formData.append(key, editInfo[key]);
+        });
+        console.log("formData", formData);
+        const response = await updateMenuItem(
+          selectedItem._id,
+          formData,
+          restaurantId
+        );
+
         const updatedMenuItems = menuItems.map((item) =>
           item._id === selectedItem._id ? response.data : item
         );
+
         setMenuItems(updatedMenuItems);
         setEditInfo({
           title: "",
@@ -100,7 +129,7 @@ const Menu = () => {
 
   const handleAddNewItem = async () => {
     try {
-      const response = await addMenuItem(newItemInfo);
+      const response = await addMenuItem(newItemInfo, restaurantId);
       setMenuItems([...menuItems, response.data]);
       setNewItemInfo({
         title: "",
@@ -117,7 +146,7 @@ const Menu = () => {
 
   const handleDelete = async (itemToDelete) => {
     try {
-      await deleteMenuItem(itemToDelete._id);
+      await deleteMenuItem(itemToDelete._id, restaurantId);
       const updatedMenuItems = menuItems.filter(
         (item) => item._id !== itemToDelete._id
       );
@@ -288,6 +317,35 @@ const Menu = () => {
                   borderRadius: "4px",
                   border: "1px solid #ccc",
                 }}
+              />
+            </div>
+            <div style={{ marginBottom: "10px" }}>
+              <UploaderComponent
+                name="image"
+                success={(args) => {
+                  if (args.file) {
+                    handleChange({
+                      target: {
+                        name: "image",
+                        files: [args.file],
+                      },
+                    });
+                  }
+                }}
+                selected={(args) => {
+                  if (args.filesData && args.filesData.length > 0) {
+                    handleChange({
+                      target: {
+                        name: "image",
+                        files: [args.filesData[0].rawFile],
+                      },
+                    });
+                  }
+                }}
+                allowedExtensions=".jpg,.jpeg,.png,.webp"
+                maxFileSize={5000000} // 5MB
+                multiple={false}
+                showFileList={true}
               />
             </div>
             <div style={{ marginBottom: "10px" }}>

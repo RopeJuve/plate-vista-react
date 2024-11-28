@@ -18,11 +18,12 @@ export const postData = async (url, data) => {
   }
 };
 
-export const fetchUserData = async (url, token, logout) => {
+export const fetchUserData = async (url, token, logout, restaurantId) => {
   try {
     const response = await axios.get(url, {
       headers: {
         Authorization: `Bearer ${token}`,
+        "x-restaurant-id": restaurantId,
       },
     });
     return response;

@@ -3,9 +3,11 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { fetchUserData } from "../services/fetchData";
 import Loading from "./Loading";
+import { plateVistaConfig } from "../Config/plateVista.config";
+
 
 const PrivateRoute = ({ allowedRoles }) => {
-  const { authToken, logout, user } = useAuth();
+  const { authToken, logout, user, restaurantId } = useAuth();
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null);
   const role = user;
@@ -16,9 +18,10 @@ const PrivateRoute = ({ allowedRoles }) => {
       setLoading(true);
       try {
         const { data } = await fetchUserData(
-          `${import.meta.env.VITE_VERCEL_API_URL}/auth/user`,
+          `${plateVistaConfig.VITE_VERCEL_API_URL}/auth/user`,
           authToken,
-          logout
+          logout,
+          restaurantId
         );
         console.log(data.user);
         setUserData(data);

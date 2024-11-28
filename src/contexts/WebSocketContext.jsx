@@ -1,5 +1,6 @@
 import { createContext, useContext, useState } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
+import { plateVistaConfig } from "../Config/plateVista.config";
 
 const WebSocketContext = createContext();
 
