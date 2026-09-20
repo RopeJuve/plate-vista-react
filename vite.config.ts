@@ -5,9 +5,18 @@ import path from "path";
 export default defineConfig({
   plugins: [react()],
   resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-    },
+    // More specific aliases must come first. Linux/Netlify is case-sensitive:
+    // `@/components` lives on disk as `src/Components`.
+    alias: [
+      {
+        find: "@/components",
+        replacement: path.resolve(__dirname, "./src/Components"),
+      },
+      {
+        find: "@",
+        replacement: path.resolve(__dirname, "./src"),
+      },
+    ],
     extensions: [".mjs", ".mts", ".ts", ".tsx", ".js", ".jsx", ".json"],
   },
   build: {
