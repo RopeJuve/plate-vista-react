@@ -1,10 +1,9 @@
 import "./index.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import AdminDashboard from "./Components/AdminComponents/AdminDashboard";
 import { PrivateRoute, BarPage, Customer, BarPageTableView } from "./pages";
 import Login from "./Components/AdminComponents/Auth/Login";
 import { OrderProvider } from "./contexts/OrderContext";
-import Register from "./Components/AdminComponents/Auth/Register";
 import { WebSocketProvider } from "./contexts/WebSocketContext";
 
 function App() {
@@ -17,8 +16,7 @@ function App() {
             <Route path="/" element={<Login />} />
             <Route path="/:restaurantId" element={<Login />} />
 
-            {/* Register Route */}
-            <Route path="/register" element={<Register />} />
+            <Route path="/register" element={<Navigate to="/" replace />} />
             {/* Admin Routes */}
             <Route
               path="/admin/*"

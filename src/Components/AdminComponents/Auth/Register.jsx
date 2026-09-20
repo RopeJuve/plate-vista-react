@@ -8,6 +8,7 @@ const Register = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [position, setPosition] = useState('bar');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   // useEffect(() => {
@@ -21,6 +22,7 @@ const Register = () => {
     e.preventDefault();
   
     if (password) {
+      setError('');
       const employeeData = {
         employee: username,
         email: email,
@@ -29,14 +31,11 @@ const Register = () => {
       };
   
       try {
-        console.log(employeeData);
         const response = await api.post('/employee', employeeData);
-        console.log('Registration successful:', response.data); 
-        navigate('/');
-         
+        navigate('/admin/Employees');
+        return response;
       } catch (error) {
-        console.error('Registration failed:', error);
-        alert('Registration failed. Please try again.');
+        setError(error.response?.data?.message || 'Registration failed. Please try again.');
       }
     }
   };
@@ -53,7 +52,12 @@ const Register = () => {
         onSubmit={handleRegister} 
         className="bg-white dark:bg-secondary-dark-bg p-8 rounded-2xl shadow-md w-96"
       >
-        <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100 text-center">Register</h2>
+        <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100 text-center">Add Staff</h2>
+        {error && (
+          <p className="mb-4 rounded-md bg-red-100 px-3 py-2 text-center text-sm text-red-700" role="alert">
+            {error}
+          </p>
+        )}
 
         <div className="mb-6">
           <label className="block mb-2 text-gray-600 dark:text-gray-300">Username</label>
@@ -108,7 +112,7 @@ const Register = () => {
         </button>
         
         <p className="mt-6 text-gray-600 dark:text-gray-300 text-center">
-          Already have an account? <Link to="/" className="text-dark-yellow-bg hover:underline">Login</Link>
+          <Link to="/admin/Employees" className="text-dark-yellow-bg hover:underline">Back to employees</Link>
         </p>
       </form>
     </div>
