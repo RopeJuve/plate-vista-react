@@ -8,6 +8,7 @@ import { LinePrimaryXAxis, LinePrimaryYAxis } from "../data/data";
 import { useFetchOrdersForCharts } from "../utils/fetchOrdersForCharts";
 import { useNavigate } from "react-router-dom";
 import { fetchOrders } from "../services/orderDataFetch";
+import { notify } from "../utils/notify";
 
 const DropDown = ({ currentMode }) => (
   <div className="w-28 border-1 border-color px-2 py-1 rounded-md">
@@ -36,6 +37,7 @@ const Overview = () => {
       })
       .catch((error) => {
         console.error("Error fetching order total:", error);
+        notify(error.response?.data?.message || "Could not load order total");
       });
   }, []);
 
