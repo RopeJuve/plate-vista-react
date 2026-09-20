@@ -4,6 +4,7 @@ import { BsCheck } from "react-icons/bs";
 import { TooltipComponent } from "@syncfusion/ej2-react-popups";
 import { themeColors } from "../../data/data";
 import { useStateContext } from "../../contexts/ContextProvider";
+import "../../utils/registerSyncfusion";
 
 const ThemeSettings = () => {
   const { setColor, setMode, currentMode, currentColor, setThemeSettings } = useStateContext();

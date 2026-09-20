@@ -1,9 +1,9 @@
 import React from "react";
-
 import { Routes, Route } from "react-router-dom";
 import { FiSettings } from "react-icons/fi";
 import { TooltipComponent } from "@syncfusion/ej2-react-popups";
 import Register from "./Auth/Register";
+import "../../utils/registerSyncfusion";
 
 import {
   Navbar,

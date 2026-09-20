@@ -7,12 +7,6 @@ import { ContextProvider } from "./contexts/ContextProvider";
 import { AuthProvider } from "./contexts/AuthContext";
 import ToastProvider from "./Components/ToastProvider";
 
-import { registerLicense } from "@syncfusion/ej2-base";
-
-registerLicense(
-  "Ngo9BigBOggjHTQxAR8/V1NCaF5cXmZCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWXdfc3RdQ2dcUUB1V0Q="
-);
-
 const root = createRoot(document.getElementById("root"));
 
 root.render(

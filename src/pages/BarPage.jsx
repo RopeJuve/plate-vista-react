@@ -1,4 +1,5 @@
 import { useState } from "react";
+import "../utils/registerSyncfusion";
 import BarHeader from "../Components/BarComponents/BarHeader";
 import OrderDetails from "../Components/BarComponents/OrderDetails";
 import Categories from "../Components/BarComponents/Categories";

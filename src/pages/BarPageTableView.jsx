@@ -1,4 +1,5 @@
 import { useState } from "react";
+import "../utils/registerSyncfusion";
 import BarPageNav from "../Components/BarComponents/BarPageNav";
 import TableView from "../Components/BarComponents/TableView";
 import OrdersView from "../Components/BarComponents/OrdersView";

@@ -1,17 +1,17 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import NavBarCustomer from "../Components/Customer/NavBarCustomer";
 import CategoriesCustomer from "../Components/Customer/CategoriesCustomer";
 import MenuItemsList from "../Components/Customer/MenuItemsList";
-import { Footer } from "../Components/AdminComponents";
+import Footer from "../Components/AdminComponents/Footer";
 import api from "../services/api";
 import SkeletonList from "../Components/Customer/SkeletonList";
 import { CartProvider } from "../contexts/CartContext";
 import Cart from "../Components/Customer/Cart";
 import { useWebSocketContext } from "../contexts/WebSocketContext";
 import { useStateContext } from "../contexts/ContextProvider";
-import { TooltipComponent } from "@syncfusion/ej2-react-popups";
 import { FiSettings } from "react-icons/fi";
-import ThemeSettings from "../Components/AdminComponents/ThemeSettings";
+
+const ThemeSettings = lazy(() => import("../Components/AdminComponents/ThemeSettings"));
 
 const Customer = () => {
   const { tableNum, readyState, tableError } = useWebSocketContext();
@@ -53,19 +53,23 @@ const Customer = () => {
       <div className={currentMode === "Dark" ? "dark" : ""}>
         <div className="bg-slate-50 dark:bg-main-dark-bg flex flex-col h-screen relative">
           <div className="fixed right-2 bottom-20" style={{ zIndex: 1000 }}>
-            <TooltipComponent content="Settings" position="Top">
-              <button
-                type="button"
-                className="text-3xl p-3 hover:drop-shadow-xl hover:bg-light-gray text-white"
-                onClick={() => setThemeSettings(true)}
-                style={{ background: currentColor, borderRadius: "50%" }}
-              >
-                <FiSettings />
-              </button>
-            </TooltipComponent>
+            <button
+              type="button"
+              className="text-3xl p-3 hover:drop-shadow-xl hover:bg-light-gray text-white"
+              onClick={() => setThemeSettings(true)}
+              style={{ background: currentColor, borderRadius: "50%" }}
+              aria-label="Settings"
+              title="Settings"
+            >
+              <FiSettings />
+            </button>
           </div>
 
-          {themeSettings && <ThemeSettings />}
+          {themeSettings && (
+            <Suspense fallback={null}>
+              <ThemeSettings />
+            </Suspense>
+          )}
 
           <NavBarCustomer tableNum={tableNum} connectionStatus={readyState} />
           {/* Commented this out below because I get the categories in the Customer Page in the UItwice otherwise */}
