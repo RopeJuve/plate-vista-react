@@ -89,7 +89,6 @@ const OrderDetails = () => {
             product: item._id,
             quantity: item.quantity,
           })),
-          orderStatus: ORDER_STATUS.PROCESSING,
         },
       }),
       false

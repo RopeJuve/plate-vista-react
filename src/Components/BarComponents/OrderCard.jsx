@@ -7,7 +7,7 @@ import { useWebSocketContext } from "../../contexts/WebSocketContext";
 import { ORDER_STATUS, ORDER_STATUS_LABEL } from "../../constants/orderStatus";
 
 const OrderCard = ({ item, table, variant }) => {
-  const { sendMessage } = useWebSocketContext();
+  const { sendMessage, queueDeletedOrder } = useWebSocketContext();
   const orderStatus = variant != "accepted" ? ORDER_STATUS.PROCESSING : ORDER_STATUS.COMPLETE;
   const handleAcceptOrder = (orderId, status) => {
     sendMessage(
@@ -18,7 +18,23 @@ const OrderCard = ({ item, table, variant }) => {
           status,
           tableNum: table,
         },
-      })
+      }),
+      false
+    );
+  };
+
+  const handleRejectOrder = (orderId) => {
+    const confirmed = window.confirm("Delete this order?");
+    if (!confirmed) {
+      return;
+    }
+    queueDeletedOrder(orderId);
+    sendMessage(
+      JSON.stringify({
+        type: "deleteOrder",
+        payload: { orderId },
+      }),
+      false
     );
   };
   return (
@@ -55,7 +71,12 @@ const OrderCard = ({ item, table, variant }) => {
           </button>
         )}
         {variant !== "accepted" && variant !== "completed" && (
-          <button className=" text-red-400">
+          <button
+            type="button"
+            className=" text-red-400"
+            aria-label="Delete order"
+            onClick={() => handleRejectOrder(item._id)}
+          >
             <IoCloseCircle className="inline-block" />
           </button>
         )}
