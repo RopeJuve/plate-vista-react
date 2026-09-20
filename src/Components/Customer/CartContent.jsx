@@ -57,9 +57,9 @@ const CartContent = ({ variant, orders, handleSendMessages, pending, statusMessa
               <div key={order._id} className="px-1 mb-1 mr-1 rounded-lg border">
                 {order.menuItems?.map((menuItem) => (
                   <div key={menuItem._id} className="flex gap-4 items-center border-b border-gray-200 py-2">
-                    <p className="w-2/3 font-semibold">{menuItem.product?.title}</p>
+                    <p className="w-2/3 font-semibold">{menuItem.product?.title ?? "Unavailable item"}</p>
                     <p className="flex-grow">{menuItem.quantity}</p>
-                    <p className="font-semibold">{(menuItem.product?.price * menuItem.quantity).toFixed(2)}€</p>
+                    <p className="font-semibold">{((menuItem.product?.price || 0) * (menuItem.quantity || 0)).toFixed(2)}€</p>
                   </div>
                 ))}
                 {order?.orderStatus === ORDER_STATUS.PENDING && (

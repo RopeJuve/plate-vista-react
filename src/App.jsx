@@ -5,12 +5,14 @@ import { PrivateRoute, BarPage, Customer, BarPageTableView } from "./pages";
 import Login from "./Components/AdminComponents/Auth/Login";
 import { OrderProvider } from "./contexts/OrderContext";
 import { WebSocketProvider } from "./contexts/WebSocketContext";
+import ErrorBoundary from "./Components/ErrorBoundary";
 
 function App() {
   return (
     <div>
       <OrderProvider>
         <BrowserRouter>
+          <ErrorBoundary>
           <WebSocketProvider>
             <Routes>
             <Route path="/" element={<Login />} />
@@ -38,6 +40,7 @@ function App() {
             <Route path="/table/:tableId" element={<Customer />} />
             </Routes>
           </WebSocketProvider>
+          </ErrorBoundary>
         </BrowserRouter>
       </OrderProvider>
     </div>

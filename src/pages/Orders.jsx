@@ -10,10 +10,12 @@ const PAGE_SIZE = 20;
 
 const transformOrders = (orders = []) =>
   orders.map((order) => {
-    const menuItemsDetails = (order.menuItems || []).map((item) => ({
-      title: item.product?.title,
-      quantity: item?.quantity,
-    }));
+    const menuItemsDetails = (order.menuItems || [])
+      .filter((item) => item.product)
+      .map((item) => ({
+        title: item.product?.title ?? "Unavailable item",
+        quantity: item?.quantity,
+      }));
 
     const totalQuantity = menuItemsDetails.reduce(
       (acc, item) => acc + (item.quantity || 0),
@@ -63,7 +65,11 @@ const Orders = () => {
 
   
   const menuItemsTemplate = (props) => {
-    const menuItems = props.menuItems;
+    const menuItems = props.menuItems || [];
+
+    if (menuItems.length === 0) {
+      return <span>Unavailable item</span>;
+    }
 
     if (menuItems.length > 1) {
       
@@ -81,7 +87,7 @@ const Orders = () => {
 
       return (
         <span>
-          {menuItems[0].title}
+          {menuItems[0]?.title ?? "Unavailable item"}
         </span>
       );
     }

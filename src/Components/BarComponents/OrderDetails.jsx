@@ -111,7 +111,7 @@ const OrderDetails = () => {
     }));
   };
 
-  const total = orders?.reduce((acc, item) => acc + item.totalPrice, 0);
+  const total = orders?.reduce((acc, item) => acc + (item.totalPrice || 0), 0);
 
   return (
     <div className="col-span-2 bg-secondary-dark-bg rounded-lg flex flex-col justify-between">
@@ -160,13 +160,11 @@ const OrderDetails = () => {
                         className="flex gap-4 items-center py-2"
                       >
                         <p className="w-2/3 font-semibold">
-                          {menuItem.product.title}
+                          {menuItem.product?.title ?? "Unavailable item"}
                         </p>
                         <p className="flex-grow">{menuItem.quantity}</p>
                         <p className="font-semibold">
-                          {(menuItem.product.price * menuItem.quantity).toFixed(
-                            2
-                          )}
+                          {((menuItem.product?.price || 0) * menuItem.quantity).toFixed(2)}
                         </p>
                       </div>
                     ))}

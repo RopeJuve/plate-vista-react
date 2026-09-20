@@ -18,7 +18,7 @@ export const useFetchOrdersForCharts = () => {
 
        
         orders.forEach(order => {
-          order.menuItems.forEach(item => {
+          (order.menuItems || []).forEach(item => {
             const category = item?.product?.category?.toLowerCase() || '';
             const date = new Date(order.createdAt);
 
