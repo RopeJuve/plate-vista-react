@@ -1,4 +1,5 @@
-import { createContext, useCallback, useContext, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import useWebSocket from "react-use-websocket";
 import { plateVistaConfig } from "../Config/plateVista.config";
 import { useAuth } from "./AuthContext";
@@ -19,10 +20,22 @@ const buildSocketUrl = (token, tableNum) => {
 
 export const WebSocketProvider = ({ children }) => {
   const { authToken } = useAuth();
+  const location = useLocation();
   const [messages, setMessages] = useState([]);
-  const [tableNum, setTableNum] = useState("");
   const [tableError, setTableError] = useState(null);
   const employeeReconnectFailures = useRef(0);
+
+  const tableNum = useMemo(() => {
+    const barTableMatch = location.pathname.match(/^\/bar\/table\/([^/]+)/);
+    if (barTableMatch) {
+      return barTableMatch[1];
+    }
+    const guestTableMatch = location.pathname.match(/^\/table\/([^/]+)/);
+    if (guestTableMatch) {
+      return guestTableMatch[1];
+    }
+    return "";
+  }, [location.pathname]);
 
   const getSocketUrl = useCallback(async () => {
     if (authToken) {
@@ -90,7 +103,6 @@ export const WebSocketProvider = ({ children }) => {
         readyState,
         lastMessage,
         tableNum,
-        setTableNum,
         tableError,
       }}
     >

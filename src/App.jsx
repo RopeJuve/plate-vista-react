@@ -5,13 +5,15 @@ import { PrivateRoute, BarPage, Customer, BarPageTableView } from "./pages";
 import Login from "./Components/AdminComponents/Auth/Login";
 import { OrderProvider } from "./contexts/OrderContext";
 import Register from "./Components/AdminComponents/Auth/Register";
+import { WebSocketProvider } from "./contexts/WebSocketContext";
 
 function App() {
   return (
     <div>
       <OrderProvider>
         <BrowserRouter>
-          <Routes>
+          <WebSocketProvider>
+            <Routes>
             <Route path="/" element={<Login />} />
             <Route path="/:restaurantId" element={<Login />} />
 
@@ -36,7 +38,8 @@ function App() {
               {/* Add nested routes here if necessary */}
             </Route>
             <Route path="/table/:tableId" element={<Customer />} />
-          </Routes>
+            </Routes>
+          </WebSocketProvider>
         </BrowserRouter>
       </OrderProvider>
     </div>

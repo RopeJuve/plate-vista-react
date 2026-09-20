@@ -14,15 +14,11 @@ const OrderDetails = () => {
     lastMessage,
     tableNum,
     messages,
-    setTableNum,
   } = useWebSocketContext();
   const { menuItems, clearOrder } = useOrder();
   const [orders, setOrders] = useState([]);
   const [visibleOrders, setVisibleOrders] = useState({});
   useEffect(() => {
-    if (tableId) {
-      setTableNum(tableId);
-    }
     if (lastMessage) {
       try {
         const messageData = JSON.parse(lastMessage.data);

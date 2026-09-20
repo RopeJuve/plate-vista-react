@@ -4,7 +4,6 @@ import App from "./App";
 import "./index.css";
 import { CartProvider } from "./CartContext";
 import { ContextProvider } from "./contexts/ContextProvider";
-import { WebSocketProvider } from "./contexts/WebSocketContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import ToastProvider from "./Components/ToastProvider";
 
@@ -22,9 +21,7 @@ root.render(
       <CartProvider>
         <AuthProvider>
           <ToastProvider>
-            <WebSocketProvider>
-              <App />
-            </WebSocketProvider>
+            <App />
           </ToastProvider>
         </AuthProvider>
       </CartProvider>

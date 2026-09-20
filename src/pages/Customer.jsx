@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
 import NavBarCustomer from "../Components/Customer/NavBarCustomer";
 import CategoriesCustomer from "../Components/Customer/CategoriesCustomer";
 import MenuItemsList from "../Components/Customer/MenuItemsList";
@@ -15,18 +14,14 @@ import { FiSettings } from "react-icons/fi";
 import ThemeSettings from "../Components/AdminComponents/ThemeSettings";
 
 const Customer = () => {
-  const { tableNum, setTableNum, readyState, tableError } = useWebSocketContext();
+  const { tableNum, readyState, tableError } = useWebSocketContext();
   const [selectedCategory, setSelectedCategory] = useState("beer");
   const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const { themeSettings, setThemeSettings, currentMode, currentColor } =
     useStateContext();
-  const { tableId } = useParams();
 
   useEffect(() => {
-    if (tableId) {
-      setTableNum(Number(tableId));
-    }
     const getItems = async () => {
       try {
         setIsLoading(true);
