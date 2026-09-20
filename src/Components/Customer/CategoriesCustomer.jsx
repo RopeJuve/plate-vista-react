@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { fetchData } from "../../services/fetchData";
+import api from "../../services/api";
 import CategoryCustomer from "./CategoryCustomer";
 import SkeletonList from "./SkeletonList";
 import { useStateContext } from "../../contexts/ContextProvider";
@@ -12,9 +12,7 @@ const CategoriesCustomer = ({ selectedCategory, setSelectedCategory }) => {
     const getCategories = async () => {
       try {
         setIsLoading(true);
-        const { data } = await fetchData(
-          `${import.meta.env.VITE_VERCEL_API_URL}/menu-items/category`
-        );
+        const { data } = await api.get("/menu-items/category");
         setCategories(data);
         setIsLoading(false);
       } catch (error) {

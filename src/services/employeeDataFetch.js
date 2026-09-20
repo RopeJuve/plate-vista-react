@@ -1,7 +1,3 @@
-import axios from 'axios';
+import api from "./api";
 
-const apiUrl = import.meta.env.VITE_VERCEL_API_URL;
-
-export const fetchEmployees = () => {
-  return axios.get(`${apiUrl}/employee`);
-};
+export const fetchEmployees = () => api.get("/employee");

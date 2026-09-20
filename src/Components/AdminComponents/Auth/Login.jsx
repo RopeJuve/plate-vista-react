@@ -5,37 +5,48 @@ import Table2 from "../../../data/QrCodes/table-2-qr-code.png";
 import Table3 from "../../../data/QrCodes/table-3-qr-code.png";
 import Table4 from "../../../data/QrCodes/table-4-qr-code.png";
 import Table5 from "../../../data/QrCodes/table-5-qr-code.png";
-import axios from "axios";
 import { useAuth } from "../../../contexts/AuthContext";
-import { plateVistaConfig } from "../../../Config/plateVista.config";
+import api from "../../../services/api";
+import { consumeSessionMessage } from "../../../utils/notify";
 
 const Login = () => {
   const { restaurantId } = useParams();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [authMessage] = useState(() => consumeSessionMessage());
   const navigate = useNavigate();
   const { login } = useAuth();
+
+  const getAuthTokenFromHeaders = (headers) => {
+    const authHeader =
+      headers.authorization ||
+      headers.Authorization ||
+      (typeof headers.get === "function" ? headers.get("authorization") : "");
+    if (!authHeader) {
+      return null;
+    }
+    return authHeader.startsWith("Bearer ")
+      ? authHeader.slice(7)
+      : authHeader.split(" ")[1];
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
 
     try {
-      const response = await axios.post(
-        `${plateVistaConfig.VITE_VERCEL_API_URL}/auth/employee/login`,
+      const response = await api.post(
+        "/auth/employee/login",
         {
           employee: username,
           password: password,
         },
-        {
-          headers: {
-            "x-restaurant-id": restaurantId,
-          },
-        }
+        restaurantId
+          ? { headers: { "x-restaurant-id": restaurantId } }
+          : undefined
       );
 
       if (response.status === 200) {
-        const authHeader = response.headers.get("authorization");
-        const token = authHeader.split(" ")[1];
+        const token = getAuthTokenFromHeaders(response.headers);
         login(token, response.data.position, restaurantId);
         if (response.data.position === "admin") {
           navigate(`/admin`);
@@ -63,6 +74,11 @@ const Login = () => {
         <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100 text-center">
           Login
         </h2>
+        {authMessage && (
+          <p className="mb-4 rounded-md bg-red-100 px-3 py-2 text-center text-sm text-red-700" role="alert">
+            {authMessage}
+          </p>
+        )}
 
         <div className="mb-6">
           <label className="block mb-2 text-gray-600 dark:text-gray-300">

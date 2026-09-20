@@ -1,34 +1,7 @@
-import axios from "axios";
+import api from "./api";
 
-export const fetchData = async (url) => {
-  try {
-    const response = await axios.get(url);
-    return response;
-  } catch (err) {
-    console.log(err);
-  }
-};
+export const fetchData = (url, config) => api.get(url, config);
 
-export const postData = async (url, data) => {
-  try {
-    const response = await axios.post(url, data);
-    return response;
-  } catch (err) {
-    console.log(err);
-  }
-};
+export const postData = (url, data, config) => api.post(url, data, config);
 
-export const fetchUserData = async (url, token, logout, restaurantId) => {
-  try {
-    const response = await axios.get(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "x-restaurant-id": restaurantId,
-      },
-    });
-    return response;
-  } catch (err) {
-    console.log(err);
-    logout();
-  }
-};
+export const fetchUserData = (url, config) => api.get(url, config);

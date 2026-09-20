@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchData } from "../../services/fetchData";
+import api from "../../services/api";
 import CategoryItem from "./CategoryItem";
 
 const Categories = ({ setCategory }) => {
@@ -8,9 +8,7 @@ const Categories = ({ setCategory }) => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const { data } = await fetchData(
-          `${import.meta.env.VITE_VERCEL_API_URL}/menu-items/category`
-        );
+        const { data } = await api.get("/menu-items/category");
         setCategories(data);
       } catch (error) {
         console.log("Error fetching categories", error);

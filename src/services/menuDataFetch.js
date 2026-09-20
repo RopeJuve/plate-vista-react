@@ -1,46 +1,36 @@
-import axios from 'axios';
-import { plateVistaConfig } from '../Config/plateVista.config';
+import api from "./api";
 
-const apiUrl = plateVistaConfig.VITE_VERCEL_API_URL;
+const restaurantHeaders = (restaurantId) =>
+  restaurantId ? { "x-restaurant-id": restaurantId } : {};
 
-export const fetchMenuItems = (restaurantId) => {
-  return axios.get(`${apiUrl}/menu-items`,{
-    headers:{
-      "x-restaurant-id": restaurantId,
-    },
+export const fetchMenuItems = (restaurantId, params) =>
+  api.get("/menu-items", {
+    params,
+    headers: restaurantHeaders(restaurantId),
   });
-};
 
-export const updateMenuItem = (id, item, restaurantId) => {
-  return axios.put(`${apiUrl}/menu-items/${id}`, item, {
-    headers:{
-      "x-restaurant-id": restaurantId,
+export const updateMenuItem = (id, item, restaurantId) =>
+  api.put(`/menu-items/${id}`, item, {
+    headers: {
+      ...restaurantHeaders(restaurantId),
       "Content-Type": "multipart/form-data",
     },
   });
-};
 
-export const addMenuItem = (item, restaurantId) => {
-  return axios.post(`${apiUrl}/menu-items`, item, {
-    headers:{
-      "x-restaurant-id": restaurantId,
+export const addMenuItem = (item, restaurantId) =>
+  api.post("/menu-items", item, {
+    headers: {
+      ...restaurantHeaders(restaurantId),
       "Content-Type": "multipart/form-data",
     },
   });
-};
 
-export const deleteMenuItem = (id, restaurantId) => {
-  return axios.delete(`${apiUrl}/menu-items/${id}`, {
-    headers:{
-      "x-restaurant-id": restaurantId,
-    },
+export const deleteMenuItem = (id, restaurantId) =>
+  api.delete(`/menu-items/${id}`, {
+    headers: restaurantHeaders(restaurantId),
   });
-};
 
-export const fetchCategories = (restaurantId) => {
-  return axios.get(`${apiUrl}/menu-items/category`,{
-    headers:{
-      "x-restaurant-id": restaurantId,
-    },
+export const fetchCategories = (restaurantId) =>
+  api.get("/menu-items/category", {
+    headers: restaurantHeaders(restaurantId),
   });
-};

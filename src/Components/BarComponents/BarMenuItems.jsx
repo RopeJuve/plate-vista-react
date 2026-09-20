@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchData } from "../../services/fetchData";
+import api from "../../services/api";
 import BarMenuItem from "./BarMenuItem";
 
 const BarMenuItems = ({ category }) => {
@@ -7,11 +7,9 @@ const BarMenuItems = ({ category }) => {
   useEffect(() => {
     const fetchMenuItems = async () => {
       try {
-        const { data } = await fetchData(
-          `${
-            import.meta.env.VITE_VERCEL_API_URL
-          }/menu-items?category=${category}`
-        );
+        const { data } = await api.get("/menu-items", {
+          params: { category },
+        });
         setMenuItems(data);
       } catch (error) {
         console.log("Error fetching menu items", error);

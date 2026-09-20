@@ -5,7 +5,7 @@ import { BsSearch } from "react-icons/bs";
 import TableIcon from "./TableIcon";
 import mainlogoLight from "../../data/mainlogoLight.svg";
 import mainlogoDark from "../../data/mainlogoDark.svg";
-import { fetchData } from "../../services/fetchData";
+import api from "../../services/api";
 import MenuItemCard from "./MenuItemCard";
 
 const NavBarCustomer = ({ tableNum, connectionStatus }) => {
@@ -16,9 +16,7 @@ const NavBarCustomer = ({ tableNum, connectionStatus }) => {
   useEffect(() => {
     const getMeals = async () => {
       try {
-        const { data } = await fetchData(
-          `${import.meta.env.VITE_VERCEL_API_URL}/menu-items`
-        );
+        const { data } = await api.get("/menu-items");
         setMeals(data);
       } catch (error) {
         console.error(error);

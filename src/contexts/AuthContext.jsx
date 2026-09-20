@@ -1,4 +1,5 @@
 import { createContext, useReducer, useContext, useEffect } from "react";
+import { AUTH_EVENTS } from "../utils/notify";
 
 const AuthContext = createContext();
 
@@ -37,13 +38,25 @@ const AuthProvider = ({ children }) => {
     if (authToken && user) {
       localStorage.setItem("authToken", authToken);
       localStorage.setItem("user", user);
-      localStorage.setItem("restaurantId", restaurantId);
+      if (restaurantId) {
+        localStorage.setItem("restaurantId", restaurantId);
+      }
     } else {
       localStorage.removeItem("authToken");
       localStorage.removeItem("user");
       localStorage.removeItem("restaurantId");
     }
-  }, [authToken, restaurantId]);
+  }, [authToken, user, restaurantId]);
+
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      dispatch({ type: "LOGOUT" });
+    };
+    window.addEventListener(AUTH_EVENTS.LOGOUT, handleUnauthorized);
+    return () => {
+      window.removeEventListener(AUTH_EVENTS.LOGOUT, handleUnauthorized);
+    };
+  }, []);
 
   const login = (token, user, restaurantId) => {
     dispatch({ type: "LOGIN", payload: { token, user, restaurantId } });

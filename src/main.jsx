@@ -6,6 +6,7 @@ import { CartProvider } from "./CartContext";
 import { ContextProvider } from "./contexts/ContextProvider";
 import { WebSocketProvider } from "./contexts/WebSocketContext";
 import { AuthProvider } from "./contexts/AuthContext";
+import ToastProvider from "./Components/ToastProvider";
 
 import { registerLicense } from "@syncfusion/ej2-base";
 
@@ -20,9 +21,11 @@ root.render(
     <ContextProvider>
       <CartProvider>
         <AuthProvider>
-          <WebSocketProvider>
-            <App />
-          </WebSocketProvider>
+          <ToastProvider>
+            <WebSocketProvider>
+              <App />
+            </WebSocketProvider>
+          </ToastProvider>
         </AuthProvider>
       </CartProvider>
     </ContextProvider>

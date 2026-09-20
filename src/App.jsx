@@ -12,6 +12,7 @@ function App() {
       <OrderProvider>
         <BrowserRouter>
           <Routes>
+            <Route path="/" element={<Login />} />
             <Route path="/:restaurantId" element={<Login />} />
 
             {/* Register Route */}

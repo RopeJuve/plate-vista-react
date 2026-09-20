@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { DropDownListComponent } from '@syncfusion/ej2-react-dropdowns';
+import api from '../../../services/api';
 
 const Register = () => {
   const [username, setUsername] = useState('');
@@ -30,7 +30,7 @@ const Register = () => {
   
       try {
         console.log(employeeData);
-        const response = await axios.post(`${import.meta.env.VITE_VERCEL_API_URL}/employee`, employeeData);
+        const response = await api.post('/employee', employeeData);
         console.log('Registration successful:', response.data); 
         navigate('/');
          

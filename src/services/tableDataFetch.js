@@ -1,8 +1,3 @@
-import axios from 'axios';
-import { plateVistaConfig } from '../Config/plateVista.config';
+import api from "./api";
 
-const apiUrl = plateVistaConfig.VITE_VERCEL_API_URL;
-
-export const fetchTables = () => {
-  return axios.get(`${apiUrl}/table`);
-};
+export const fetchTables = () => api.get("/table");

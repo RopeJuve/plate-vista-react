@@ -1,29 +1,21 @@
 import { useNavigate, Outlet } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { fetchUserData } from "../services/fetchData";
+import api from "../services/api";
 import Loading from "./Loading";
-import { plateVistaConfig } from "../Config/plateVista.config";
-
 
 const PrivateRoute = ({ allowedRoles }) => {
-  const { authToken, logout, user, restaurantId } = useAuth();
+  const { authToken, logout, user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null);
   const role = user;
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchData = async () => {
+    const verifyUser = async () => {
       setLoading(true);
       try {
-        const { data } = await fetchUserData(
-          `${plateVistaConfig.VITE_VERCEL_API_URL}/auth/user`,
-          authToken,
-          logout,
-          restaurantId
-        );
-        console.log(data.user);
+        const { data } = await api.get("/auth/user");
         setUserData(data);
       } catch (err) {
         console.log(err);
@@ -34,7 +26,7 @@ const PrivateRoute = ({ allowedRoles }) => {
     if (authToken === null) {
       navigate("/", { replace: true });
     } else {
-      fetchData();
+      verifyUser();
       setLoading(false);
     }
   }, [authToken, role, logout, allowedRoles, navigate]);

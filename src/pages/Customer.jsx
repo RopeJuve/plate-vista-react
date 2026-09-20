@@ -4,7 +4,7 @@ import NavBarCustomer from "../Components/Customer/NavBarCustomer";
 import CategoriesCustomer from "../Components/Customer/CategoriesCustomer";
 import MenuItemsList from "../Components/Customer/MenuItemsList";
 import { Footer } from "../Components/AdminComponents";
-import { fetchData } from "../services/fetchData";
+import api from "../services/api";
 import SkeletonList from "../Components/Customer/SkeletonList";
 import { CartProvider } from "../contexts/CartContext";
 import Cart from "../Components/Customer/Cart";
@@ -30,11 +30,9 @@ const Customer = () => {
     const getItems = async () => {
       try {
         setIsLoading(true);
-        const { data } = await fetchData(
-          `${
-            import.meta.env.VITE_VERCEL_API_URL
-          }/menu-items?category=${selectedCategory}`
-        );
+        const { data } = await api.get("/menu-items", {
+          params: { category: selectedCategory },
+        });
         setItems(data);
         setIsLoading(false);
       } catch (error) {

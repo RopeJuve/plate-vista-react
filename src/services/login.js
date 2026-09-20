@@ -1,54 +1,41 @@
-import { postData, fetchData } from "./fetchData";
+import api from "./api";
+
+const getAuthTokenFromHeaders = (headers) => {
+  const authHeader =
+    headers.authorization ||
+    headers.Authorization ||
+    (typeof headers.get === "function" ? headers.get("authorization") : "");
+  if (!authHeader) {
+    return null;
+  }
+  return authHeader.startsWith("Bearer ")
+    ? authHeader.slice(7)
+    : authHeader.split(" ")[1];
+};
 
 export const userLogin = async (formData, login, navigate) => {
-  try {
-    const response = await postData(
-      `${import.meta.env.VERCEL_API_URL}/auth/login`,
-      formData
-    );
-    const authHeader = response.headers.get("authorization");
-    const token = authHeader.split(" ")[1];
-    if (!token) {
-      navigate("/login");
-    }
-    login(token);
-    navigate("/");
-  } catch (err) {
-    console.log(err);
+  const response = await api.post("/auth/login", formData);
+  const token = getAuthTokenFromHeaders(response.headers);
+  if (!token) {
+    navigate("/login");
+    return;
   }
+  login(token);
+  navigate("/");
 };
 
 export const employeeLogin = async (formData, login, navigate) => {
-  try {
-    const response = await postData(
-      `${import.meta.env.VERCEL_API_URL}/auth/employee/login`,
-      formData
-    );
-    const authHeader = response.headers.get("authorization");
-    const token = authHeader.split(" ")[1];
-    if (!token) {
-      navigate("/login");
-    }
-    login(token);
-    navigate("/");
-  } catch (err) {
-    console.log(err);
+  const response = await api.post("/auth/employee/login", formData);
+  const token = getAuthTokenFromHeaders(response.headers);
+  if (!token) {
+    navigate("/login");
+    return;
   }
+  login(token);
+  navigate("/");
 };
 
-export const authUser = async (token, setAuth) => {
-  try {
-    const response = await fetchData(
-      `${import.meta.env.VERCEL_API_URL}/auth/user`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    const data = await response.json();
-    setAuth(data);
-  } catch (err) {
-    console.log(err);
-  }
+export const authUser = async () => {
+  const { data } = await api.get("/auth/user");
+  return data;
 };
