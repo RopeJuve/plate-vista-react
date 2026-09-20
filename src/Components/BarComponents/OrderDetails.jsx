@@ -12,7 +12,7 @@ const CONFIRM_TIMEOUT_MS = 10000;
 const OrderDetails = () => {
   const { tableId } = useParams();
   const { userData } = useOutletContext();
-  const { sendMessage, readyState, lastMessage, messages } = useWebSocketContext();
+  const { sendMessage, readyState, lastMessage } = useWebSocketContext();
   const { menuItems, clearOrder } = useOrder();
   const [orders, setOrders] = useState([]);
   const [visibleOrders, setVisibleOrders] = useState({});
@@ -63,7 +63,7 @@ const OrderDetails = () => {
         clearPending();
       }
     }
-  }, [lastMessage, messages, tableId, clearOrder]);
+  }, [lastMessage, tableId, clearOrder]);
 
   const handleSendMessages = () => {
     if (pending || menuItems.length === 0) {

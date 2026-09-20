@@ -21,7 +21,7 @@ const buildSocketUrl = (token, tableNum) => {
 export const WebSocketProvider = ({ children }) => {
   const { authToken } = useAuth();
   const location = useLocation();
-  const [messages, setMessages] = useState([]);
+  const [latestByType, setLatestByType] = useState({});
   const [tableError, setTableError] = useState(null);
   const [tables, setTables] = useState([]);
   const employeeReconnectFailures = useRef(0);
@@ -82,7 +82,7 @@ export const WebSocketProvider = ({ children }) => {
 
   const shouldConnect = Boolean(authToken || tableNum);
 
-  const { sendMessage, lastMessage, readyState } = useWebSocket(
+  const { sendMessage, lastMessage, readyState, getWebSocket } = useWebSocket(
     getSocketUrl,
     {
       share: true,
@@ -119,7 +119,10 @@ export const WebSocketProvider = ({ children }) => {
             const nextTables = applyPendingDeletes(messageData.payload || []);
             pendingDeleteIds.current.clear();
             setTables(nextTables);
-            setMessages((prev) => [...prev, { ...messageData, payload: nextTables }]);
+            setLatestByType((prev) => ({
+              ...prev,
+              allTables: { ...messageData, payload: nextTables },
+            }));
             return;
           }
 
@@ -132,7 +135,10 @@ export const WebSocketProvider = ({ children }) => {
             return;
           }
 
-          setMessages((prev) => [...prev, messageData]);
+          setLatestByType((prev) => ({
+            ...prev,
+            [messageData.type]: messageData,
+          }));
         } catch (error) {
           console.error("WebSocket message parse error:", error);
         }
@@ -141,19 +147,43 @@ export const WebSocketProvider = ({ children }) => {
     shouldConnect
   );
 
+  const resetWebSocket = useCallback(() => {
+    try {
+      getWebSocket()?.close();
+    } catch {
+      // Socket may already be closed.
+    }
+    setLatestByType({});
+    setTables([]);
+    setTableError(null);
+    pendingDeleteIds.current.clear();
+    localStorage.removeItem("cart");
+  }, [getWebSocket]);
+
+  const isOffline =
+    shouldConnect &&
+    readyState !== 0 &&
+    readyState !== 1;
+
   return (
     <WebSocketContext.Provider
       value={{
         sendMessage,
-        messages,
+        messages: latestByType,
         readyState,
         lastMessage,
         tableNum,
         tableError,
         tables,
         queueDeletedOrder,
+        resetWebSocket,
       }}
     >
+      {isOffline && (
+        <div className="fixed top-0 left-0 right-0 z-[1500] bg-red-600 px-4 py-2 text-center text-sm text-white" role="status">
+          Offline — reconnecting to live orders
+        </div>
+      )}
       {children}
     </WebSocketContext.Provider>
   );

@@ -20,7 +20,7 @@ const parseSocketMessage = (lastMessage) => {
 
 const CartModal = ({ closeModal }) => {
   const { tableId } = useParams();
-  const { sendMessage, lastMessage, messages, readyState } = useWebSocketContext();
+  const { sendMessage, lastMessage, readyState } = useWebSocketContext();
   const { clearCart, cart } = useCart();
   const [selectedTab, setSelectedTab] = useState("cart");
   const [orders, setOrders] = useState([]);
@@ -59,29 +59,19 @@ const CartModal = ({ closeModal }) => {
     }
 
     const nextOrders = messageData.payload.orders ?? [];
-    const tableMessages = messages.filter(
-      (message) =>
-        Number(message.tableNum) === Number(tableId) &&
-        message.type === "orderSuccess" &&
-        message.payload
-    );
-    const latestOrders =
-      tableMessages.length > 0
-        ? tableMessages[tableMessages.length - 1].payload?.orders ?? nextOrders
-        : nextOrders;
-    setOrders(latestOrders);
+    setOrders(nextOrders);
 
     if (pendingRef.current) {
       const hasNewOrder =
-        latestOrders.some((order) => !pendingRef.current.knownIds.has(order._id)) ||
-        latestOrders.length > pendingRef.current.previousCount;
+        nextOrders.some((order) => !pendingRef.current.knownIds.has(order._id)) ||
+        nextOrders.length > pendingRef.current.previousCount;
       if (hasNewOrder) {
         clearCart();
         setStatusMessage("Order Placed!");
         clearPending();
       }
     }
-  }, [lastMessage, messages, tableId, clearCart]);
+  }, [lastMessage, tableId, clearCart]);
 
   const handleSendMessages = () => {
     if (pending) {

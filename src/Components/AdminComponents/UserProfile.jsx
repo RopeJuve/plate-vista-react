@@ -6,17 +6,18 @@ import { useStateContext } from '../../contexts/ContextProvider';
 import avatar from '../../data/avatar.jpg';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useWebSocketContext } from '../../contexts/WebSocketContext';
 
 const UserProfile = () => {
   const { currentColor, setIsClicked, initialState } = useStateContext();
   const { logout } = useAuth(); 
+  const { resetWebSocket } = useWebSocketContext();
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    
-    navigate('/');
-
+    resetWebSocket();
     logout();
+    navigate('/');
     setIsClicked(initialState);
   };
 

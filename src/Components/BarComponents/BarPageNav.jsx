@@ -6,7 +6,7 @@ import BarAvatar from "./BarAvatar";
 import { useAuth } from "../../contexts/AuthContext";
 
 const BarPageNav = ({ selected, setSelected }) => {
-  const { readyState } = useWebSocketContext();
+  const { readyState, resetWebSocket } = useWebSocketContext();
   const { logout } = useAuth();
   return (
     <div className="max-w-screen-xl mx-auto flex items-center justify-between py-3">
@@ -18,8 +18,12 @@ const BarPageNav = ({ selected, setSelected }) => {
       <div className="flex items-center">
         <BarAvatar />
         <button
+          type="button"
           className="px-4 py-2 rounded-lg text-red-500"
-          onClick={() => logout()}
+          onClick={() => {
+            resetWebSocket();
+            logout();
+          }}
         >
           Logout
         </button>
