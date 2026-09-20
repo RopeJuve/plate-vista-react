@@ -18,25 +18,36 @@ const Customer = () => {
   const [selectedCategory, setSelectedCategory] = useState("beer");
   const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const [retryCount, setRetryCount] = useState(0);
   const { themeSettings, setThemeSettings, currentMode, currentColor } =
     useStateContext();
 
   useEffect(() => {
+    const controller = new AbortController();
     const getItems = async () => {
       try {
         setIsLoading(true);
+        setLoadError("");
         const { data } = await api.get("/menu-items", {
           params: { category: selectedCategory },
+          signal: controller.signal,
         });
         setItems(data);
-        setIsLoading(false);
       } catch (error) {
-        setIsLoading(true);
-        console.error(error);
+        if (error.code === "ERR_CANCELED") {
+          return;
+        }
+        setLoadError(error.response?.data?.message || "Could not load the menu");
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsLoading(false);
+        }
       }
     };
     getItems();
-  }, [selectedCategory]);
+    return () => controller.abort();
+  }, [selectedCategory, tableNum, retryCount]);
 
   if (tableError) {
     return (
@@ -78,8 +89,23 @@ const Customer = () => {
             setSelectedCategory={setSelectedCategory}
           />
           <div className="flex-grow overflow-hidden">
-            <SkeletonList itemsCount={10} isLoading={isLoading} />
-            <MenuItemsList items={items} isLoading={isLoading} />
+            {loadError ? (
+              <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
+                <p className="text-gray-700 dark:text-gray-200" role="alert">{loadError}</p>
+                <button
+                  type="button"
+                  className="rounded-md bg-orange-500 px-4 py-2 text-white"
+                  onClick={() => setRetryCount((count) => count + 1)}
+                >
+                  Retry
+                </button>
+              </div>
+            ) : (
+              <>
+                <SkeletonList itemsCount={10} isLoading={isLoading} />
+                <MenuItemsList items={items} isLoading={isLoading} />
+              </>
+            )}
           </div>
           <Cart />
           <Footer />
