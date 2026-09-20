@@ -84,9 +84,6 @@ const CartContent = ({ variant, orders, handleSendMessages, pending, statusMessa
             <h3 className="text-xl font-semibold">Total</h3>
             <h3 className="font-semibold">{totalOrderPrice?.toFixed(2)}€</h3>
           </div>
-          <button className="bg-blue-400 text-white w-full py-2 mt-6 rounded-lg" onClick={clearCart}>
-            Call Waiter
-          </button>
         </>
       )}
     </>

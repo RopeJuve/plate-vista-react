@@ -18,7 +18,7 @@ const MenuItemCard = ({ item }) => {
       <div className="w-16 h-16 rounded-lg flex-shrink-0">
         <img
           src={item.image}
-          alt={item.name}
+          alt={item.title}
           className="w-full h-full object-cover rounded-lg"
         />
       </div>
@@ -30,7 +30,7 @@ const MenuItemCard = ({ item }) => {
         <p className={`text-gray-500 text-[0.725rem] text-pretty max-w-[85%] ${
         currentMode === "Dark" ? "bg-gray-500 text-white" : "bg-white text-black"
       }`}>
-          {showMore
+          {showMore || (item.description || "").length <= 35
             ? item.description
             : `${item.description.substring(0, 35)}...`}
           <button
@@ -46,7 +46,7 @@ const MenuItemCard = ({ item }) => {
           onClick={() => addToCart({
             ...item,
             quantity,
-            price: item.price * quantity,
+            price: item.price,
           })}
         >
           <MdOutlineAddShoppingCart className="w-full h-full" style={{ color: currentColor }} />

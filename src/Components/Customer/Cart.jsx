@@ -18,7 +18,7 @@ const Cart = () => {
           <MdOutlineShoppingCart className="text-white w-8 h-8 translate-x-[-50%] translate-y-[-50%] relative" />
           {cart.length > 0 && (<div
             className="absolute z-[50] top-0 right-0 text-[0.725rem] bg-red-500 text-white w-4 h-4 rounded-full flex items-center justify-center"
-          >{cart.length}</div>)}
+          >{cart.reduce((total, item) => total + (item.quantity || 0), 0)}</div>)}
           {showCart && <CartModal items={cart} closeModal={setShowCart} />}
         </div>
     </>

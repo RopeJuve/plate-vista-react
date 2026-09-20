@@ -49,7 +49,7 @@ const Customer = () => {
   }
 
   return (
-    <CartProvider>
+    <CartProvider tableId={tableNum}>
       <div className={currentMode === "Dark" ? "dark" : ""}>
         <div className="bg-slate-50 dark:bg-main-dark-bg flex flex-col h-screen relative">
           <div className="fixed right-2 bottom-20" style={{ zIndex: 1000 }}>
