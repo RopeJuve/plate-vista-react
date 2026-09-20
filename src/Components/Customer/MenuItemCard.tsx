@@ -1,0 +1,60 @@
+import { useState } from "react";
+import { ShoppingCart } from "lucide-react";
+import { useCart } from "../../contexts/CartContext";
+import { useStateContext } from "../../contexts/ContextProvider";
+import { MenuItem } from "../../types";
+
+const MenuItemCard = ({ item }: { item: MenuItem }) => {
+  const [showMore, setShowMore] = useState(false);
+  const [quantity] = useState(1);
+  const { addToCart } = useCart();
+  const { currentColor, currentMode } = useStateContext();
+
+  return (
+    <div
+      className={`flex items-center gap-4 shadow-md rounded-lg py-4 px-2 ${
+        currentMode === "Dark" ? "bg-gray-500 text-white" : "bg-white text-black"
+      }`}
+    >
+      <div className="w-16 h-16 rounded-lg flex-shrink-0">
+        <img
+          src={item.image}
+          alt={item.title}
+          className="w-full h-full object-cover rounded-lg"
+        />
+      </div>
+      <div className="flex flex-col gap-1 flex-grow">
+        <div className="flex items-center justify-between flex-wrap">
+          <h3 className="font-semibold text-base flex-shrink-0">{item.title}</h3>
+          <p className="font-semibold text-base">{item.price}€</p>
+        </div>
+        <p className={`text-gray-500 text-[0.725rem] text-pretty max-w-[85%] ${
+        currentMode === "Dark" ? "bg-gray-500 text-white" : "bg-white text-black"
+      }`}>
+          {showMore || (item.description || "").length <= 35
+            ? item.description
+            : `${item.description.substring(0, 35)}...`}
+          <button
+            className="ml-1 font-semibold"
+            onClick={() => setShowMore(!showMore)}
+            style={{ color: currentColor }}
+          >
+            {showMore ? "Less" : "More"}
+          </button>
+        </p>
+        <button
+          className="self-end w-6 h-6"
+          onClick={() => addToCart({
+            ...item,
+            quantity,
+            price: item.price,
+          })}
+        >
+          <ShoppingCart className="h-6 w-6" style={{ color: currentColor }} />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default MenuItemCard;

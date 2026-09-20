@@ -1,6 +1,6 @@
 # Plate Vista
 
-React frontend for the Plate Vista restaurant ordering app (React 18, Vite, Tailwind, Syncfusion).
+React frontend for the Plate Vista restaurant ordering app (React 18, Vite, Tailwind, shadcn/ui).
 
 ## Environment
 
@@ -13,7 +13,6 @@ Copy `.env.example` to `.env` and set:
 | `VITE_PLATE_VISTA_URL` | Public frontend origin used in table QR codes |
 | `VITE_DEVELOPMENT_URL` | Local API origin |
 | `VITE_DEVELOPMENT_WS_URL` | Local WebSocket URL |
-| `VITE_SYNCFUSION_KEY` | Syncfusion license key |
 
 The production build fails if the production API, WebSocket, or frontend URL is missing. Use `wss://` for the socket URL on HTTPS hosts. The API `CORS_ORIGIN` must include this frontend origin.
 
