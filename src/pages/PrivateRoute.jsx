@@ -16,6 +16,7 @@ const PrivateRoute = ({ allowedRoles }) => {
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null);
   const [allowed, setAllowed] = useState(false);
+  const allowedKey = (allowedRoles || []).join(",");
 
   useEffect(() => {
     let cancelled = false;
@@ -35,7 +36,7 @@ const PrivateRoute = ({ allowedRoles }) => {
         }
         setUserData(data);
         setUser(data.user);
-        setAllowed(isRoleAllowed(data.user, allowedRoles));
+        setAllowed(isRoleAllowed(data.user, allowedKey.split(",").filter(Boolean)));
       } catch {
         if (!cancelled) {
           setAllowed(false);
@@ -52,7 +53,7 @@ const PrivateRoute = ({ allowedRoles }) => {
     return () => {
       cancelled = true;
     };
-  }, [authToken, allowedRoles, logout, setUser]);
+  }, [authToken, allowedKey, logout, setUser]);
 
   if (!authToken) {
     return <Navigate to="/" replace />;
