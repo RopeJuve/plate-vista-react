@@ -1,33 +1,22 @@
-import { useState } from "react"; // Import useState
 import { useCart } from "../../contexts/CartContext";
 import { MdPendingActions } from "react-icons/md";
 import { LuAlarmClock } from "react-icons/lu";
 import { PiSealCheck } from "react-icons/pi";
 import { ORDER_STATUS } from "../../constants/orderStatus";
 
-const CartContent = ({ variant, orders, handleSendMessages }) => {
+const CartContent = ({ variant, orders, handleSendMessages, pending, statusMessage }) => {
   const { cart, clearCart } = useCart();
   const price = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  const totalOrderPrice = orders?.reduce((acc, order) => acc + order.totalPrice, 0);
-
-  // New state for order status
-  const [orderStatusMessage, setOrderStatusMessage] = useState("");
-
-  const handleOrderNow = () => {
-    // Call the handleSendMessages function
-    handleSendMessages();
-    // Set the order status message
-    setOrderStatusMessage("Order Placed!");
-  };
+  const totalOrderPrice = orders?.reduce((acc, order) => acc + (order.totalPrice || 0), 0);
 
   return (
     <>
       {variant === "cart" && (
         <div className="mt-4 max-h-[50vh] overflow-hidden">
-          {orderStatusMessage && ( 
-            <p className="text-center h-[5rem]">{orderStatusMessage}</p>
+          {statusMessage && (
+            <p className="text-center h-[5rem]">{statusMessage}</p>
           )}
-          {cart.length === 0 && !orderStatusMessage && ( 
+          {cart.length === 0 && !statusMessage && (
             <p className="text-center h-[5rem]">Cart is empty</p>
           )}
           {cart.map((item) => (
@@ -43,16 +32,18 @@ const CartContent = ({ variant, orders, handleSendMessages }) => {
           </div>
           <div className="flex items-center gap-2">
             <button
+              type="button"
               className="bg-orange-400 text-white w-full py-2 mt-6 rounded-lg disabled:opacity-50"
-              onClick={handleOrderNow}
-              disabled={cart.length === 0}
+              onClick={handleSendMessages}
+              disabled={cart.length === 0 || pending}
             >
-              Order Now
+              {pending ? "Placing..." : "Order Now"}
             </button>
             <button
+              type="button"
               className="bg-red-400 text-white w-full py-2 mt-6 rounded-lg disabled:opacity-50"
               onClick={clearCart}
-              disabled={cart.length === 0}
+              disabled={cart.length === 0 || pending}
             >
               Clear Cart
             </button>

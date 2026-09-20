@@ -1,66 +1,107 @@
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useOutletContext, useParams } from "react-router-dom";
+import { ReadyState } from "react-use-websocket";
 import { useOrder } from "../../contexts/OrderContext";
 import { useWebSocketContext } from "../../contexts/WebSocketContext";
-import { useOutletContext } from "react-router-dom";
 import { MdOutlineKeyboardArrowDown } from "react-icons/md";
 import { ORDER_STATUS } from "../../constants/orderStatus";
+import { notify } from "../../utils/notify";
+
+const CONFIRM_TIMEOUT_MS = 10000;
 
 const OrderDetails = () => {
   const { tableId } = useParams();
   const { userData } = useOutletContext();
-  const {
-    sendMessage,
-    readyState,
-    lastMessage,
-    tableNum,
-    messages,
-  } = useWebSocketContext();
+  const { sendMessage, readyState, lastMessage, messages } = useWebSocketContext();
   const { menuItems, clearOrder } = useOrder();
   const [orders, setOrders] = useState([]);
   const [visibleOrders, setVisibleOrders] = useState({});
+  const [pending, setPending] = useState(false);
+  const pendingRef = useRef(null);
+  const timeoutRef = useRef(null);
+
+  const clearPending = () => {
+    pendingRef.current = null;
+    if (timeoutRef.current) {
+      window.clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    setPending(false);
+  };
+
   useEffect(() => {
-    if (lastMessage) {
-      try {
-        const messageData = JSON.parse(lastMessage.data);
-        if (messageData?.type === "orderSuccess") {
-          if (!messageData.payload) {
-            return;
-          }
-          const tableMessages = messages.filter(
-            (message) =>
-              Number(message.tableNum) === Number(tableId) &&
-              message.type === "orderSuccess"
-          );
-          if (tableMessages.length > 0) {
-            const latestMessage = tableMessages[tableMessages.length - 1];
-            setOrders(latestMessage.payload?.orders ?? []);
-          } else {
-            console.log("No order messages found for table:", tableNum);
-          }
-        }
-      } catch (error) {
-        console.error("Error processing message:", error);
+    if (!lastMessage?.data) {
+      return;
+    }
+
+    let messageData;
+    try {
+      messageData = JSON.parse(lastMessage.data);
+    } catch {
+      return;
+    }
+
+    if (messageData.type === "error" && pendingRef.current) {
+      clearPending();
+      return;
+    }
+
+    if (messageData.type !== "orderSuccess" || !messageData.payload) {
+      return;
+    }
+
+    const latestOrders = messageData.payload.orders ?? [];
+    setOrders(latestOrders);
+
+    if (pendingRef.current) {
+      const hasNewOrder =
+        latestOrders.some((order) => !pendingRef.current.knownIds.has(order._id)) ||
+        latestOrders.length > pendingRef.current.previousCount;
+      if (hasNewOrder) {
+        clearOrder();
+        notify("Order placed", "success");
+        clearPending();
       }
     }
-  }, [userData, lastMessage, messages, tableId]);
+  }, [lastMessage, messages, tableId, clearOrder]);
 
   const handleSendMessages = () => {
-    const menuItemsForSend = menuItems.map((item) => {
-      return { product: item._id, quantity: item.quantity };
-    });
+    if (pending || menuItems.length === 0) {
+      return;
+    }
+    if (readyState !== ReadyState.OPEN) {
+      notify("Not confirmed, check the order list before retrying");
+      return;
+    }
+
+    pendingRef.current = {
+      knownIds: new Set(orders.map((order) => order._id)),
+      previousCount: orders.length,
+    };
+    setPending(true);
 
     sendMessage(
       JSON.stringify({
         type: "newOrder",
         payload: {
-          user: userData.user.id,
-          menuItems: menuItemsForSend,
+          user: userData?.user?.id,
+          menuItems: menuItems.map((item) => ({
+            product: item._id,
+            quantity: item.quantity,
+          })),
           orderStatus: ORDER_STATUS.PROCESSING,
         },
-      })
+      }),
+      false
     );
-    clearOrder();
+
+    timeoutRef.current = window.setTimeout(() => {
+      if (pendingRef.current) {
+        pendingRef.current = null;
+        setPending(false);
+        notify("Not confirmed, check the order list before retrying");
+      }
+    }, CONFIRM_TIMEOUT_MS);
   };
 
   const handleToggleOrder = (orderId) => {
@@ -147,11 +188,12 @@ const OrderDetails = () => {
         <p>{`${total?.toFixed(2)}€`}</p>
       </div>
       <button
-        className="bg-blue-500 text-white w-full p-2 rounded-lg"
+        type="button"
+        className="bg-blue-500 text-white w-full p-2 rounded-lg disabled:opacity-50"
         onClick={handleSendMessages}
-        disabled={menuItems?.length === 0}
+        disabled={menuItems?.length === 0 || pending}
       >
-        Place Order
+        {pending ? "Placing..." : "Place Order"}
       </button>
     </div>
   );

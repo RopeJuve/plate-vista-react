@@ -1,61 +1,125 @@
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
+import { ReadyState } from "react-use-websocket";
 import { useCart } from "../../contexts/CartContext";
 import { useWebSocketContext } from "../../contexts/WebSocketContext";
 import CartContent from "./CartContent";
 
+const CONFIRM_TIMEOUT_MS = 10000;
+
+const parseSocketMessage = (lastMessage) => {
+  if (!lastMessage?.data) {
+    return null;
+  }
+  try {
+    return JSON.parse(lastMessage.data);
+  } catch {
+    return null;
+  }
+};
+
 const CartModal = ({ closeModal }) => {
   const { tableId } = useParams();
-  const { sendMessage, lastMessage, messages } = useWebSocketContext();
+  const { sendMessage, lastMessage, messages, readyState } = useWebSocketContext();
   const { clearCart, cart } = useCart();
   const [selectedTab, setSelectedTab] = useState("cart");
   const [orders, setOrders] = useState([]);
+  const [pending, setPending] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
+  const pendingRef = useRef(null);
+  const timeoutRef = useRef(null);
 
-  useEffect(() => {
-    if (lastMessage) {
-      try {
-        const messageData = JSON.parse(lastMessage.data);
-        if (messageData?.type === "orderSuccess") {
-          if (!messageData.payload) {
-            return;
-          }
-          const tableMessages = messages.filter(
-            (message) =>
-             Number(message.tableNum) === Number(tableId) &&
-              message.type === "orderSuccess"
-          );
-          if (tableMessages.length > 0) {
-            const latestMessage = tableMessages[tableMessages.length - 1];
-            setOrders(latestMessage.payload?.orders ?? []);
-          } else {
-            console.log("No order messages found for table:", tableId);
-          }
-        }
-      } catch (error) {
-        console.error("Error processing message:", error);
-      }
+  const clearPending = () => {
+    pendingRef.current = null;
+    if (timeoutRef.current) {
+      window.clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
     }
-  }, [lastMessage, messages]);
-
-  const changeTab = (tab) => {
-    setSelectedTab(tab);
+    setPending(false);
   };
 
+  useEffect(() => {
+    const messageData = parseSocketMessage(lastMessage);
+    if (!messageData) {
+      return;
+    }
+
+    if (messageData.type === "error" && pendingRef.current) {
+      setStatusMessage(
+        typeof messageData.payload === "string"
+          ? messageData.payload
+          : "Order failed"
+      );
+      clearPending();
+      return;
+    }
+
+    if (messageData.type !== "orderSuccess" || !messageData.payload) {
+      return;
+    }
+
+    const nextOrders = messageData.payload.orders ?? [];
+    const tableMessages = messages.filter(
+      (message) =>
+        Number(message.tableNum) === Number(tableId) &&
+        message.type === "orderSuccess" &&
+        message.payload
+    );
+    const latestOrders =
+      tableMessages.length > 0
+        ? tableMessages[tableMessages.length - 1].payload?.orders ?? nextOrders
+        : nextOrders;
+    setOrders(latestOrders);
+
+    if (pendingRef.current) {
+      const hasNewOrder =
+        latestOrders.some((order) => !pendingRef.current.knownIds.has(order._id)) ||
+        latestOrders.length > pendingRef.current.previousCount;
+      if (hasNewOrder) {
+        clearCart();
+        setStatusMessage("Order Placed!");
+        clearPending();
+      }
+    }
+  }, [lastMessage, messages, tableId, clearCart]);
+
   const handleSendMessages = () => {
-    const menuItemsForSend = cart.map((item) => {
-      return { product: item._id, quantity: item.quantity };
-    });
+    if (pending) {
+      return;
+    }
+    if (readyState !== ReadyState.OPEN) {
+      setStatusMessage("Not confirmed, check the Bill tab before retrying");
+      return;
+    }
+
+    pendingRef.current = {
+      knownIds: new Set(orders.map((order) => order._id)),
+      previousCount: orders.length,
+    };
+    setPending(true);
+    setStatusMessage("Placing order...");
 
     sendMessage(
       JSON.stringify({
         type: "newOrder",
         payload: {
           user: null,
-          menuItems: menuItemsForSend,
+          menuItems: cart.map((item) => ({
+            product: item._id,
+            quantity: item.quantity,
+          })),
         },
-      })
+      }),
+      false
     );
-    clearCart();
+
+    timeoutRef.current = window.setTimeout(() => {
+      if (pendingRef.current) {
+        pendingRef.current = null;
+        setPending(false);
+        setStatusMessage("Not confirmed, check the Bill tab before retrying");
+      }
+    }, CONFIRM_TIMEOUT_MS);
   };
 
   return (
@@ -63,15 +127,25 @@ const CartModal = ({ closeModal }) => {
       <div
         className="fixed inset-0 bg-black bg-opacity-50 z-50"
         onClick={() => closeModal(false)}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") {
+            closeModal(false);
+          }
+        }}
+        role="presentation"
       ></div>
 
       <div
         className="fixed w-96 z-50 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 p-4 rounded-lg bg-slate-50"
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Cart"
       >
         <div className="flex gap-2 items-center mb-6 bg-slate-200 p-1 rounded-lg">
           <button
-            onClick={() => changeTab("cart")}
+            type="button"
+            onClick={() => setSelectedTab("cart")}
             className={
               selectedTab === "cart"
                 ? `w-1/2 py-1 text-center rounded-lg text-white bg-orange-400 transition-all ease-in-out duration-500`
@@ -81,7 +155,8 @@ const CartModal = ({ closeModal }) => {
             Cart
           </button>
           <button
-            onClick={() => changeTab("bill")}
+            type="button"
+            onClick={() => setSelectedTab("bill")}
             className={
               selectedTab === "bill"
                 ? `w-1/2 py-1 text-center text-white bg-orange-400 rounded-lg transition-all ease-in-out duration-500`
@@ -92,20 +167,13 @@ const CartModal = ({ closeModal }) => {
           </button>
         </div>
 
-        {selectedTab === "cart" && (
-          <CartContent
-            variant="cart"
-            orders={orders}
-            handleSendMessages={handleSendMessages}
-          />
-        )}
-        {selectedTab === "bill" && (
-          <CartContent
-            variant="bill"
-            orders={orders}
-            handleSendMessages={handleSendMessages}
-          />
-        )}
+        <CartContent
+          variant={selectedTab}
+          orders={orders}
+          handleSendMessages={handleSendMessages}
+          pending={pending}
+          statusMessage={statusMessage}
+        />
       </div>
     </>
   );
