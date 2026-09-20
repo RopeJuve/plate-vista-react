@@ -1,4 +1,4 @@
-import { createContext, useReducer, useContext, useEffect } from "react";
+import { createContext, useReducer, useContext, useEffect, useCallback } from "react";
 import { AUTH_EVENTS } from "../utils/notify";
 
 const AuthContext = createContext();
@@ -11,9 +11,11 @@ const authReducer = (state, action) => {
       return {
         ...state,
         authToken: action.payload.token,
-        user: action.payload.user,
-        restaurantId: action.payload.restaurantId,
+        user: action.payload.user ?? state.user,
+        restaurantId: action.payload.restaurantId ?? state.restaurantId,
       };
+    case "SET_USER":
+      return { ...state, user: action.payload };
     case "LOGOUT":
       return { ...state, authToken: null, user: null, restaurantId: null };
     default:
@@ -23,30 +25,25 @@ const authReducer = (state, action) => {
 
 const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, {
-    authToken: localStorage.getItem("authToken")
-      ? localStorage.getItem("authToken")
-      : null,
-    user: localStorage.getItem("user") ? localStorage.getItem("user") : null,
-    restaurantId: localStorage.getItem("restaurantId")
-      ? localStorage.getItem("restaurantId")
-      : null,
+    authToken: localStorage.getItem("authToken") || null,
+    user: null,
+    restaurantId: localStorage.getItem("restaurantId") || null,
   });
 
   const { authToken, user, restaurantId } = state;
 
   useEffect(() => {
-    if (authToken && user) {
+    localStorage.removeItem("user");
+    if (authToken) {
       localStorage.setItem("authToken", authToken);
-      localStorage.setItem("user", user);
       if (restaurantId) {
         localStorage.setItem("restaurantId", restaurantId);
       }
     } else {
       localStorage.removeItem("authToken");
-      localStorage.removeItem("user");
       localStorage.removeItem("restaurantId");
     }
-  }, [authToken, user, restaurantId]);
+  }, [authToken, restaurantId]);
 
   useEffect(() => {
     const handleUnauthorized = () => {
@@ -58,17 +55,24 @@ const AuthProvider = ({ children }) => {
     };
   }, []);
 
-  const login = (token, user, restaurantId) => {
-    dispatch({ type: "LOGIN", payload: { token, user, restaurantId } });
-  };
+  const login = useCallback((token, nextUser, nextRestaurantId) => {
+    dispatch({
+      type: "LOGIN",
+      payload: { token, user: nextUser, restaurantId: nextRestaurantId },
+    });
+  }, []);
 
-  const logout = () => {
+  const setUser = useCallback((nextUser) => {
+    dispatch({ type: "SET_USER", payload: nextUser });
+  }, []);
+
+  const logout = useCallback(() => {
     dispatch({ type: "LOGOUT" });
-  };
+  }, []);
 
   return (
     <AuthContext.Provider
-      value={{ authToken, login, logout, user, restaurantId }}
+      value={{ authToken, login, logout, user, setUser, restaurantId }}
     >
       {children}
     </AuthContext.Provider>
