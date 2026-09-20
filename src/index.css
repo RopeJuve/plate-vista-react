@@ -1,77 +1,116 @@
-/* index.css */
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap");
 
-@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap');
-@import url('https://cdn.syncfusion.com/ej2/material.css');
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
 
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 187 97% 43%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 187 97% 43%;
+    --chart-1: 187 97% 43%;
+    --chart-2: 258 100% 66%;
+    --chart-3: 340 100% 68%;
+    --chart-4: 207 91% 53%;
+    --chart-5: 16 95% 73%;
+    --radius: 0.5rem;
+  }
 
-/* Global styles */
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 47.4% 11.2%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 47.4% 11.2%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 187 97% 43%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 187 97% 43%;
+    --chart-1: 187 97% 43%;
+    --chart-2: 258 100% 66%;
+    --chart-3: 340 100% 68%;
+    --chart-4: 207 91% 53%;
+    --chart-5: 16 95% 73%;
+  }
+
+  * {
+    @apply border-border;
+  }
+}
+
 body {
-    margin: 0;
-    padding: 0;
-    font-family: "Open Sans", sans-serif;
+  margin: 0;
+  padding: 0;
+  font-family: "Open Sans", sans-serif;
 }
 
 .bar-menu-item-container {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.25rem;
-    height: 93%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.25rem;
+  height: 93%;
 }
 
-
-
 .sidebar {
-    box-shadow: rgb(113 122 131 / 11%) 0px 7px 30px 0px;
+  box-shadow: rgb(113 122 131 / 11%) 0px 7px 30px 0px;
 }
 
 .nav-item,
 .navbar {
-    z-index: 10000;
+  z-index: 10000;
 }
 
 @media screen and (max-width: 800px) {
-    .sidebar {
-        z-index: 10000000;
-    }
-}
-
-.e-dlg-center-center,
-.e-quick-popup-wrapper.e-device {
-    z-index: 1000000 !important;
+  .sidebar {
+    z-index: 10000000;
+  }
 }
 
 .no-scrollbar::-webkit-scrollbar {
-    display: none;
+  display: none;
 }
 
 .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 ::-webkit-scrollbar {
-    width: 6px;
+  width: 6px;
 }
 
 ::-webkit-scrollbar-thumb {
-    background-color: rgb(216, 216, 216);
-    border-radius: 40px;
+  background-color: rgb(216, 216, 216);
+  border-radius: 40px;
 }
 
 ::-webkit-scrollbar-track {
-    background-color: transparent;
-}
-
-.e-input-group:not(.e-float-icon-left),
-.e-input-group.e-success:not(.e-float-icon-left),
-.e-input-group.e-warning:not(.e-float-icon-left),
-.e-input-group.e-error:not(.e-float-icon-left),
-.e-input-group.e-control-wrapper:not(.e-float-icon-left),
-.e-input-group.e-control-wrapper.e-success:not(.e-float-icon-left),
-.e-input-group.e-control-wrapper.e-warning:not(.e-float-icon-left),
-.e-input-group.e-control-wrapper.e-error:not(.e-float-icon-left) {
-    border: none;
+  background-color: transparent;
 }

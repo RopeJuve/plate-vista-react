@@ -12,6 +12,7 @@ dist
 dist-ssr
 *.local
 .env
+src/data/QrCodes/
 
 # Editor directories and files
 .vscode/*
