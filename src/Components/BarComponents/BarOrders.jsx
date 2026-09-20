@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useWebSocketContext } from "../../contexts/WebSocketContext";
+import { ORDER_STATUS } from "../../constants/orderStatus";
 import OrderCard from "./OrderCard";
 
 const BarOrders = ({ title }) => {
@@ -28,7 +29,7 @@ const BarOrders = ({ title }) => {
             ? orders
                 .map((item) => {
                   return item.orders
-                    .filter((order) => order.orderStatus === "Pending")
+                    .filter((order) => order.orderStatus === ORDER_STATUS.PENDING)
                     .map((order) => {
                       return (
                         <OrderCard
@@ -44,7 +45,7 @@ const BarOrders = ({ title }) => {
             ? orders
                 .map((item) => {
                   return item.orders
-                    .filter((order) => order.orderStatus === "Processing")
+                    .filter((order) => order.orderStatus === ORDER_STATUS.PROCESSING)
                     .sort()
                     .map((order) => {
                       return (
@@ -61,7 +62,7 @@ const BarOrders = ({ title }) => {
             : orders
                 .map((item) => {
                   return item.orders
-                    .filter((order) => order.orderStatus === "Completed")
+                    .filter((order) => order.orderStatus === ORDER_STATUS.COMPLETE)
                     .sort()
                     .map((order) => {
                       return (

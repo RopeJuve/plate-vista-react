@@ -4,6 +4,7 @@ import { useOrder } from "../../contexts/OrderContext";
 import { useWebSocketContext } from "../../contexts/WebSocketContext";
 import { useOutletContext } from "react-router-dom";
 import { MdOutlineKeyboardArrowDown } from "react-icons/md";
+import { ORDER_STATUS } from "../../constants/orderStatus";
 
 const OrderDetails = () => {
   const { tableId } = useParams();
@@ -52,7 +53,7 @@ const OrderDetails = () => {
         payload: {
           user: userData.user.id,
           menuItems: menuItemsForSend,
-          orderStatus: "Processing",
+          orderStatus: ORDER_STATUS.PROCESSING,
         },
       })
     );
@@ -91,9 +92,9 @@ const OrderDetails = () => {
               <div
                 key={order._id}
                 className={`${
-                  order.orderStatus === "Pending"
+                  order.orderStatus === ORDER_STATUS.PENDING
                     ? "bg-yellow-400"
-                    : order.orderStatus === "Processing"
+                    : order.orderStatus === ORDER_STATUS.PROCESSING
                     ? "bg-blue-400 "
                     : "bg-green-400"
                 } p-2 space-y-1 rounded-lg`}

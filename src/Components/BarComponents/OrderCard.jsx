@@ -4,10 +4,11 @@ import OrderItem from "./OrderItem";
 import { PiSealCheckFill } from "react-icons/pi";
 import { IoCloseCircle } from "react-icons/io5";
 import { useWebSocketContext } from "../../contexts/WebSocketContext";
+import { ORDER_STATUS, ORDER_STATUS_LABEL } from "../../constants/orderStatus";
 
 const OrderCard = ({ item, table, variant }) => {
   const { sendMessage } = useWebSocketContext();
-  const orderStatus = variant != "accepted" ? "Processing" : "Completed";
+  const orderStatus = variant != "accepted" ? ORDER_STATUS.PROCESSING : ORDER_STATUS.COMPLETE;
   const handleAcceptOrder = (orderId, status) => {
     sendMessage(
       JSON.stringify({
@@ -39,7 +40,7 @@ const OrderCard = ({ item, table, variant }) => {
           </span>
           {variant === "completed" && (
             <span className="inline-flex opacity-70 text-[0.725rem] px-1 py-0.5 rounded-lg italic text-green-500 border border-green-500">
-              Completed
+              {ORDER_STATUS_LABEL[ORDER_STATUS.COMPLETE]}
             </span>
           )}
         </div>

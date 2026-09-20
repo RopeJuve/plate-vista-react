@@ -3,6 +3,7 @@ import { useCart } from "../../contexts/CartContext";
 import { MdPendingActions } from "react-icons/md";
 import { LuAlarmClock } from "react-icons/lu";
 import { PiSealCheck } from "react-icons/pi";
+import { ORDER_STATUS } from "../../constants/orderStatus";
 
 const CartContent = ({ variant, orders, handleSendMessages }) => {
   const { cart, clearCart } = useCart();
@@ -70,17 +71,17 @@ const CartContent = ({ variant, orders, handleSendMessages }) => {
                     <p className="font-semibold">{(menuItem.product?.price * menuItem.quantity).toFixed(2)}€</p>
                   </div>
                 ))}
-                {order?.orderStatus === "Pending" && (
+                {order?.orderStatus === ORDER_STATUS.PENDING && (
                   <span className="inline-flex items-center gap-1 opacity-70 text-[0.725rem] italic text-yellow-500">
                     <LuAlarmClock /> {order.orderStatus}
                   </span>
                 )}
-                {order?.orderStatus === "Processing" && (
+                {order?.orderStatus === ORDER_STATUS.PROCESSING && (
                   <span className="inline-flex items-center gap-1 opacity-70 text-[0.725rem] italic text-blue-500">
                     <MdPendingActions /> {order.orderStatus}
                   </span>
                 )}
-                {order?.orderStatus === "Completed" && (
+                {order?.orderStatus === ORDER_STATUS.COMPLETE && (
                   <span className="inline-flex items-center gap-1 opacity-70 text-[0.725rem] italic text-green-500">
                     <PiSealCheck /> {order.orderStatus}
                   </span>

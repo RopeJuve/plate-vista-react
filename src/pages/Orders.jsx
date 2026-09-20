@@ -4,6 +4,7 @@ import { useStateContext } from "../contexts/ContextProvider";
 import { fetchOrders } from "../services/orderDataFetch";
 import { Header } from "../Components/AdminComponents";
 import { DropDownButtonComponent } from '@syncfusion/ej2-react-splitbuttons';
+import { ORDER_STATUS } from "../constants/orderStatus";
 
 const PAGE_SIZE = 20;
 
@@ -88,17 +89,17 @@ const Orders = () => {
 
     
     const statusColorMap = {
-    "Processing": "#FF0000",
-    "Pending": "#FFA500",
-    "Complete": "#008000",
+    [ORDER_STATUS.PROCESSING]: "#FF0000",
+    [ORDER_STATUS.PENDING]: "#FFA500",
+    [ORDER_STATUS.COMPLETE]: "#008000",
     };
   
     
     const statusColorTemplate = (props) => {
       const statusColorClasses = {
-        "Processing": "bg-red-500 text-gray-100",
-        "Pending": "bg-orange-500 text-gray-100",
-        "Complete": "bg-green-500 text-gray-100",
+        [ORDER_STATUS.PROCESSING]: "bg-red-500 text-gray-100",
+        [ORDER_STATUS.PENDING]: "bg-orange-500 text-gray-100",
+        [ORDER_STATUS.COMPLETE]: "bg-green-500 text-gray-100",
       };
     
       const statusClasses = statusColorClasses[props.orderStatus]
