@@ -5,19 +5,12 @@ import OrderCard from "./OrderCard";
 
 const BarOrders = ({ title }) => {
   const [orders, setOrder] = useState([]);
-  const { lastMessage, messages } = useWebSocketContext();
+  const { lastMessage, tables } = useWebSocketContext();
   useEffect(() => {
-    if (lastMessage) {
-      const messageData = JSON.parse(lastMessage.data);
-      if (messageData.type === "allTables") {
-        const tables = messages[messages.length - 1];
-        if (tables.type === "allTables") {
-          setOrder(tables.payload);
-        }
-      }
+    if (tables) {
+      setOrder(tables);
     }
-  }, [lastMessage, messages]);
-  console.log(messages);
+  }, [lastMessage, tables]);
   return (
     <div className="bg-secondary-dark-bg rounded-lg flex flex-col justify-between overflow-scroll pl-1.5">
       <h2 className="text-xl text-center uppercase font-semibold bg-secondary-dark-bg pb-1">
@@ -28,7 +21,7 @@ const BarOrders = ({ title }) => {
           {title === "New Orders"
             ? orders
                 .map((item) => {
-                  return item.orders
+                  return (item.orders || [])
                     .filter((order) => order.orderStatus === ORDER_STATUS.PENDING)
                     .map((order) => {
                       return (
@@ -44,7 +37,7 @@ const BarOrders = ({ title }) => {
             : title === "Accepted"
             ? orders
                 .map((item) => {
-                  return item.orders
+                  return (item.orders || [])
                     .filter((order) => order.orderStatus === ORDER_STATUS.PROCESSING)
                     .sort()
                     .map((order) => {
@@ -61,7 +54,7 @@ const BarOrders = ({ title }) => {
                 .reverse()
             : orders
                 .map((item) => {
-                  return item.orders
+                  return (item.orders || [])
                     .filter((order) => order.orderStatus === ORDER_STATUS.COMPLETE)
                     .sort()
                     .map((order) => {

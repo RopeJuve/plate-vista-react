@@ -4,7 +4,7 @@ import useWebSocket from "react-use-websocket";
 import { plateVistaConfig } from "../Config/plateVista.config";
 import { useAuth } from "./AuthContext";
 import api from "../services/api";
-import { triggerUnauthorized } from "../utils/notify";
+import { notify, triggerUnauthorized } from "../utils/notify";
 
 const WebSocketContext = createContext();
 
@@ -23,7 +23,27 @@ export const WebSocketProvider = ({ children }) => {
   const location = useLocation();
   const [messages, setMessages] = useState([]);
   const [tableError, setTableError] = useState(null);
+  const [tables, setTables] = useState([]);
   const employeeReconnectFailures = useRef(0);
+  const pendingDeleteIds = useRef(new Set());
+
+  const queueDeletedOrder = useCallback((orderId) => {
+    if (orderId) {
+      pendingDeleteIds.current.add(orderId);
+    }
+  }, []);
+
+  const applyPendingDeletes = useCallback((tableList = []) => {
+    if (pendingDeleteIds.current.size === 0) {
+      return tableList;
+    }
+    return tableList.map((table) => ({
+      ...table,
+      orders: (table.orders || []).filter(
+        (order) => !pendingDeleteIds.current.has(order._id)
+      ),
+    }));
+  }, []);
 
   const tableNum = useMemo(() => {
     const barTableMatch = location.pathname.match(/^\/bar\/table\/([^/]+)/);
@@ -86,6 +106,32 @@ export const WebSocketProvider = ({ children }) => {
       onMessage: (event) => {
         try {
           const messageData = JSON.parse(event.data);
+          if (messageData.type === "error") {
+            const errorText =
+              typeof messageData.payload === "string"
+                ? messageData.payload
+                : "Something went wrong";
+            notify(errorText);
+            return;
+          }
+
+          if (messageData.type === "allTables") {
+            const nextTables = applyPendingDeletes(messageData.payload || []);
+            pendingDeleteIds.current.clear();
+            setTables(nextTables);
+            setMessages((prev) => [...prev, { ...messageData, payload: nextTables }]);
+            return;
+          }
+
+          if (messageData.type === "orderSuccess" && !messageData.payload) {
+            setTables((prev) => {
+              const nextTables = applyPendingDeletes(prev);
+              pendingDeleteIds.current.clear();
+              return nextTables;
+            });
+            return;
+          }
+
           setMessages((prev) => [...prev, messageData]);
         } catch (error) {
           console.error("WebSocket message parse error:", error);
@@ -104,6 +150,8 @@ export const WebSocketProvider = ({ children }) => {
         lastMessage,
         tableNum,
         tableError,
+        tables,
+        queueDeletedOrder,
       }}
     >
       {children}

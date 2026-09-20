@@ -16,6 +16,9 @@ const CartModal = ({ closeModal }) => {
       try {
         const messageData = JSON.parse(lastMessage.data);
         if (messageData?.type === "orderSuccess") {
+          if (!messageData.payload) {
+            return;
+          }
           const tableMessages = messages.filter(
             (message) =>
              Number(message.tableNum) === Number(tableId) &&
@@ -23,7 +26,7 @@ const CartModal = ({ closeModal }) => {
           );
           if (tableMessages.length > 0) {
             const latestMessage = tableMessages[tableMessages.length - 1];
-            setOrders(latestMessage.payload.orders);
+            setOrders(latestMessage.payload?.orders ?? []);
           } else {
             console.log("No order messages found for table:", tableId);
           }
