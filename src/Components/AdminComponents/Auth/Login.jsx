@@ -1,10 +1,5 @@
 import React, { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import Table1 from "../../../data/QrCodes/table-1-qr-code.png";
-import Table2 from "../../../data/QrCodes/table-2-qr-code.png";
-import Table3 from "../../../data/QrCodes/table-3-qr-code.png";
-import Table4 from "../../../data/QrCodes/table-4-qr-code.png";
-import Table5 from "../../../data/QrCodes/table-5-qr-code.png";
 import { useAuth } from "../../../contexts/AuthContext";
 import api from "../../../services/api";
 import { consumeSessionMessage } from "../../../utils/notify";
@@ -112,33 +107,6 @@ const Login = () => {
           Login
         </button>
       </form>
-      <div className="bg-white dark:bg-secondary-dark-bg py-9 rounded-2xl shadow-md">
-        <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100 text-center">
-          Scan QR Code
-        </h2>
-        <div className="flex flex-wrap justify-center">
-          <div className="text-center font-semibold">
-            <h3>Table 1</h3>
-            <img src={Table1} alt="Table 1 QR Code" className="w-30 h-30" />
-          </div>
-          <div className="text-center font-semibold">
-            <h3>Table 2</h3>
-            <img src={Table2} alt="Table 2 QR Code" className="w-30 h-30" />
-          </div>
-          <div className="text-center font-semibold">
-            <h3>Table 3</h3>
-            <img src={Table3} alt="Table 3 QR Code" className="w-30 h-30" />
-          </div>
-          <div className="text-center font-semibold">
-            <h3>Table 4</h3>
-            <img src={Table4} alt="Table 4 QR Code" className="w-30 h-30" />
-          </div>
-          <div className="text-center font-semibold">
-            <h3>Table 5</h3>
-            <img src={Table5} alt="Table 5 QR Code" className="w-30 h-30" />
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
