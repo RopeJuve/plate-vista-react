@@ -47,15 +47,22 @@ export const WebSocketProvider = ({ children }) => {
 
   const tableNum = useMemo(() => {
     const barTableMatch = location.pathname.match(/^\/bar\/table\/([^/]+)/);
-    if (barTableMatch) {
-      return barTableMatch[1];
-    }
     const guestTableMatch = location.pathname.match(/^\/table\/([^/]+)/);
-    if (guestTableMatch) {
-      return guestTableMatch[1];
+    const rawTable = barTableMatch?.[1] || guestTableMatch?.[1] || "";
+    if (!rawTable) {
+      return "";
     }
-    return "";
+    if (!/^[1-9]\d*$/.test(rawTable)) {
+      return "invalid";
+    }
+    return rawTable;
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (tableNum === "invalid") {
+      setTableError("Invalid table, please scan the QR code again");
+    }
+  }, [tableNum]);
 
   const getSocketUrl = useCallback(async () => {
     if (authToken) {
@@ -63,7 +70,7 @@ export const WebSocketProvider = ({ children }) => {
       return buildSocketUrl(authToken, tableNum || undefined);
     }
 
-    if (tableNum) {
+    if (tableNum && tableNum !== "invalid") {
       try {
         const { data } = await api.post(`/auth/table/${tableNum}`);
         setTableError(null);
@@ -80,7 +87,7 @@ export const WebSocketProvider = ({ children }) => {
     return null;
   }, [authToken, tableNum]);
 
-  const shouldConnect = Boolean(authToken || tableNum);
+  const shouldConnect = Boolean(authToken || (tableNum && tableNum !== "invalid"));
 
   const { sendMessage, lastMessage, readyState, getWebSocket } = useWebSocket(
     getSocketUrl,
