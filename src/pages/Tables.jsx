@@ -1,32 +1,50 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { MdOutlineTableRestaurant } from "react-icons/md";
 import { fetchTables } from '../services/tableDataFetch';
 import { Header } from '../Components/AdminComponents';
 import { tableColors } from '../data/data';
 import { DialogComponent } from '@syncfusion/ej2-react-popups';
+import { notify } from '../utils/notify';
+import { useWebSocketContext } from '../contexts/WebSocketContext';
+
+const formatDateTime = (dateString) => {
+  if (!dateString) {
+    return "—";
+  }
+  const date = new Date(dateString);
+  return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+};
+
+const orderCount = (table) => {
+  if (!table?.orders) {
+    return 0;
+  }
+  return Array.isArray(table.orders) ? table.orders.length : 0;
+};
 
 const Tables = () => {
+  const { tables: liveTables } = useWebSocketContext();
   const [tables, setTables] = useState([]);
   const [selectedTable, setSelectedTable] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     fetchTables()
-      .then(response => setTables(response.data))
-      .catch(error => console.error("Error fetching tables:", error));
+      .then((response) => setTables(response.data || []))
+      .catch((error) => {
+        notify(error.response?.data?.message || "Could not load tables");
+      });
   }, []);
+
+  useEffect(() => {
+    if (liveTables?.length) {
+      setTables(liveTables);
+    }
+  }, [liveTables]);
 
   const handleTableClick = (table) => {
     setSelectedTable(table);
     setIsModalOpen(true);
-  };
-
-  // Function to format the date and time (Used help from Chat GPT :))
-  const formatDateTime = (dateString) => {
-    const date = new Date(dateString);
-    const formattedDate = date.toLocaleDateString();
-    const formattedTime = date.toLocaleTimeString();
-    return `${formattedDate} ${formattedTime}`;
   };
 
   return (
@@ -34,11 +52,13 @@ const Tables = () => {
       <Header title="Tables" />
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {tables.map((table, index) => (
-          <div
-            key={index}
-            className="e-card e-card-horizontal rounded-lg shadow-lg overflow-hidden flex items-center bg-white p-4" 
+          <button
+            type="button"
+            key={table._id || table.tableNumber}
+            className="e-card e-card-horizontal rounded-lg shadow-lg overflow-hidden flex items-center bg-white p-4 text-left"
             style={{ backgroundColor: tableColors[index % tableColors.length] }}
             onClick={() => handleTableClick(table)}
+            aria-label={`Open details for table ${table.tableNumber}`}
           >
             <div className="flex-shrink-0 mr-4">
               <MdOutlineTableRestaurant size={40} className="text-gray-700" />
@@ -52,11 +72,10 @@ const Tables = () => {
                 <p>Status: {table.status}</p>
               </div>
             </div>
-          </div>
+          </button>
         ))}
       </div>
 
-      {/* Dialog Popup with all the info from the API */}
       {selectedTable && (
         <DialogComponent
           style={{
@@ -73,9 +92,9 @@ const Tables = () => {
             <p><strong>Table Number:</strong> {selectedTable.tableNumber}</p>
             <p><strong>Capacity:</strong> {selectedTable.capacity}</p>
             <p><strong>Status:</strong> {selectedTable.status}</p>
-            <p><strong>Orders:</strong> {selectedTable.orders}</p>
-            <p><strong>Customers:</strong> {selectedTable.customers}</p>
-            <p><strong>Occupied from:</strong> {formatDateTime(selectedTable.createdAt)}</p>
+            <p><strong>Open orders:</strong> {orderCount(selectedTable)}</p>
+            <p><strong>Customers:</strong> {selectedTable.customers ?? 0}</p>
+            <p><strong>Created:</strong> {formatDateTime(selectedTable.createdAt)}</p>
             <p><strong>Updated at:</strong> {formatDateTime(selectedTable.updatedAt)}</p>
           </div>
         </DialogComponent>
