@@ -13,6 +13,7 @@ import { Header } from "../Components/AdminComponents";
 import { fetchEmployees } from "../services/employeeDataFetch";
 import { useNavigate } from "react-router-dom";
 import { useStateContext } from "../contexts/ContextProvider";
+import { notify } from "../utils/notify";
 
 const Employees = () => {
   const { currentColor } = useStateContext();
@@ -22,11 +23,8 @@ const Employees = () => {
   useEffect(() => {
     fetchEmployees()
       .then((response) => {
-        // to check if the data is coming from the API
-        console.log("API response data:", response.data);
-
         const transformedEmployees = response.data.map((employee) => ({
-          employeeId: 1234567, // Hardcoded for now
+          employeeId: employee._id,
           employee: employee.employee,
           email: employee.email,
           position: employee.position,
@@ -34,7 +32,7 @@ const Employees = () => {
         setEmployees(transformedEmployees);
       })
       .catch((error) => {
-        console.error("Error fetching employees:", error);
+        notify(error.response?.data?.message || "Could not load employees");
       });
   }, []);
 

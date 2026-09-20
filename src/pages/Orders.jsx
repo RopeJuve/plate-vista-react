@@ -5,6 +5,7 @@ import { fetchOrders } from "../services/orderDataFetch";
 import { Header } from "../Components/AdminComponents";
 import { DropDownButtonComponent } from '@syncfusion/ej2-react-splitbuttons';
 import { ORDER_STATUS } from "../constants/orderStatus";
+import { notify } from "../utils/notify";
 
 const PAGE_SIZE = 20;
 
@@ -28,8 +29,8 @@ const transformOrders = (orders = []) =>
       quantity: totalQuantity,
       totalPrice: order.totalPrice,
       orderStatus: order.orderStatus,
-      location: "Germany",
-      orderId: "1234567",
+      location: order.tableNumber ?? order.table?.tableNumber ?? "",
+      orderId: order._id,
     };
   });
 
@@ -49,6 +50,7 @@ const Orders = () => {
       })
       .catch((error) => {
         console.error("Error fetching orders:", error);
+        notify(error.response?.data?.message || "Could not load orders");
       });
   };
 

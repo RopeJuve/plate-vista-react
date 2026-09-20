@@ -10,7 +10,7 @@ import { useWebSocketContext } from '../../contexts/WebSocketContext';
 
 const UserProfile = () => {
   const { currentColor, setIsClicked, initialState } = useStateContext();
-  const { logout } = useAuth(); 
+  const { logout, user } = useAuth(); 
   const { resetWebSocket } = useWebSocketContext();
   const navigate = useNavigate();
 
@@ -45,14 +45,14 @@ const UserProfile = () => {
           alt="user-profile"
         />
         <div>
-          <p className="font-semibold text-xl dark:text-gray-200"> Petar Petrov </p>
-          <p className="text-gray-500 text-sm dark:text-gray-400">  Administrator </p>
-          <p className="text-gray-500 text-sm font-semibold dark:text-gray-400"> info@platevista.com</p>
+          <p className="font-semibold text-xl dark:text-gray-200">{user?.employee || "Staff"}</p>
+          <p className="text-gray-500 text-sm dark:text-gray-400">{user?.position || user?.role || "Employee"}</p>
+          <p className="text-gray-500 text-sm font-semibold dark:text-gray-400">{user?.email || ""}</p>
         </div>
       </div>
       <div>
-        {userProfileData.map((item, index) => (
-          <div key={index} className="flex gap-5 border-b-1 border-color p-4 hover:bg-light-gray cursor-pointer dark:hover:bg-[#42464D]">
+        {userProfileData.map((item) => (
+          <div key={item.title} className="flex gap-5 border-b-1 border-color p-4 hover:bg-light-gray cursor-pointer dark:hover:bg-[#42464D]">
             <button
               type="button"
               style={{ color: item.iconColor, backgroundColor: item.iconBg }}
