@@ -1,17 +1,14 @@
 import { useState, useEffect } from 'react';
-import { fetchOrders } from "../services/orderDataFetch";
-import { chartData, categorizedData } from "../data/data";
+import { fetchAllOrders } from "../services/orderDataFetch";
+import { categorizedData } from "../data/data";
 
 export const useFetchOrdersForCharts = () => {
   const [lineChartData, setLineChartData] = useState([]);
   const [totalIncome, setTotalIncome] = useState(0);
 
   useEffect(() => {
-    fetchOrders()
-      .then(response => {
-        const orders = response.data;
-
-        // This is for my total income
+    fetchAllOrders()
+      .then(({ orders }) => {
         const income = orders.reduce((acc, order) => acc + (order.totalPrice || 0), 0);
         setTotalIncome(income.toFixed(2));
 

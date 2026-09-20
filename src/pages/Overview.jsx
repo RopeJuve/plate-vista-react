@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { DropDownListComponent } from "@syncfusion/ej2-react-dropdowns";
 import { dropdownData } from "../data/data";
 import LineChart from "../components/AdminComponents/Charts/LineChart";
@@ -7,6 +7,7 @@ import { useStateContext } from "../contexts/ContextProvider";
 import { LinePrimaryXAxis, LinePrimaryYAxis } from "../data/data";
 import { useFetchOrdersForCharts } from "../utils/fetchOrdersForCharts";
 import { useNavigate } from "react-router-dom";
+import { fetchOrders } from "../services/orderDataFetch";
 
 const DropDown = ({ currentMode }) => (
   <div className="w-28 border-1 border-color px-2 py-1 rounded-md">
@@ -23,9 +24,20 @@ const DropDown = ({ currentMode }) => (
 );
 
 const Overview = () => {
-  const { currentColor, currentMode, totalOrders } = useStateContext();
+  const { currentColor, currentMode } = useStateContext();
   const { lineChartData, totalIncome } = useFetchOrdersForCharts();
+  const [totalOrders, setTotalOrders] = useState(0);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchOrders({ page: 1, limit: 1 })
+      .then((response) => {
+        setTotalOrders(response.data?.total ?? 0);
+      })
+      .catch((error) => {
+        console.error("Error fetching order total:", error);
+      });
+  }, []);
 
   const handleCardClick = (title) => {
     if (title === "Total Income") {

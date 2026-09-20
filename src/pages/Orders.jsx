@@ -5,40 +5,58 @@ import { fetchOrders } from "../services/orderDataFetch";
 import { Header } from "../Components/AdminComponents";
 import { DropDownButtonComponent } from '@syncfusion/ej2-react-splitbuttons';
 
+const PAGE_SIZE = 20;
+
+const transformOrders = (orders = []) =>
+  orders.map((order) => {
+    const menuItemsDetails = (order.menuItems || []).map((item) => ({
+      title: item.product?.title,
+      quantity: item?.quantity,
+    }));
+
+    const totalQuantity = menuItemsDetails.reduce(
+      (acc, item) => acc + (item.quantity || 0),
+      0
+    );
+
+    return {
+      user: order.user ? order.user.username : "Guest User",
+      menuItems: menuItemsDetails,
+      quantity: totalQuantity,
+      totalPrice: order.totalPrice,
+      orderStatus: order.orderStatus,
+      location: "Germany",
+      orderId: "1234567",
+    };
+  });
+
 const Orders = () => {
   const { currentColor } = useStateContext();
   const [orders, setOrders] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  useEffect(() => {
-    fetchOrders()
+  const loadOrders = (page) => {
+    fetchOrders({ page, limit: PAGE_SIZE })
       .then((response) => {
-        console.log("API response data:", response.data);
-
-        const transformedOrders = response.data.map((order) => {
- 
-          const menuItemsDetails = order.menuItems.map((item) => ({
-            title: item.product?.title,
-            quantity: item?.quantity,
-          }));
-
-          const totalQuantity = menuItemsDetails.reduce((acc, item) => acc + item.quantity, 0);
-
-          return {
-            user: order.user ? order.user.username : "Guest User",
-            menuItems: menuItemsDetails,
-            quantity: totalQuantity,
-            totalPrice: order.totalPrice,
-            orderStatus: order.orderStatus,
-            location: "Germany", // Hardcoded for now
-            orderId: "1234567", // Hardcoded for now
-          };
-        });
-        setOrders(transformedOrders);
+        const pageOrders = response.data?.orders ?? [];
+        setOrders(transformOrders(pageOrders));
+        setTotal(response.data?.total ?? pageOrders.length);
+        setCurrentPage(response.data?.page ?? page);
       })
       .catch((error) => {
         console.error("Error fetching orders:", error);
       });
+  };
+
+  useEffect(() => {
+    loadOrders(1);
   }, []);
+
+  const handleDataStateChange = (state) => {
+    const nextPage = Math.floor((state.skip || 0) / (state.take || PAGE_SIZE)) + 1;
+    loadOrders(nextPage);
+  };
 
   const toolbarOptions = ["Search"];
 
@@ -100,11 +118,12 @@ const Orders = () => {
       
       <Header title="Orders" />
       <GridComponent
-        dataSource={orders}
+        dataSource={{ result: orders, count: total }}
         allowPaging={true}
         allowSorting={true}
         toolbar={toolbarOptions}
-        pageSettings={{ pageSize: 20 }}
+        pageSettings={{ pageSize: PAGE_SIZE, currentPage }}
+        dataStateChange={handleDataStateChange}
         style={{ backgroundColor: currentColor }}
       >
         <ColumnsDirective>

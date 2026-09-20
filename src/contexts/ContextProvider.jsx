@@ -1,6 +1,4 @@
-import { Search } from "@syncfusion/ej2-react-dropdowns";
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { fetchOrders } from "../services/orderDataFetch";
+import React, { createContext, useContext, useState } from "react";
 
 const StateContext = createContext();
 
@@ -17,7 +15,6 @@ export const ContextProvider = ({ children }) => {
   const [themeSettings, setThemeSettings] = useState(false);
   const [activeMenu, setActiveMenu] = useState(true);
   const [isClicked, setIsClicked] = useState(initialState);
-  const [totalOrders, setTotalOrders] = useState(0);
 
   // I added new contexts for the search bar
   const [categories, setCategories] = useState([]);
@@ -40,17 +37,6 @@ export const ContextProvider = ({ children }) => {
   const handleClick = (clicked) =>
     setIsClicked({ ...initialState, [clicked]: true });
 
-  useEffect(() => {
-    fetchOrders()
-      .then((response) => {
-        const orders = response.data;
-        setTotalOrders(orders.length);
-      })
-      .catch((error) => {
-        console.error("Error fetching orders:", error);
-      });
-  }, []);
-
   return (
     <StateContext.Provider
       value={{
@@ -68,7 +54,6 @@ export const ContextProvider = ({ children }) => {
         setColor,
         themeSettings,
         setThemeSettings,
-        totalOrders,
         categories,
         setCategories,
         search,
