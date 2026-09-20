@@ -15,26 +15,51 @@ import {
 } from "../services/menuDataFetch";
 import { useStateContext } from "../contexts/ContextProvider";
 import { useAuth } from "../contexts/AuthContext";
+import { notify } from "../utils/notify";
+
+const EDITABLE_FIELDS = [
+  "title",
+  "description",
+  "price",
+  "image",
+  "category",
+  "popular",
+  "inStock",
+];
+
+const emptyItem = {
+  title: "",
+  price: "",
+  category: "",
+  description: "",
+  image: "",
+  popular: false,
+  inStock: true,
+};
+
+const appendEditableFields = (formData, info) => {
+  EDITABLE_FIELDS.forEach((key) => {
+    if (key === "image" && (!info.image || typeof info.image === "string")) {
+      if (typeof info.image === "string" && info.image) {
+        formData.append("image", info.image);
+      }
+      return;
+    }
+    if (info[key] === undefined || info[key] === null) {
+      return;
+    }
+    formData.append(key, info[key]);
+  });
+};
+
 const Menu = () => {
   const { currentColor } = useStateContext();
   const { restaurantId } = useAuth();
   const [dialogVisible, setDialogVisible] = useState(false);
   const [isAddingNewItem, setIsAddingNewItem] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
-  const [editInfo, setEditInfo] = useState({
-    title: "",
-    price: "",
-    category: "",
-    description: "",
-    image: "",
-  });
-  const [newItemInfo, setNewItemInfo] = useState({
-    title: "",
-    price: 0,
-    category: "",
-    description: "",
-    image: "",
-  });
+  const [editInfo, setEditInfo] = useState(emptyItem);
+  const [newItemInfo, setNewItemInfo] = useState(emptyItem);
   const [menuItems, setMenuItems] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -42,16 +67,28 @@ const Menu = () => {
   useEffect(() => {
     fetchMenuItems(restaurantId)
       .then((response) => setMenuItems(response.data))
-      .catch((error) => console.error("Error fetching menu items:", error));
+      .catch((error) =>
+        notify(error.response?.data?.message || "Could not load menu items")
+      );
 
     fetchCategories(restaurantId)
       .then((response) => setCategories(response.data))
-      .catch((error) => console.error("Error fetching categories:", error));
-  }, []);
+      .catch((error) =>
+        notify(error.response?.data?.message || "Could not load categories")
+      );
+  }, [restaurantId]);
 
   const openDialog = (item) => {
     setSelectedItem(item);
-    setEditInfo(item);
+    setEditInfo({
+      title: item.title || "",
+      price: item.price || "",
+      category: item.category || "",
+      description: item.description || "",
+      image: item.image || "",
+      popular: Boolean(item.popular),
+      inStock: item.inStock !== false,
+    });
     setDialogVisible(true);
   };
 
@@ -68,91 +105,80 @@ const Menu = () => {
   };
 
   const handleChange = (e) => {
-    const { name, value, files } = e.target;
-    console.log("name", name);
-    console.log("value", value);
-    console.log("files", files);
+    const { name, value, files, type, checked } = e.target;
     if (name === "image" && files && files[0]) {
       setEditInfo((prev) => ({
         ...prev,
         image: files[0],
       }));
-    } else {
-      setEditInfo((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
+      return;
     }
+    setEditInfo((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
 
   const handleSave = async () => {
-    if (selectedItem) {
-      console.log("selectedItem", selectedItem);
-      console.log("editInfo", editInfo);
-      try {
-        const formData = new FormData();
-
-        Object.keys(editInfo).forEach((key) => {
-          if (key === "image" && !editInfo.image) return;
-          formData.append(key, editInfo[key]);
-        });
-        console.log("formData", formData);
-        const response = await updateMenuItem(
-          selectedItem._id,
-          formData,
-          restaurantId
-        );
-
-        const updatedMenuItems = menuItems.map((item) =>
+    if (!selectedItem) {
+      return;
+    }
+    try {
+      const formData = new FormData();
+      appendEditableFields(formData, editInfo);
+      const response = await updateMenuItem(
+        selectedItem._id,
+        formData,
+        restaurantId
+      );
+      setMenuItems((prev) =>
+        prev.map((item) =>
           item._id === selectedItem._id ? response.data : item
-        );
-
-        setMenuItems(updatedMenuItems);
-        setEditInfo({
-          title: "",
-          price: "",
-          category: "",
-          description: "",
-          image: "",
-        });
-        setDialogVisible(false);
-      } catch (error) {
-        console.error("Error saving item:", error);
-      }
+        )
+      );
+      setEditInfo(emptyItem);
+      setDialogVisible(false);
+      notify("Menu item updated", "success");
+    } catch (error) {
+      notify(error.response?.data?.message || "Could not save menu item");
     }
   };
 
   const handleNewItemChange = (e) => {
-    const { name, value } = e.target;
-    setNewItemInfo({ ...newItemInfo, [name]: value });
+    const { name, value, type, checked } = e.target;
+    setNewItemInfo((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
 
   const handleAddNewItem = async () => {
     try {
-      const response = await addMenuItem(newItemInfo, restaurantId);
-      setMenuItems([...menuItems, response.data]);
-      setNewItemInfo({
-        title: "",
-        price: 0,
-        category: "",
-        description: "",
-        image: "",
-      });
+      const formData = new FormData();
+      appendEditableFields(formData, newItemInfo);
+      const response = await addMenuItem(formData, restaurantId);
+      setMenuItems((prev) => [...prev, response.data]);
+      setNewItemInfo(emptyItem);
       setIsAddingNewItem(false);
+      notify("Menu item added", "success");
     } catch (error) {
-      console.error("Error adding new item:", error);
+      notify(error.response?.data?.message || "Could not add menu item");
     }
   };
 
   const handleDelete = async (itemToDelete) => {
+    const confirmed = window.confirm(`Delete "${itemToDelete.title}"?`);
+    if (!confirmed) {
+      return;
+    }
     try {
       await deleteMenuItem(itemToDelete._id, restaurantId);
-      const updatedMenuItems = menuItems.filter(
-        (item) => item._id !== itemToDelete._id
+      setMenuItems((prev) =>
+        prev.filter((item) => item._id !== itemToDelete._id)
       );
-      setMenuItems(updatedMenuItems);
+      notify("Menu item deleted", "success");
     } catch (error) {
-      console.error("Error deleting item:", error);
+      notify(error.response?.data?.message || "Could not delete menu item");
     }
   };
 
@@ -168,9 +194,10 @@ const Menu = () => {
     <div className="flex flex-col p-8">
       <div className="mb-4">
         <div className="flex overflow-x-auto bg-gray-200 p-2 rounded-md shadow-md w-full">
-          {categories.map((category, index) => (
+          {categories.map((category) => (
             <button
-              key={index}
+              key={category}
+              type="button"
               onClick={() => handleCategoryClick(category)}
               className={`flex-grow px-4 py-2 rounded-md mx-2 text-sm font-semibold text-center ${
                 selectedCategory === category
@@ -208,10 +235,10 @@ const Menu = () => {
             Add New Item
           </button>
         </div>
-        {filteredMenuItems.map((item, index) => (
+        {filteredMenuItems.map((item) => (
           <div
             className="e-card e-card-horizontal rounded-lg shadow-lg overflow-hidden"
-            key={index}
+            key={item._id}
           >
             <div className="e-card-image">
               <img
@@ -227,6 +254,10 @@ const Menu = () => {
                   <div className="e-card-sub-title">Price: {item.price}</div>
                   <div className="e-card-sub-title">
                     Category: {item.category}
+                  </div>
+                  <div className="e-card-sub-title">
+                    {item.inStock === false ? "Out of stock" : "In stock"}
+                    {item.popular ? " · Popular" : ""}
                   </div>
                 </div>
               </div>
@@ -389,6 +420,24 @@ const Menu = () => {
                 }}
               />
             </div>
+            <label className="mb-2 flex items-center gap-2">
+              <input
+                type="checkbox"
+                name="inStock"
+                checked={Boolean(editInfo.inStock)}
+                onChange={handleChange}
+              />
+              In stock
+            </label>
+            <label className="mb-2 flex items-center gap-2">
+              <input
+                type="checkbox"
+                name="popular"
+                checked={Boolean(editInfo.popular)}
+                onChange={handleChange}
+              />
+              Popular
+            </label>
           </div>
         </DialogComponent>
       )}
@@ -498,6 +547,24 @@ const Menu = () => {
                 }}
               />
             </div>
+            <label className="mb-2 flex items-center gap-2">
+              <input
+                type="checkbox"
+                name="inStock"
+                checked={Boolean(newItemInfo.inStock)}
+                onChange={handleNewItemChange}
+              />
+              In stock
+            </label>
+            <label className="mb-2 flex items-center gap-2">
+              <input
+                type="checkbox"
+                name="popular"
+                checked={Boolean(newItemInfo.popular)}
+                onChange={handleNewItemChange}
+              />
+              Popular
+            </label>
           </div>
         </DialogComponent>
       )}
