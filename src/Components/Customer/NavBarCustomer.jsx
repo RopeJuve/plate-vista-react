@@ -7,10 +7,12 @@ import mainlogoLight from "../../data/mainlogoLight.svg";
 import mainlogoDark from "../../data/mainlogoDark.svg";
 import api from "../../services/api";
 import MenuItemCard from "./MenuItemCard";
+import { notify } from "../../utils/notify";
 
 const NavBarCustomer = ({ tableNum, connectionStatus }) => {
   const { search, setSearch } = useStateContext();
   const [meals, setMeals] = useState([]);
+  const [menuOpen, setMenuOpen] = useState(false);
   const { currentMode } = useStateContext();
 
   useEffect(() => {
@@ -19,7 +21,7 @@ const NavBarCustomer = ({ tableNum, connectionStatus }) => {
         const { data } = await api.get("/menu-items");
         setMeals(data);
       } catch (error) {
-        console.error(error);
+        notify(error.response?.data?.message || "Could not load menu items");
       }
     };
     getMeals();
@@ -41,34 +43,45 @@ const NavBarCustomer = ({ tableNum, connectionStatus }) => {
           />
           <TableIcon tableNum={tableNum} connectionStatus={connectionStatus} />
         </div>
-        <div className={`w-[1.5rem] h-[1.rem] cursor-pointer ${currentMode === "Dark" ? " text-white" : "bg-white text-black"}`}>
+        <button
+          type="button"
+          aria-label={menuOpen ? "Hide search" : "Show search"}
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen((open) => !open)}
+          className={`w-6 h-6 cursor-pointer ${currentMode === "Dark" ? " text-white" : "bg-white text-black"}`}
+        >
           <RxHamburgerMenu className="w-full h-full" />
-        </div>
+        </button>
       </div>
 
-      <div className="w-full px-6">
-        <div className={`flex items-center gap-2 border border-gray-500 rounded-xl p-1 ${currentMode === "Dark" ? "bg-gray-500 text-white" : "bg-white text-black"}`}>
-          <BsSearch className="w-5 h-5" />
-          <input
-            className="flex-grow outline-none bg-transparent"
-            type="text"
-            name="search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search for meals or ingredients"
-          />
-        </div>
-      </div>
+      {menuOpen && (
+        <>
+          <div className="w-full px-6">
+            <div className={`flex items-center gap-2 border border-gray-500 rounded-xl p-1 ${currentMode === "Dark" ? "bg-gray-500 text-white" : "bg-white text-black"}`}>
+              <BsSearch className="w-5 h-5" />
+              <input
+                className="flex-grow outline-none bg-transparent"
+                type="text"
+                name="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search for meals or ingredients"
+                aria-label="Search for meals or ingredients"
+              />
+            </div>
+          </div>
 
-      <div className="mt-4 grid grid-cols-1 gap-4">
-        {search && filteredMeals.length > 0 ? (
-          filteredMeals.map(meal => (
-            <MenuItemCard key={meal._id} item={meal} />
-          ))
-        ) : (
-          search && <div className="text-gray-500">No results found</div>
-        )}
-      </div>
+          <div className="mt-4 grid grid-cols-1 gap-4">
+            {search && filteredMeals.length > 0 ? (
+              filteredMeals.map(meal => (
+                <MenuItemCard key={meal._id} item={meal} />
+              ))
+            ) : (
+              search && <div className="text-gray-500">No results found</div>
+            )}
+          </div>
+        </>
+      )}
     </>
   );
 };

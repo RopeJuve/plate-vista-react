@@ -49,7 +49,9 @@ const Orders = () => {
         setCurrentPage(response.data?.page ?? page);
       })
       .catch((error) => {
-        console.error("Error fetching orders:", error);
+        if (import.meta.env.DEV) {
+          console.error("Error fetching orders:", error);
+        }
         notify(error.response?.data?.message || "Could not load orders");
       });
   };

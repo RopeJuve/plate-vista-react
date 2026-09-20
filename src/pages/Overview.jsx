@@ -36,7 +36,9 @@ const Overview = () => {
         setTotalOrders(response.data?.total ?? 0);
       })
       .catch((error) => {
-        console.error("Error fetching order total:", error);
+        if (import.meta.env.DEV) {
+          console.error("Error fetching order total:", error);
+        }
         notify(error.response?.data?.message || "Could not load order total");
       });
   }, []);
@@ -66,19 +68,20 @@ const Overview = () => {
       <div className="flex flex-wrap lg:flex-nowrap justify-center">
         <div className="flex m-3 flex-wrap justify-center gap-4 items-center w-full">
           {updatedEarningData.map((item) => (
-            <div
+            <button
+              type="button"
               onClick={() => handleCardClick(item.title)}
               key={item.title}
-              className="h-54 p-8 pt-9 rounded-2xl w-72 md:w-400 relative"
+              className="h-54 p-8 pt-9 rounded-2xl w-72 md:w-400 relative text-left"
               style={{
                 backgroundColor: item.bgColor,
                 color: item.textColor,
                 cursor: "pointer",
               }}
+              aria-label={`${item.title} ${item.amount}`}
             >
               <div className="flex items-start">
-                <button
-                  type="button"
+                <span
                   style={{
                     color: item.iconColor,
                     backgroundColor: item.iconBg,
@@ -86,7 +89,7 @@ const Overview = () => {
                   className="text-2xl opacity-0.9 rounded-full p-4 hover:drop-shadow-xl"
                 >
                   <item.icon />
-                </button>
+                </span>
                 <div className="ml-4">
                   <p className="text-xl font-semibold">{item.title}</p>
                   <p className="text-sm mt-1">{item.name}</p>
@@ -95,7 +98,7 @@ const Overview = () => {
               <p className="text-lg font-semibold absolute bottom-4 right-4">
                 {item.amount}
               </p>
-            </div>
+            </button>
           ))}
         </div>
       </div>

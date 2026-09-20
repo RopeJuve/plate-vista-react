@@ -3,6 +3,7 @@ import api from "../../services/api";
 import CategoryCustomer from "./CategoryCustomer";
 import SkeletonList from "./SkeletonList";
 import { useStateContext } from "../../contexts/ContextProvider";
+import { notify } from "../../utils/notify";
 
 const CategoriesCustomer = ({ selectedCategory, setSelectedCategory }) => {
   const { categories, setCategories, search } = useStateContext();
@@ -17,7 +18,7 @@ const CategoriesCustomer = ({ selectedCategory, setSelectedCategory }) => {
         setIsLoading(false);
       } catch (error) {
         setIsLoading(false);
-        console.error(error);
+        notify(error.response?.data?.message || "Could not load categories");
       }
     };
     getCategories();

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../../services/api";
 import BarMenuItem from "./BarMenuItem";
+import { notify } from "../../utils/notify";
 
 const BarMenuItems = ({ category }) => {
   const [menuItems, setMenuItems] = useState([]);
@@ -12,7 +13,7 @@ const BarMenuItems = ({ category }) => {
         });
         setMenuItems(data);
       } catch (error) {
-        console.log("Error fetching menu items", error);
+        notify(error.response?.data?.message || "Could not load menu items");
       }
     };
     fetchMenuItems();

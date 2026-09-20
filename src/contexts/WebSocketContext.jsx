@@ -147,7 +147,9 @@ export const WebSocketProvider = ({ children }) => {
             [messageData.type]: messageData,
           }));
         } catch (error) {
-          console.error("WebSocket message parse error:", error);
+          if (import.meta.env.DEV) {
+            console.error("WebSocket message parse error:", error);
+          }
         }
       },
     },
