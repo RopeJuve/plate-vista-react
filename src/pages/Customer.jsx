@@ -15,7 +15,7 @@ import { FiSettings } from "react-icons/fi";
 import ThemeSettings from "../Components/AdminComponents/ThemeSettings";
 
 const Customer = () => {
-  const { tableNum, setTableNum, readyState } = useWebSocketContext();
+  const { tableNum, setTableNum, readyState, tableError } = useWebSocketContext();
   const [selectedCategory, setSelectedCategory] = useState("beer");
   const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -42,6 +42,16 @@ const Customer = () => {
     };
     getItems();
   }, [selectedCategory]);
+
+  if (tableError) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 px-6 text-center">
+        <p className="text-lg font-semibold text-gray-800" role="alert">
+          {tableError}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <CartProvider>

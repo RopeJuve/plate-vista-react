@@ -12,7 +12,6 @@ const OrderDetails = () => {
     sendMessage,
     readyState,
     lastMessage,
-    setUserId,
     tableNum,
     messages,
     setTableNum,
@@ -21,9 +20,8 @@ const OrderDetails = () => {
   const [orders, setOrders] = useState([]);
   const [visibleOrders, setVisibleOrders] = useState({});
   useEffect(() => {
-    if (userData) {
+    if (tableId) {
       setTableNum(tableId);
-      setUserId(userData.user.id);
     }
     if (lastMessage) {
       try {
