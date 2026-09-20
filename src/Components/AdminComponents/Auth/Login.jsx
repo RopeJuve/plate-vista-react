@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate, Link, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Table1 from "../../../data/QrCodes/table-1-qr-code.png";
 import Table2 from "../../../data/QrCodes/table-2-qr-code.png";
 import Table3 from "../../../data/QrCodes/table-3-qr-code.png";
@@ -111,33 +111,6 @@ const Login = () => {
         >
           Login
         </button>
-        <button
-          type="button"
-          className="bg-dark-yellow-bg hover:bg-yellow-600 text-white py-3 px-6 rounded-md w-full mt-2"
-          onClick={() => {
-            setUsername("Admin 1");
-            setPassword("admin");
-          }}
-        >
-          Login as Admin
-        </button>
-        <button
-          type="button"
-          className="bg-dark-yellow-bg hover:bg-yellow-600 text-white py-3 px-6 rounded-md w-full mt-2"
-          onClick={() => {
-            setUsername("Bartender");
-            setPassword("1234567");
-          }}
-        >
-          Login as Bar
-        </button>
-
-        <p className="mt-6 text-gray-600 dark:text-gray-300 text-center">
-          Don't have an account?{" "}
-          <Link to="/register" className="text-dark-yellow-bg hover:underline">
-            Register
-          </Link>
-        </p>
       </form>
       <div className="bg-white dark:bg-secondary-dark-bg py-9 rounded-2xl shadow-md">
         <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100 text-center">
