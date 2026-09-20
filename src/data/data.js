@@ -1,11 +1,11 @@
 import React from "react";
-import { FiBarChart2, FiTrendingUp, FiPieChart, FiCreditCard, FiStar, FiShoppingCart } from "react-icons/fi";
+import { FiBarChart2, FiTrendingUp, FiPieChart, FiCreditCard } from "react-icons/fi";
 import { FaMedal } from "react-icons/fa";
 import { GiHotMeal } from "react-icons/gi";
 import { MdOutlineQrCode2 } from "react-icons/md";
 import { AiOutlineFileText, AiOutlineCalendar, AiOutlineShoppingCart } from "react-icons/ai";
 import { FaBowlFood } from "react-icons/fa6";
-import { BsPerson, BsCurrencyDollar, BsShield, BsChatLeft, BsKanban } from "react-icons/bs";
+import { BsPerson, BsCurrencyDollar, BsShield, BsKanban } from "react-icons/bs";
 import { MdRestaurantMenu, MdOutlineTableRestaurant } from "react-icons/md";
 import { IoMdPeople } from "react-icons/io";
 import { FaDollarSign } from "react-icons/fa";

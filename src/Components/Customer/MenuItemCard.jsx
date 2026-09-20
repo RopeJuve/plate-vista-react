@@ -5,7 +5,7 @@ import { useStateContext } from "../../contexts/ContextProvider";
 
 const MenuItemCard = ({ item }) => {
   const [showMore, setShowMore] = useState(false);
-  const [quantity, setQuantity] = useState(1);
+  const [quantity] = useState(1);
   const { addToCart } = useCart();
   const { currentColor, currentMode } = useStateContext();
 

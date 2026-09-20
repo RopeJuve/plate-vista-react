@@ -12,7 +12,6 @@ import {
 import { Header } from "../Components/AdminComponents";
 import { fetchEmployees } from "../services/employeeDataFetch";
 import { useNavigate } from "react-router-dom";
-import { ButtonComponent } from "@syncfusion/ej2-react-buttons";
 import { useStateContext } from "../contexts/ContextProvider";
 
 const Employees = () => {

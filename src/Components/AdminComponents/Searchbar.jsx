@@ -7,7 +7,7 @@ import { useStateContext } from "../../contexts/ContextProvider";
 const Searchbar = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredEmployees, setFilteredEmployees] = useState([]);
-  const { currentColor, setIsClicked, initialState } = useStateContext();
+  const { setIsClicked, initialState } = useStateContext();
 
   const handleSearchChange = (e) => {
     const requirement = e.target.value;

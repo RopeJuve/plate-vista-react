@@ -4,7 +4,6 @@ import { lineCustomSeries, LinePrimaryXAxis, LinePrimaryYAxis } from '../../../d
 import { useStateContext } from '../../../contexts/ContextProvider';
 
 const ColumnChart = () => {
-    
     const { currentMode } = useStateContext();
 
     return (
@@ -15,7 +14,7 @@ const ColumnChart = () => {
     primaryYAxis={LinePrimaryYAxis}
     chartArea={{ border: { width: 0 } }}
     tooltip={{ enable: true }}
-    // background={currentMode === 'Dark' ? '#33373E' : '#fff'}
+    background={currentMode === 'Dark' ? '#33373E' : '#fff'}
     >
       <Inject services= {[LineSeries, DateTime, Legend, Tooltip]} />
       <SeriesCollectionDirective>

@@ -88,13 +88,6 @@ const Orders = () => {
   };
 
     
-    const statusColorMap = {
-    [ORDER_STATUS.PROCESSING]: "#FF0000",
-    [ORDER_STATUS.PENDING]: "#FFA500",
-    [ORDER_STATUS.COMPLETE]: "#008000",
-    };
-  
-    
     const statusColorTemplate = (props) => {
       const statusColorClasses = {
         [ORDER_STATUS.PROCESSING]: "bg-red-500 text-gray-100",

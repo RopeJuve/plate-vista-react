@@ -1,9 +1,7 @@
 import React from "react";
 import { Link, NavLink } from "react-router-dom";
-import { IoRestaurantOutline } from "react-icons/io5";
 import { MdOutlineCancel } from "react-icons/md";
 import { TooltipComponent } from "@syncfusion/ej2-react-popups";
-import { IoRestaurant } from "react-icons/io5";
 import { useStateContext } from "../../contexts/ContextProvider";
 import mainlogoLight from "./../../data/mainlogoLight.svg";
 import mainlogoDark from "./../../data/mainlogoDark.svg";
