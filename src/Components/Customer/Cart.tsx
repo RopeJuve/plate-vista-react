@@ -3,24 +3,33 @@ import { ShoppingCart } from "lucide-react";
 import { useCart } from "../../contexts/CartContext";
 import CartModal from "./CartModal";
 import { useStateContext } from "../../contexts/ContextProvider";
+import { useMenu } from "../../features/guest-ordering/MenuProvider";
+import { formatCents, lineTotalCents, sumCents } from "../../shared/money/formatCents";
 
 const Cart = () => {
   const { cart } = useCart();
+  const { itemsById } = useMenu();
   const [showCart, setShowCart] = useState(false);
   const { currentColor } = useStateContext();
+  const count = cart.reduce((total, item) => total + item.quantity, 0);
+  const totalCents = sumCents(
+    cart.map((line) => lineTotalCents(itemsById[line.productId]?.priceCents ?? 0, line.quantity))
+  );
+
   return (
     <>
-      <div
-        className="fixed bottom-[1rem] right-[0.5rem] z-50 w-10 h-10 rounded-full cursor-pointer p-7 shadow-bg-light-gray shadow-lg"
+      <button
+        type="button"
+        className="fixed bottom-4 right-4 z-40 flex min-h-14 items-center gap-3 rounded-full px-5 py-3 text-white shadow-lg"
         style={{ background: currentColor }}
-        onClick={() => setShowCart(!showCart)}
+        onClick={() => setShowCart(true)}
+        aria-label={`Open cart, ${count} items, ${formatCents(totalCents)}`}
       >
-        <ShoppingCart className="h-8 w-8 text-white translate-x-[-50%] translate-y-[-50%] relative" />
-        {cart.length > 0 && (<div
-          className="absolute z-[50] top-0 right-0 text-[0.725rem] bg-red-500 text-white w-4 h-4 rounded-full flex items-center justify-center"
-        >{cart.reduce((total, item) => total + (item.quantity || 0), 0)}</div>)}
-        {showCart && <CartModal items={cart} closeModal={setShowCart} />}
-      </div>
+        <ShoppingCart className="h-7 w-7" />
+        <span className="text-sm font-semibold">{count}</span>
+        <span className="text-sm font-semibold">{formatCents(totalCents)}</span>
+      </button>
+      {showCart && <CartModal closeModal={setShowCart} />}
     </>
   );
 };

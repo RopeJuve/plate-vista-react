@@ -1,6 +1,12 @@
 import { Euro } from "lucide-react";
 
-const OrderItem = ({ item }) => {
+type OrderLine = {
+  _id?: string;
+  quantity?: number;
+  product?: { title?: string; price?: number | string };
+};
+
+const OrderItem = ({ item }: { item: { menuItems?: OrderLine[] } }) => {
   return (
     <div className="space-y-1 w-[80%]">
       {(item.menuItems || []).map((menuItem) => (

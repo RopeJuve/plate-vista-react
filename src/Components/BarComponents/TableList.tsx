@@ -1,41 +1,17 @@
-import { useEffect, useState } from "react";
 import Table from "./Table";
-import { fetchTables } from "../../services/tableDataFetch";
-import { notify } from "../../utils/notify";
-import { useWebSocketContext } from "../../contexts/WebSocketContext";
-import { RestaurantTable } from "../../types";
+import { useStaffBoard } from "../../features/staff-board/StaffBoardProvider";
 
 const TableList = () => {
-  const { tables: liveTables } = useWebSocketContext();
-  const [tables, setTables] = useState<RestaurantTable[]>([]);
-
-  useEffect(() => {
-    const tablesData = async () => {
-      try {
-        const { data } = await fetchTables();
-        setTables(data || []);
-      } catch (error) {
-        notify(error.response?.data?.message || "Could not load tables");
-      }
-    };
-    tablesData();
-  }, []);
-
-  useEffect(() => {
-    if (liveTables?.length) {
-      setTables(liveTables);
-    }
-  }, [liveTables]);
+  const { state } = useStaffBoard();
+  const tables = Object.values(state.tablesById).sort((a, b) => a.tableNumber - b.tableNumber);
 
   return (
-    <div className="p-10 grid gap-20 grid-flow-row auto-rows-max grid-cols-table border-t-1 border-t-gray-500 md:h-screen">
+    <div className="grid auto-rows-max grid-flow-row grid-cols-table gap-20 border-t-1 border-t-gray-500 p-10 md:h-screen">
       {tables.map((table) => (
-        <Table
-          key={table._id}
-          tableNum={table.tableNumber}
-          status={table.status}
-        />
+        <Table key={table._id} tableId={table._id} tableNumber={table.tableNumber} status={table.status} />
       ))}
+      {!state.ready && <p className="text-gray-300">Connecting…</p>}
+      {state.ready && tables.length === 0 && <p className="text-gray-300">No tables yet</p>}
     </div>
   );
 };

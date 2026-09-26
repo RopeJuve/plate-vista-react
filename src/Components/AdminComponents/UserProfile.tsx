@@ -5,16 +5,16 @@ import { useStateContext } from "../../contexts/ContextProvider";
 import avatar from "../../data/avatar.jpg";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import { useWebSocketContext } from "../../contexts/WebSocketContext";
+import { useRealtime } from "../../shared/realtime/RealtimeProvider";
 
 const UserProfile = () => {
   const { currentColor, setIsClicked, initialState } = useStateContext();
   const { logout, user } = useAuth();
-  const { resetWebSocket } = useWebSocketContext();
+  const { disconnect } = useRealtime();
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    resetWebSocket();
+    disconnect();
     logout();
     navigate("/");
     setIsClicked(initialState);

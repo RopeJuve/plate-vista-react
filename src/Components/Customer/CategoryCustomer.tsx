@@ -4,6 +4,10 @@ const CategoryCustomer = ({
   category,
   setSelectedCategory,
   selectedCategory,
+}: {
+  category: string;
+  setSelectedCategory: (category: string) => void;
+  selectedCategory: string;
 }) => {
   const { currentColor } = useStateContext();
   const categoryClass =
@@ -15,7 +19,7 @@ const CategoryCustomer = ({
     <button
       id={`${category}`}
       className={`${categoryClass}`}
-      onClick={(e) => setSelectedCategory(e.target.id)}
+      onClick={(event) => setSelectedCategory(event.currentTarget.id)}
       style={{
         backgroundColor:
           selectedCategory === category ? currentColor : "",

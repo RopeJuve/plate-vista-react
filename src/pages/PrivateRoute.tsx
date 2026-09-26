@@ -5,11 +5,14 @@ import api from "../services/api";
 import Loading from "./Loading";
 import { User } from "../types";
 
-const isRoleAllowed = (user, allowedRoles: string[] = []) => {
+const isRoleAllowed = (user: User | null, allowedRoles: string[] = []) => {
   if (!user) {
     return false;
   }
-  return allowedRoles.includes(user.position) || allowedRoles.includes(user.role);
+  return Boolean(
+    (user.position && allowedRoles.includes(user.position)) ||
+      (user.role && allowedRoles.includes(user.role))
+  );
 };
 
 const PrivateRoute = ({ allowedRoles }: { allowedRoles?: string[] }) => {

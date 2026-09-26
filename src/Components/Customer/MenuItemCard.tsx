@@ -1,54 +1,40 @@
-import { useState } from "react";
 import { ShoppingCart } from "lucide-react";
 import { useCart } from "../../contexts/CartContext";
 import { useStateContext } from "../../contexts/ContextProvider";
-import { MenuItem } from "../../types";
+import type { MenuRecord } from "../../features/guest-ordering/menu";
+import { formatCents } from "../../shared/money/formatCents";
 
-const MenuItemCard = ({ item }: { item: MenuItem }) => {
-  const [showMore, setShowMore] = useState(false);
-  const [quantity] = useState(1);
-  const { addToCart } = useCart();
+const MenuItemCard = ({ item }: { item: MenuRecord }) => {
+  const { addLine } = useCart();
   const { currentColor, currentMode } = useStateContext();
+  const unavailable = !item.inStock || item.archived;
 
   return (
     <div
-      className={`flex items-center gap-4 shadow-md rounded-lg py-4 px-2 ${
+      className={`flex items-center gap-4 rounded-lg px-2 py-4 shadow-md ${
         currentMode === "Dark" ? "bg-gray-500 text-white" : "bg-white text-black"
-      }`}
+      } ${unavailable ? "opacity-60" : ""}`}
     >
-      <div className="w-16 h-16 rounded-lg flex-shrink-0">
-        <img
-          src={item.image}
-          alt={item.title}
-          className="w-full h-full object-cover rounded-lg"
-        />
+      <div className="h-16 w-16 flex-shrink-0 rounded-lg">
+        {item.image ? (
+          <img src={item.image} alt={item.title} className="h-full w-full rounded-lg object-cover" />
+        ) : (
+          <div className="h-full w-full rounded-lg bg-slate-200" />
+        )}
       </div>
-      <div className="flex flex-col gap-1 flex-grow">
-        <div className="flex items-center justify-between flex-wrap">
-          <h3 className="font-semibold text-base flex-shrink-0">{item.title}</h3>
-          <p className="font-semibold text-base">{item.price}€</p>
+      <div className="flex flex-grow flex-col gap-1">
+        <div className="flex flex-wrap items-center justify-between">
+          <h3 className="text-base font-semibold">{item.title}</h3>
+          <p className="text-base font-semibold">{formatCents(item.priceCents)}</p>
         </div>
-        <p className={`text-gray-500 text-[0.725rem] text-pretty max-w-[85%] ${
-        currentMode === "Dark" ? "bg-gray-500 text-white" : "bg-white text-black"
-      }`}>
-          {showMore || (item.description || "").length <= 35
-            ? item.description
-            : `${item.description.substring(0, 35)}...`}
-          <button
-            className="ml-1 font-semibold"
-            onClick={() => setShowMore(!showMore)}
-            style={{ color: currentColor }}
-          >
-            {showMore ? "Less" : "More"}
-          </button>
-        </p>
+        {item.description && <p className="max-w-[85%] text-[0.725rem] text-pretty text-gray-500">{item.description}</p>}
+        {unavailable && <p className="text-sm text-red-600">Out of stock</p>}
         <button
-          className="self-end w-6 h-6"
-          onClick={() => addToCart({
-            ...item,
-            quantity,
-            price: item.price,
-          })}
+          type="button"
+          className="h-11 w-11 self-end"
+          onClick={() => addLine(item._id)}
+          disabled={unavailable}
+          aria-label={`Add ${item.title} to cart`}
         >
           <ShoppingCart className="h-6 w-6" style={{ color: currentColor }} />
         </button>

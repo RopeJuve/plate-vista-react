@@ -16,11 +16,24 @@ export const registerSchema = z.object({
 
 export type RegisterValues = z.infer<typeof registerSchema>;
 
+export const restaurantRegisterSchema = z.object({
+  restaurantName: z.string().min(1, "Restaurant name is required"),
+  slug: z
+    .string()
+    .min(2, "Slug is too short")
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Use lowercase letters, numbers, and hyphens"),
+  ownerName: z.string().min(1, "Owner name is required"),
+  email: z.string().email("Enter a valid email"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
+
+export type RestaurantRegisterValues = z.infer<typeof restaurantRegisterSchema>;
+
 const imageValue = z.union([z.instanceof(File), z.string().min(1)]);
 
 export const menuItemSchema = z.object({
   title: z.string().min(1, "Title is required"),
-  price: z.coerce.number().positive("Price must be greater than 0"),
+  price: z.number().positive("Price must be greater than 0"),
   category: z.string().min(1, "Category is required"),
   description: z.string().optional(),
   popular: z.boolean(),

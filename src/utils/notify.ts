@@ -24,6 +24,16 @@ export const registerToastHandler = (handler: ToastHandler) => {
   };
 };
 
+export const apiMessage = (error: unknown, fallback: string) => {
+  if (typeof error === "object" && error && "response" in error) {
+    const message = (error as { response?: { data?: { message?: string } } }).response?.data?.message;
+    if (message) {
+      return message;
+    }
+  }
+  return fallback;
+};
+
 export const notify = (message: string, variant: ToastVariant = "error") => {
   if (!message) {
     return;
@@ -64,7 +74,7 @@ export const triggerUnauthorized = () => {
     new CustomEvent(AUTH_EVENTS.LOGOUT, { detail: { reason: "session-expired" } })
   );
 
-  const isGuestTable = window.location.pathname.startsWith("/table/");
+  const isGuestTable = /^\/r\/[^/]+\/t\//.test(window.location.pathname);
   if (isGuestTable) {
     return;
   }

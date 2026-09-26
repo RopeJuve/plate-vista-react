@@ -13,17 +13,25 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { Order, OrderRow } from "@/types";
+import { formatCents, readCents } from "../shared/money/formatCents";
+import { ORDER_STATUS_LABEL, type OrderStatus } from "../shared/realtime/protocol";
 
 const PAGE_SIZE = 20;
 
 const transformOrders = (orders: Order[] = []): OrderRow[] =>
   orders.map((order) => {
-    const menuItemsDetails = (order.menuItems || [])
-      .filter((item) => typeof item === "object" && item.product)
-      .map((item) => ({
-        title: typeof item === "object" ? item.product?.title ?? "Unavailable item" : "Unavailable item",
-        quantity: typeof item === "object" ? item.quantity || 0 : 0,
-      }));
+    const protocolItems = (order as { items?: Array<{ title?: string; quantity?: number }> }).items;
+    const menuItemsDetails = protocolItems
+      ? protocolItems.map((item) => ({
+          title: item.title || "Unavailable item",
+          quantity: item.quantity || 0,
+        }))
+      : (order.menuItems || [])
+          .filter((item) => typeof item === "object" && item.product)
+          .map((item) => ({
+            title: typeof item === "object" ? item.product?.title ?? "Unavailable item" : "Unavailable item",
+            quantity: typeof item === "object" ? item.quantity || 0 : 0,
+          }));
 
     const totalQuantity = menuItemsDetails.reduce(
       (acc, item) => acc + (item.quantity || 0),
@@ -39,8 +47,8 @@ const transformOrders = (orders: Order[] = []): OrderRow[] =>
       user: username,
       menuItems: menuItemsDetails,
       quantity: totalQuantity,
-      totalPrice: order.totalPrice || 0,
-      orderStatus: order.orderStatus,
+      totalPrice: readCents((order as { totalCents?: number }).totalCents, order.totalPrice),
+      orderStatus: (order as { status?: string }).status || order.orderStatus,
       location: order.tableNumber ?? order.table?.tableNumber ?? "",
       orderId: order._id,
     };
@@ -115,6 +123,7 @@ const Orders = () => {
       {
         accessorKey: "totalPrice",
         header: "Total Price",
+        cell: ({ row }) => formatCents(row.original.totalPrice),
       },
       {
         accessorKey: "orderStatus",
@@ -125,10 +134,14 @@ const Orders = () => {
             [ORDER_STATUS.PENDING]: "bg-orange-500 text-gray-100",
             [ORDER_STATUS.COMPLETE]: "bg-green-500 text-gray-100",
           };
-          const statusClasses = statusColorClasses[row.original.orderStatus] || "";
+          const status = row.original.orderStatus;
+          const statusClasses =
+            status && status in statusColorClasses
+              ? statusColorClasses[status as keyof typeof statusColorClasses]
+              : "";
           return (
             <div className={`inline-block rounded-full px-2 py-2 text-center ${statusClasses}`}>
-              {row.original.orderStatus}
+              {ORDER_STATUS_LABEL[row.original.orderStatus as OrderStatus] || row.original.orderStatus}
             </div>
           );
         },

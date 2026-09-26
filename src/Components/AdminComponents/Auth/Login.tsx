@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "../../../contexts/AuthContext";
 import api from "../../../services/api";
-import { consumeSessionMessage } from "../../../utils/notify";
+import { apiMessage, consumeSessionMessage } from "../../../utils/notify";
 import { loginSchema, type LoginValues } from "@/lib/schemas";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,11 +28,19 @@ const Login = () => {
     defaultValues: { username: "", password: "" },
   });
 
-  const getAuthTokenFromHeaders = (headers) => {
+  const getAuthTokenFromHeaders = (headers: unknown) => {
+    if (!headers || typeof headers !== "object") {
+      return null;
+    }
+    const record = headers as {
+      authorization?: string;
+      Authorization?: string;
+      get?: (name: string) => string | null;
+    };
     const authHeader =
-      headers.authorization ||
-      headers.Authorization ||
-      (typeof headers.get === "function" ? headers.get("authorization") : "");
+      record.authorization ||
+      record.Authorization ||
+      (typeof record.get === "function" ? record.get("authorization") : "");
     if (!authHeader) {
       return null;
     }
@@ -63,7 +71,11 @@ const Login = () => {
       }
 
       const token = getAuthTokenFromHeaders(response.headers);
-      const position = response.data.position;
+      const position = response.data.position as string | undefined;
+      if (!token) {
+        setAuthMessage("Login failed. Please try again.");
+        return;
+      }
       login(token, { position, employee: values.username }, restaurantId);
 
       if (position === "admin") {
@@ -77,10 +89,8 @@ const Login = () => {
 
       logout();
       setAuthMessage("This account does not have access to the staff apps.");
-    } catch (error) {
-      setAuthMessage(
-        error.response?.data?.message || "Login failed. Please try again."
-      );
+    } catch (error: unknown) {
+      setAuthMessage(apiMessage(error, "Login failed. Please try again."));
     } finally {
       setPending(false);
     }
@@ -148,6 +158,11 @@ const Login = () => {
           >
             {pending ? "Signing in..." : "Login"}
           </Button>
+          <p className="mt-6 text-center text-gray-600 dark:text-gray-300">
+            <Link to="/register" className="text-dark-yellow-bg hover:underline">
+              Create a restaurant
+            </Link>
+          </p>
         </form>
       </Form>
     </div>

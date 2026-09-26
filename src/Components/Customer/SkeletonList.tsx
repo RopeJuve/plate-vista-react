@@ -1,7 +1,15 @@
 import SkeletonCard from "./SkeletonCard";
 import SkeletonCategoryCustomer from "./SkeletonCategoryCustomer";
 
-const SkeletonList = ({ itemsCount, isLoading, variant = "card" }) => {
+const SkeletonList = ({
+  itemsCount,
+  isLoading,
+  variant = "card",
+}: {
+  itemsCount: number;
+  isLoading: boolean;
+  variant?: "card" | "category";
+}) => {
   const items = Array.from({ length: itemsCount }, (_, index) => index);
 
   return (

@@ -1,12 +1,39 @@
 import { createContext, useReducer, useContext, useEffect, useCallback, ReactNode } from "react";
 import { AUTH_EVENTS } from "../utils/notify";
 import { User } from "../types";
+import { decodeJwt } from "../shared/api/jwt";
 
-const AuthContext = createContext<any>(undefined);
+type AuthState = {
+  authToken: string | null;
+  user: User | null;
+  restaurantId: string | null;
+};
 
-const useAuth = () => useContext(AuthContext);
+type AuthAction =
+  | { type: "LOGIN"; payload: { token: string; user?: User | null; restaurantId?: string | null } }
+  | { type: "SET_USER"; payload: User }
+  | { type: "LOGOUT" };
 
-const authReducer = (state, action) => {
+type AuthContextValue = {
+  authToken: string | null;
+  user: User | null;
+  restaurantId: string | null;
+  login: (token: string, nextUser?: User, nextRestaurantId?: string) => void;
+  logout: () => void;
+  setUser: (nextUser: User) => void;
+};
+
+const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+
+const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within AuthProvider");
+  }
+  return context;
+};
+
+const authReducer = (state: AuthState, action: AuthAction): AuthState => {
   switch (action.type) {
     case "LOGIN":
       return {
@@ -56,7 +83,12 @@ const AuthProvider = ({ children }: { children?: ReactNode }) => {
     };
   }, []);
 
-  const login = useCallback((token, nextUser?: User, nextRestaurantId?: string) => {
+  const login = useCallback((token: string, nextUser?: User, nextRestaurantId?: string) => {
+    const payload = decodeJwt(token);
+    const slug = payload.slug || payload.restaurantSlug;
+    if (typeof slug === "string" && slug) {
+      localStorage.setItem("restaurantSlug", slug);
+    }
     dispatch({
       type: "LOGIN",
       payload: { token, user: nextUser, restaurantId: nextRestaurantId },
@@ -72,9 +104,7 @@ const AuthProvider = ({ children }: { children?: ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider
-      value={{ authToken, login, logout, user, setUser, restaurantId }}
-    >
+    <AuthContext.Provider value={{ authToken, login, logout, user, setUser, restaurantId }}>
       {children}
     </AuthContext.Provider>
   );

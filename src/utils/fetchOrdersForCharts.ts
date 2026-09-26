@@ -1,44 +1,65 @@
 import { useState, useEffect } from "react";
 import api from "../services/api";
 import { fetchAllOrders } from "../services/orderDataFetch";
-import { notify } from "./notify";
+import { notify, apiMessage } from "./notify";
 import { ChartPoint, ChartSeries } from "../types";
+import { readCents } from "../shared/money/formatCents";
 
-const asArray = (data) => {
+type ChartOrder = {
+  createdAt?: string;
+  totalCents?: number;
+  totalPrice?: number;
+  menuItems?: unknown[];
+};
+
+const asRecord = (value: unknown): Record<string, unknown> | null =>
+  value && typeof value === "object" ? (value as Record<string, unknown>) : null;
+
+const asArray = (data: unknown): unknown[] => {
   if (Array.isArray(data)) {
     return data;
   }
-  if (Array.isArray(data?.data)) {
-    return data.data;
+  const record = asRecord(data);
+  if (!record) {
+    return [];
   }
-  if (Array.isArray(data?.sales)) {
-    return data.sales;
-  }
-  if (Array.isArray(data?.orders)) {
-    return data.orders;
-  }
-  if (Array.isArray(data?.items)) {
-    return data.items;
+  for (const key of ["data", "sales", "orders", "items"] as const) {
+    if (Array.isArray(record[key])) {
+      return record[key] as unknown[];
+    }
   }
   return [];
 };
 
-const toChartPoint = (item): ChartPoint | null => {
-  const date = new Date(item.date || item.day || item.x || item.createdAt);
+const toChartPoint = (item: unknown): ChartPoint | null => {
+  const record = asRecord(item);
+  if (!record) {
+    return null;
+  }
+  const date = new Date(
+    String(record.date || record.day || record.x || record.createdAt || "")
+  );
   if (Number.isNaN(date.getTime())) {
     return null;
   }
   return {
     x: date,
-    y: Number(item.total ?? item.amount ?? item.count ?? item.y ?? item.quantity ?? 0),
+    y: Number(record.total ?? record.amount ?? record.count ?? record.y ?? record.quantity ?? 0),
   };
 };
 
-const buildSeriesFromOrders = (orders): ChartSeries[] => {
+const buildSeriesFromOrders = (orders: ChartOrder[]): ChartSeries[] => {
   const grouped: Record<string, ChartPoint[]> = {};
   orders.forEach((order) => {
-    (order.menuItems || []).forEach((item) => {
-      const createdAt = new Date(order.createdAt);
+    (order.menuItems || []).forEach((raw) => {
+      const item =
+        raw && typeof raw === "object"
+          ? (raw as { quantity?: number; product?: { category?: string } })
+          : null;
+      if (!item) {
+        return;
+      }
+      const createdAt = new Date(order.createdAt || "");
       if (Number.isNaN(createdAt.getTime())) {
         return;
       }
@@ -63,7 +84,7 @@ const buildSeriesFromOrders = (orders): ChartSeries[] => {
 
 export const useFetchOrdersForCharts = () => {
   const [lineChartData, setLineChartData] = useState<ChartSeries[]>([]);
-  const [totalIncome, setTotalIncome] = useState("0");
+  const [totalIncome, setTotalIncome] = useState(0);
 
   useEffect(() => {
     const load = async () => {
@@ -73,12 +94,9 @@ export const useFetchOrdersForCharts = () => {
           api.get("/statistics/orders/by-date"),
         ]);
 
-        const sales = salesRes.data;
-        const income =
-          sales?.total ??
-          sales?.totalIncome ??
-          asArray(sales).reduce((acc, item) => acc + Number(item.total ?? item.amount ?? 0), 0);
-        setTotalIncome(Number(income).toFixed(2));
+        const sales = salesRes.data as { totalCents?: number; total?: number; totalIncome?: number };
+        const income = readCents(sales?.totalCents, sales?.total ?? sales?.totalIncome);
+        setTotalIncome(income);
 
         const datePoints = asArray(byDateRes.data)
           .map(toChartPoint)
@@ -93,11 +111,14 @@ export const useFetchOrdersForCharts = () => {
 
       try {
         const { orders } = await fetchAllOrders();
-        const income = orders.reduce((acc, order) => acc + (order.totalPrice || 0), 0);
-        setTotalIncome(income.toFixed(2));
+        const income = orders.reduce(
+          (acc, order) => acc + readCents(order.totalCents, order.totalPrice),
+          0
+        );
+        setTotalIncome(income);
         setLineChartData(buildSeriesFromOrders(orders));
-      } catch (error) {
-        notify(error.response?.data?.message || "Could not load chart data");
+      } catch (error: unknown) {
+        notify(apiMessage(error, "Could not load chart data"));
       }
     };
 

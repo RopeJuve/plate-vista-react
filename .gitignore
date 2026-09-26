@@ -25,3 +25,7 @@ src/data/QrCodes/
 *.sln
 *.sw?
 .vercel
+test-results
+playwright-report
+blob-report
+playwright/.cache

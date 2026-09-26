@@ -21,27 +21,27 @@ export const links = [
   {
     title: "Dashboard",
     links: [
-      { name: "Overview", label: "Overview", icon: BarChart2 },
-      { name: "DailySales", label: "Daily Sales", icon: TrendingUp },
-      { name: "TotalIncome", label: "Total Income", icon: PieChart },
-      { name: "TrendingDishes", label: "Trending Dishes", icon: UtensilsCrossed },
-      { name: "TotalOrders", label: "Total Orders", icon: ShoppingCart },
-      { name: "BestEmployees", label: "Best Employees", icon: Medal },
+      { name: "overview", label: "Overview", icon: BarChart2 },
+      { name: "dailysales", label: "Daily Sales", icon: TrendingUp },
+      { name: "totalincome", label: "Total Income", icon: PieChart },
+      { name: "trendingdishes", label: "Trending Dishes", icon: UtensilsCrossed },
+      { name: "totalorders", label: "Total Orders", icon: ShoppingCart },
+      { name: "bestemployees", label: "Best Employees", icon: Medal },
     ],
   },
   {
     title: "Pages",
     links: [
-      { name: "Menu", label: "Menu", icon: Utensils },
-      { name: "Orders", label: "Orders", icon: FileText },
-      { name: "Tables", label: "Tables", icon: Utensils },
-      { name: "Employees", label: "Employees", icon: Users },
+      { name: "menu", label: "Menu", icon: Utensils },
+      { name: "orders", label: "Orders", icon: FileText },
+      { name: "tables", label: "Tables", icon: Utensils },
+      { name: "employees", label: "Employees", icon: Users },
     ],
   },
   {
     title: "Apps",
     links: [
-      { name: "QRCodeGenerator", label: "QRCode Generator", icon: QrCode },
+      { name: "qrcodes", label: "QRCode Generator", icon: QrCode },
     ],
   },
 ];

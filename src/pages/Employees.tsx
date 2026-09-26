@@ -7,7 +7,7 @@ import { useStateContext } from "../contexts/ContextProvider";
 import { notify } from "../utils/notify";
 import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
-import type { EmployeeRow } from "@/types";
+import type { Employee, EmployeeRow } from "@/types";
 
 const Employees = () => {
   const { currentColor } = useStateContext();
@@ -17,7 +17,8 @@ const Employees = () => {
   useEffect(() => {
     fetchEmployees()
       .then((response) => {
-        const transformedEmployees = response.data.map((employee) => ({
+        const transformedEmployees = (Array.isArray(response.data) ? response.data : []).map(
+          (employee: Employee) => ({
           employeeId: employee._id,
           employee: employee.employee,
           email: employee.email,

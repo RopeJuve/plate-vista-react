@@ -4,6 +4,8 @@ import { dropdownData, bestEmployees, earningData } from "../data/data";
 import LineChart from "../Components/AdminComponents/Charts/LineChart";
 import { useStateContext } from "../contexts/ContextProvider";
 import { useFetchOrdersForCharts } from "../utils/fetchOrdersForCharts";
+import { formatCents } from "../shared/money/formatCents";
+import { consumeOnboarding, dismissOnboarding } from "../features/admin/onboarding";
 import { fetchOrders } from "../services/orderDataFetch";
 import { notify } from "../utils/notify";
 import {
@@ -35,6 +37,7 @@ const Overview = () => {
   const { currentColor } = useStateContext();
   const { lineChartData, totalIncome } = useFetchOrdersForCharts();
   const [totalOrders, setTotalOrders] = useState(0);
+  const [showOnboarding, setShowOnboarding] = useState(() => consumeOnboarding());
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -52,11 +55,11 @@ const Overview = () => {
 
   const handleCardClick = (title: string) => {
     if (title === "Total Income") {
-      navigate("/admin/TotalIncome");
+      navigate("/admin/totalincome");
     } else if (title === "Total Orders") {
-      navigate("/admin/TotalOrders");
+      navigate("/admin/totalorders");
     } else if (title === "Trending Dishes") {
-      navigate("/admin/TrendingDishes");
+      navigate("/admin/trendingdishes");
     }
   };
 
@@ -65,13 +68,29 @@ const Overview = () => {
       return { ...item, amount: totalOrders };
     }
     if (item.title === "Total Income") {
-      return { ...item, amount: totalIncome };
+      return { ...item, amount: formatCents(totalIncome) };
     }
     return item;
   });
 
   return (
     <div className="mt-24">
+      {showOnboarding && (
+        <div className="mx-auto mb-6 max-w-3xl rounded-2xl bg-amber-50 p-5 text-amber-950">
+          <p className="font-semibold">Your restaurant is ready.</p>
+          <p className="mt-1 text-sm">Create your first table and menu item, then print its QR code so guests can order.</p>
+          <button
+            type="button"
+            className="mt-3 rounded-md bg-amber-600 px-3 py-2 text-sm text-white"
+            onClick={() => {
+              dismissOnboarding();
+              setShowOnboarding(false);
+            }}
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
       <div className="flex flex-wrap lg:flex-nowrap justify-center">
         <div className="flex m-3 flex-wrap justify-center gap-4 items-center w-full">
           {updatedEarningData.map((item) => (
@@ -115,10 +134,10 @@ const Overview = () => {
           <div className="flex justify-between items-center gap-2">
             <p
               className="text-xl font-semibold"
-              onClick={() => navigate("/admin/BestEmployees")}
+              onClick={() => navigate("/admin/bestemployees")}
               onKeyDown={(event) => {
                 if (event.key === "Enter" || event.key === " ") {
-                  navigate("/admin/BestEmployees");
+                  navigate("/admin/bestemployees");
                 }
               }}
               role="link"
@@ -156,10 +175,10 @@ const Overview = () => {
           <div className="flex justify-between items-center gap-2 mb-10">
             <p
               className="text-xl font-semibold"
-              onClick={() => navigate("/admin/DailySales")}
+              onClick={() => navigate("/admin/dailysales")}
               onKeyDown={(event) => {
                 if (event.key === "Enter" || event.key === " ") {
-                  navigate("/admin/DailySales");
+                  navigate("/admin/dailysales");
                 }
               }}
               role="link"

@@ -1,36 +1,44 @@
-import { useEffect, useState } from "react";
-import api from "../../services/api";
-import BarMenuItem from "./BarMenuItem";
-import { notify } from "../../utils/notify";
-import { MenuItem } from "../../types";
+import { useOrder } from "../../contexts/OrderContext";
+import { useMenu } from "../../features/guest-ordering/MenuProvider";
+import { formatCents } from "../../shared/money/formatCents";
 
 const BarMenuItems = ({ category }: { category: string }) => {
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  useEffect(() => {
-    const fetchMenuItems = async () => {
-      try {
-        const { data } = await api.get("/menu-items", {
-          params: { category },
-        });
-        setMenuItems(data);
-      } catch (error) {
-        notify(error.response?.data?.message || "Could not load menu items");
-      }
-    };
-    fetchMenuItems();
-  }, [category]);
+  const { items } = useMenu();
+  const visible = items.filter((item) => item.category === category && !item.archived);
 
   return (
-    <div className="col-span-3 bg-main-dark-bg rounded-lg">
-      <h2 className="text-2xl text-center uppercase font-semibold bg-main-dark-bg pb-1">
-        {category}
-      </h2>
+    <div className="col-span-3 rounded-lg bg-main-dark-bg">
+      <h2 className="bg-main-dark-bg pb-1 text-center text-2xl font-semibold uppercase">{category}</h2>
       <div className="bar-menu-item-container text-center">
-        {menuItems.length != 0 && menuItems.map((menuItem) => (
-          <BarMenuItem key={`${menuItem._id}`} item={menuItem} />
+        {visible.map((menuItem) => (
+          <BarMenuItemButton key={menuItem._id} productId={menuItem._id} title={menuItem.title} priceCents={menuItem.priceCents} inStock={menuItem.inStock} />
         ))}
       </div>
     </div>
+  );
+};
+
+const BarMenuItemButton = ({
+  productId,
+  title,
+  priceCents,
+  inStock,
+}: {
+  productId: string;
+  title: string;
+  priceCents: number;
+  inStock: boolean;
+}) => {
+  const { addOrder } = useOrder();
+  return (
+    <button
+      type="button"
+      className="rounded-lg bg-secondary-dark-bg px-3 py-2 disabled:opacity-40"
+      onClick={() => addOrder(productId)}
+      disabled={!inStock}
+    >
+      {title} · {formatCents(priceCents)}
+    </button>
   );
 };
 

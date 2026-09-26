@@ -1,6 +1,7 @@
 import { useAuth } from "../../contexts/AuthContext";
+import type { User } from "../../types";
 
-const getUserLabel = (user) => {
+const getUserLabel = (user: User | null) => {
   if (!user) {
     return "Staff";
   }

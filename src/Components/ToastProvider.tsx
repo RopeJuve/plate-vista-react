@@ -7,8 +7,14 @@ const VARIANT_CLASS = {
   info: "bg-blue-600",
 };
 
+type ToastItem = {
+  id: string;
+  message: string;
+  variant: "error" | "success" | "info";
+};
+
 const ToastProvider = ({ children }: { children?: ReactNode }) => {
-  const [toasts, setToasts] = useState([]);
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
 
   useEffect(() => {
     return registerToastHandler(({ message, variant = "error" }) => {
@@ -45,7 +51,7 @@ const ToastProvider = ({ children }: { children?: ReactNode }) => {
               }
             }}
             className={`max-w-sm rounded-lg px-4 py-3 text-left text-white shadow-lg ${
-              VARIANT_CLASS[toast.variant] || VARIANT_CLASS.error
+              VARIANT_CLASS[toast.variant]
             }`}
           >
             {toast.message}

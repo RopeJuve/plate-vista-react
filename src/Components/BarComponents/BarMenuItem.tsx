@@ -1,18 +1,16 @@
 import { useOrder } from "../../contexts/OrderContext";
-import { MenuItem } from "../../types";
+import type { MenuRecord } from "../../features/guest-ordering/menu";
 
-const BarMenuItem = ({ item }: { item: MenuItem }) => {
+const BarMenuItem = ({ item }: { item: MenuRecord }) => {
   const { addOrder } = useOrder();
 
-  const handleOrder = (menuItem: MenuItem) => {
-    addOrder({
-      ...menuItem,
-      quantity: 1,
-    });
-  };
-
   return (
-    <button className="bg-secondary-dark-bg rounded-lg" onClick={() => handleOrder(item)}>
+    <button
+      type="button"
+      className="rounded-lg bg-secondary-dark-bg disabled:opacity-40"
+      onClick={() => addOrder(item._id)}
+      disabled={!item.inStock || item.archived}
+    >
       {item.title}
     </button>
   );

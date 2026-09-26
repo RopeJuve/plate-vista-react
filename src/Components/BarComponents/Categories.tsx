@@ -1,18 +1,18 @@
 import { useEffect, useState } from "react";
 import api from "../../services/api";
 import CategoryItem from "./CategoryItem";
-import { notify } from "../../utils/notify";
+import { notify, apiMessage } from "../../utils/notify";
 
-const Categories = ({ setCategory }) => {
-  const [categories, setCategories] = useState([]);
+const Categories = ({ setCategory }: { setCategory: (category: string) => void }) => {
+  const [categories, setCategories] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const { data } = await api.get("/menu-items/category");
         setCategories(data);
-      } catch (error) {
-        notify(error.response?.data?.message || "Could not load categories");
+      } catch (error: unknown) {
+        notify(apiMessage(error, "Could not load categories"));
       }
     };
     fetchCategories();

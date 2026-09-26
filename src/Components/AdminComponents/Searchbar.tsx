@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ChangeEvent } from "react";
 import { X } from "lucide-react";
 import { fetchEmployees } from "../../services/employeeDataFetch";
 import { Button } from "../AdminComponents/";
@@ -10,17 +10,17 @@ const Searchbar = () => {
   const [filteredEmployees, setFilteredEmployees] = useState<Employee[]>([]);
   const { setIsClicked, initialState } = useStateContext();
 
-  const handleSearchChange = (e) => {
-    const requirement = e.target.value;
+  const handleSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const requirement = event.target.value;
     setSearchTerm(requirement);
 
     fetchEmployees().then((response) => {
-      const employees = response.data;
+      const employees = (Array.isArray(response.data) ? response.data : []) as Employee[];
 
       const filteredResults = employees.filter((employee) =>
-        employee.employee.toLowerCase().includes(requirement.toLowerCase()) ||
-        employee.email.toLowerCase().includes(requirement.toLowerCase()) ||
-        employee.position.toLowerCase().includes(requirement.toLowerCase())
+        (employee.employee || "").toLowerCase().includes(requirement.toLowerCase()) ||
+        (employee.email || "").toLowerCase().includes(requirement.toLowerCase()) ||
+        (employee.position || "").toLowerCase().includes(requirement.toLowerCase())
       );
 
       setFilteredEmployees(filteredResults);

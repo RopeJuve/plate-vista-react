@@ -1,18 +1,15 @@
-const Online = ({ status }) => {
+import type { RealtimeStatus } from "../../shared/realtime/protocol";
+
+const Online = ({ status }: { status: RealtimeStatus }) => {
+  const connecting = status === "connecting" || status === "reconnecting" || status === "closed";
+  const online = status === "open";
+
   return (
-    <div className="flex items-center justify-center gap-1 p-1 bg-gray-500 rounded-lg">
+    <div className="flex items-center justify-center gap-1 rounded-lg bg-gray-500 p-1">
       <span
-        className={`w-2 h-2 rounded-full animate-pulse ${
-          status === 0
-            ? "bg-yellow-400"
-            : status === 1
-            ? "bg-green-400"
-            : "bg-red-400"
-        }`}
-      ></span>
-      <h1 className="text-sm font-semibold">
-        {status === 0 ? "Connecting" : status === 1 ? "Online" : "Offline"}
-      </h1>
+        className={`h-2 w-2 animate-pulse rounded-full ${online ? "bg-green-400" : "bg-yellow-400"}`}
+      />
+      <h1 className="text-sm font-semibold">{online ? "Online" : connecting ? "Connecting…" : "Connecting…"}</h1>
     </div>
   );
 };

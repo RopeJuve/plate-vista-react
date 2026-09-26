@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
 import Logo from "../../data/mainlogoLight.svg";
 import { useAuth } from "../../contexts/AuthContext";
-import { useWebSocketContext } from "../../contexts/WebSocketContext";
+import { useRealtime } from "../../shared/realtime/RealtimeProvider";
+import type { User } from "../../types";
 
-const getUserLabel = (user) => {
+const getUserLabel = (user: User | null) => {
   if (!user) {
     return "Staff";
   }
@@ -15,7 +16,7 @@ const getUserLabel = (user) => {
 
 const BarHeader = () => {
   const { logout, user } = useAuth();
-  const { resetWebSocket } = useWebSocketContext();
+  const { disconnect } = useRealtime();
   return (
     <div className="max-w-4xl mx-auto  text-gray-100 bg-secondary-dark-bg flex justify-between items-center p-3 rounded-lg">
       <Link to="/bar" aria-label="Back to tables">
@@ -25,7 +26,7 @@ const BarHeader = () => {
       <button
         type="button"
         onClick={() => {
-          resetWebSocket();
+          disconnect();
           logout();
         }}
         className="text-red-500 cursor-pointer"

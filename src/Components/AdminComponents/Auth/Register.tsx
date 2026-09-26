@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import api from "../../../services/api";
+import { apiMessage } from "../../../utils/notify";
 import { registerSchema, type RegisterValues } from "@/lib/schemas";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,9 +47,9 @@ const Register = () => {
 
     try {
       await api.post("/employee", employeeData);
-      navigate("/admin/Employees");
-    } catch (err) {
-      setError(err.response?.data?.message || "Registration failed. Please try again.");
+      navigate("/admin/employees");
+    } catch (err: unknown) {
+      setError(apiMessage(err, "Registration failed. Please try again."));
     }
   };
 
@@ -140,7 +141,7 @@ const Register = () => {
           </Button>
 
           <p className="mt-6 text-gray-600 dark:text-gray-300 text-center">
-            <Link to="/admin/Employees" className="text-dark-yellow-bg hover:underline">
+            <Link to="/admin/employees" className="text-dark-yellow-bg hover:underline">
               Back to employees
             </Link>
           </p>

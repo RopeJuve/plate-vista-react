@@ -1,6 +1,12 @@
 import { Euro, Utensils } from "lucide-react";
 
-const NavTabs = ({ selected, setSelected }) => {
+const NavTabs = ({
+  selected,
+  setSelected,
+}: {
+  selected: string;
+  setSelected: (tab: string) => void;
+}) => {
   return (
     <div className="flex items-center gap-3">
       <div

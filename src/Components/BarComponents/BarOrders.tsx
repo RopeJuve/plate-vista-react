@@ -1,74 +1,30 @@
-import { useEffect, useState } from "react";
-import { useWebSocketContext } from "../../contexts/WebSocketContext";
-import { ORDER_STATUS } from "../../constants/orderStatus";
+import { listOrders } from "../../features/staff-board/boardState";
+import { useOrderActions } from "../../features/staff-board/useOrderActions";
+import { useStaffBoard } from "../../features/staff-board/StaffBoardProvider";
+import type { OrderStatus, Station } from "../../shared/realtime/protocol";
 import OrderCard from "./OrderCard";
 
-const BarOrders = ({ title }: { title: string }) => {
-  const [orders, setOrder] = useState([]);
-  const { lastMessage, tables } = useWebSocketContext();
-  useEffect(() => {
-    if (tables) {
-      setOrder(tables);
-    }
-  }, [lastMessage, tables]);
+const BarOrders = ({
+  title,
+  statuses,
+  station,
+}: {
+  title: string;
+  statuses: OrderStatus[];
+  station: Station | "all";
+}) => {
+  const { state } = useStaffBoard();
+  const { canSend } = useOrderActions();
+  const orders = listOrders(state, statuses, station);
+
   return (
-    <div className="bg-secondary-dark-bg rounded-lg flex flex-col justify-between overflow-scroll pl-1.5">
-      <h2 className="text-xl text-center uppercase font-semibold bg-secondary-dark-bg pb-1">
-        {title}
-      </h2>
-      <div className=" text-center p-2 flex-grow flex flex-col justify-between">
+    <div className="flex flex-col justify-between overflow-scroll rounded-lg bg-secondary-dark-bg pl-1.5">
+      <h2 className="bg-secondary-dark-bg pb-1 text-center text-xl font-semibold uppercase">{title}</h2>
+      <div className="flex flex-grow flex-col justify-between p-2 text-center">
         <div className="flex flex-col space-y-2">
-          {title === "New Orders"
-            ? orders
-                .map((item) => {
-                  return (item.orders || [])
-                    .filter((order) => order.orderStatus === ORDER_STATUS.PENDING)
-                    .map((order) => {
-                      return (
-                        <OrderCard
-                          key={order._id}
-                          item={order}
-                          table={item.tableNumber}
-                        />
-                      );
-                    });
-                })
-                .reverse()
-            : title === "Accepted"
-            ? orders
-                .map((item) => {
-                  return (item.orders || [])
-                    .filter((order) => order.orderStatus === ORDER_STATUS.PROCESSING)
-                    .sort()
-                    .map((order) => {
-                      return (
-                        <OrderCard
-                          key={order._id}
-                          item={order}
-                          table={item.tableNumber}
-                          variant="accepted"
-                        />
-                      );
-                    });
-                })
-                .reverse()
-            : orders
-                .map((item) => {
-                  return (item.orders || [])
-                    .filter((order) => order.orderStatus === ORDER_STATUS.COMPLETE)
-                    .sort()
-                    .map((order) => {
-                      return (
-                        <OrderCard
-                          key={order._id}
-                          item={order}
-                          table={item.tableNumber}
-                          variant="completed"
-                        />
-                      );
-                    });
-                })
-                .reverse()}
+          {orders.map(({ order, tableNumber }) => (
+            <OrderCard key={order._id} order={order} tableNumber={tableNumber} canSend={canSend} />
+          ))}
         </div>
       </div>
     </div>

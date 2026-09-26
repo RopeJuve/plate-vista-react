@@ -10,7 +10,8 @@ import {
 } from "../services/menuDataFetch";
 import { useStateContext } from "../contexts/ContextProvider";
 import { useAuth } from "../contexts/AuthContext";
-import { notify } from "../utils/notify";
+import { notify, apiMessage } from "../utils/notify";
+import { formatCents, readCents } from "../shared/money/formatCents";
 import { ImageUpload } from "@/components/ImageUpload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -122,13 +123,13 @@ const Menu = () => {
     fetchMenuItems(restaurantId)
       .then((response) => setMenuItems(response.data))
       .catch((error) =>
-        notify(error.response?.data?.message || "Could not load menu items")
+        notify(apiMessage(error, "Could not load menu items"))
       );
 
     fetchCategories(restaurantId)
       .then((response) => setCategories(response.data))
       .catch((error) =>
-        notify(error.response?.data?.message || "Could not load categories")
+        notify(apiMessage(error, "Could not load categories"))
       );
   }, [restaurantId]);
 
@@ -180,7 +181,7 @@ const Menu = () => {
       setDialogVisible(false);
       notify("Menu item updated", "success");
     } catch (error) {
-      notify(error.response?.data?.message || "Could not save menu item");
+      notify(apiMessage(error, "Could not save menu item"));
     }
   };
 
@@ -194,7 +195,7 @@ const Menu = () => {
       setIsAddingNewItem(false);
       notify("Menu item added", "success");
     } catch (error) {
-      notify(error.response?.data?.message || "Could not add menu item");
+      notify(apiMessage(error, "Could not add menu item"));
     }
   };
 
@@ -210,7 +211,7 @@ const Menu = () => {
       );
       notify("Menu item deleted", "success");
     } catch (error) {
-      notify(error.response?.data?.message || "Could not delete menu item");
+      notify(apiMessage(error, "Could not delete menu item"));
     }
   };
 
@@ -286,7 +287,9 @@ const Menu = () => {
             />
             <CardHeader className="p-4 pb-2">
               <CardTitle className="text-base">Title: {item.title}</CardTitle>
-              <p className="text-sm text-muted-foreground">Price: {item.price}</p>
+              <p className="text-sm text-muted-foreground">
+                Price: {formatCents(readCents((item as { priceCents?: number }).priceCents, item.price))}
+              </p>
               <p className="text-sm text-muted-foreground">Category: {item.category}</p>
               <p className="text-sm text-muted-foreground">
                 {item.inStock === false ? "Out of stock" : "In stock"}
@@ -345,7 +348,7 @@ const Menu = () => {
                         type="number"
                         placeholder="Price"
                         value={field.value ?? ""}
-                        onChange={field.onChange}
+                        onChange={(event) => field.onChange(event.target.value === "" ? undefined : Number(event.target.value))}
                       />
                     </FormControl>
                     <FormMessage />
@@ -458,7 +461,7 @@ const Menu = () => {
                       <Input
                         placeholder="Image"
                         value={typeof field.value === "string" ? field.value : ""}
-                        onChange={field.onChange}
+                        onChange={(event) => field.onChange(event.target.value === "" ? undefined : Number(event.target.value))}
                       />
                     </FormControl>
                     <FormMessage />
@@ -487,7 +490,7 @@ const Menu = () => {
                         type="number"
                         placeholder="Price"
                         value={field.value ?? ""}
-                        onChange={field.onChange}
+                        onChange={(event) => field.onChange(event.target.value === "" ? undefined : Number(event.target.value))}
                       />
                     </FormControl>
                     <FormMessage />

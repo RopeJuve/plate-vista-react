@@ -1,5 +1,11 @@
-const CategoryItem = ({ categoryName, setCategory }) => {
-  const colors = {
+const CategoryItem = ({
+  categoryName,
+  setCategory,
+}: {
+  categoryName: string;
+  setCategory: (category: string) => void;
+}) => {
+  const colors: Record<string, string> = {
     beer: "bg-orange-600",
     wine: "bg-red-500",
     burgers: "bg-green-500",

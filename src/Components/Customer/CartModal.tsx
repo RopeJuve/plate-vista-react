@@ -1,122 +1,59 @@
-import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
-import { ReadyState } from "react-use-websocket";
+import { useEffect, useState } from "react";
 import { useCart } from "../../contexts/CartContext";
-import { useWebSocketContext } from "../../contexts/WebSocketContext";
+import { useMenu } from "../../features/guest-ordering/MenuProvider";
+import { checkCart } from "../../features/guest-ordering/cartLimits";
+import { useGuestBill } from "../../features/guest-ordering/GuestBillProvider";
+import { usePlaceOrder } from "../../features/guest-ordering/usePlaceOrder";
+import { invalidatePendingIfCartChanged, toOrderItems } from "../../features/guest-ordering/pendingOrder";
+import { errorMessage } from "../../shared/realtime/errorMessages";
+import { useGuestAuth } from "../../features/guest-ordering/GuestAuthContext";
 import CartContent from "./CartContent";
-import { CartItem, Order } from "../../types";
 
-const CONFIRM_TIMEOUT_MS = 10000;
-
-const parseSocketMessage = (lastMessage) => {
-  if (!lastMessage?.data) {
-    return null;
-  }
-  try {
-    return JSON.parse(lastMessage.data);
-  } catch {
-    return null;
-  }
-};
-
-const CartModal = ({ closeModal }: { items?: CartItem[]; closeModal: (open: boolean) => void }) => {
-  const { tableId } = useParams();
-  const { sendMessage, lastMessage, readyState } = useWebSocketContext();
-  const { clearCart, cart } = useCart();
+const CartModal = ({ closeModal }: { closeModal: (open: boolean) => void }) => {
+  const { session } = useGuestAuth();
+  const { cart, clearCart } = useCart();
+  const { itemsById } = useMenu();
+  const { rememberOrder } = useGuestBill();
+  const storageKey = `guest:${session?.sessionId || "unknown"}`;
+  const { phase, error, fieldErrors, outOfStockIds, submit, resetPhase, canSend } = usePlaceOrder(storageKey);
   const [selectedTab, setSelectedTab] = useState("cart");
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [pending, setPending] = useState(false);
-  const [statusMessage, setStatusMessage] = useState("");
-  const pendingRef = useRef(null);
-  const timeoutRef = useRef(null);
-
-  const clearPending = () => {
-    pendingRef.current = null;
-    if (timeoutRef.current) {
-      window.clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
-    setPending(false);
-  };
+  const issues = checkCart(cart, itemsById);
+  const highlighted = [...new Set([...issues.unavailableIds, ...outOfStockIds])];
 
   useEffect(() => {
-    const messageData = parseSocketMessage(lastMessage);
-    if (!messageData) {
+    invalidatePendingIfCartChanged(storageKey, toOrderItems(cart));
+    if (cart.length === 0 && phase === "success") {
+      resetPhase();
+    }
+  }, [cart, phase, resetPhase, storageKey]);
+
+  const handleSendMessages = async () => {
+    if (phase === "sending" || issues.blocking || cart.length === 0) {
       return;
     }
-
-    if (messageData.type === "error" && pendingRef.current) {
-      setStatusMessage(
-        typeof messageData.payload === "string"
-          ? messageData.payload
-          : "Order failed"
-      );
-      clearPending();
-      return;
+    try {
+      const order = await submit(toOrderItems(cart));
+      rememberOrder(order);
+      clearCart();
+    } catch {
+      // phase is already "error"
     }
-
-    if (messageData.type !== "orderSuccess" || !messageData.payload) {
-      return;
-    }
-
-    const nextOrders = messageData.payload.orders ?? [];
-    setOrders(nextOrders);
-
-    if (pendingRef.current) {
-      const hasNewOrder =
-        nextOrders.some((order) => !pendingRef.current.knownIds.has(order._id)) ||
-        nextOrders.length > pendingRef.current.previousCount;
-      if (hasNewOrder) {
-        clearCart();
-        setStatusMessage("Order Placed!");
-        clearPending();
-      }
-    }
-  }, [lastMessage, tableId, clearCart]);
-
-  const handleSendMessages = () => {
-    if (pending) {
-      return;
-    }
-    if (readyState !== ReadyState.OPEN) {
-      setStatusMessage("Not confirmed, check the Bill tab before retrying");
-      return;
-    }
-
-    pendingRef.current = {
-      knownIds: new Set(orders.map((order) => order._id)),
-      previousCount: orders.length,
-    };
-    setPending(true);
-    setStatusMessage("Placing order...");
-
-    sendMessage(
-      JSON.stringify({
-        type: "newOrder",
-        payload: {
-          user: null,
-          menuItems: cart.map((item) => ({
-            product: item._id,
-            quantity: item.quantity,
-          })),
-        },
-      }),
-      false
-    );
-
-    timeoutRef.current = window.setTimeout(() => {
-      if (pendingRef.current) {
-        pendingRef.current = null;
-        setPending(false);
-        setStatusMessage("Not confirmed, check the Bill tab before retrying");
-      }
-    }, CONFIRM_TIMEOUT_MS);
   };
+
+  const statusMessage = !canSend
+    ? "Connecting…"
+    : phase === "sending"
+      ? "Placing order…"
+      : phase === "success"
+        ? "Order placed"
+        : error
+          ? errorMessage(error.code, error.details, error.message)
+          : issues.messages[0] || "";
 
   return (
     <>
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 z-50"
+        className="fixed inset-0 z-50 bg-black bg-opacity-50"
         onClick={() => closeModal(false)}
         onKeyDown={(event) => {
           if (event.key === "Escape") {
@@ -125,22 +62,21 @@ const CartModal = ({ closeModal }: { items?: CartItem[]; closeModal: (open: bool
         }}
         role="presentation"
       ></div>
-
       <div
-        className="fixed w-96 z-50 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 p-4 rounded-lg bg-slate-50"
-        onClick={(e) => e.stopPropagation()}
+        className="fixed top-1/2 left-1/2 z-50 w-96 -translate-x-1/2 -translate-y-1/2 rounded-lg bg-slate-50 p-4"
+        onClick={(event) => event.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-label="Cart"
       >
-        <div className="flex gap-2 items-center mb-6 bg-slate-200 p-1 rounded-lg">
+        <div className="mb-6 flex items-center gap-2 rounded-lg bg-slate-200 p-1">
           <button
             type="button"
             onClick={() => setSelectedTab("cart")}
             className={
               selectedTab === "cart"
-                ? `w-1/2 py-1 text-center rounded-lg text-white bg-orange-400 transition-all ease-in-out duration-500`
-                : `w-1/2 py-1 text-center rounded-lg text-orange-400 transition-all ease-in-out duration-500`
+                ? "w-1/2 rounded-lg bg-orange-400 py-1 text-center text-white"
+                : "w-1/2 rounded-lg py-1 text-center text-orange-400"
             }
           >
             Cart
@@ -150,20 +86,23 @@ const CartModal = ({ closeModal }: { items?: CartItem[]; closeModal: (open: bool
             onClick={() => setSelectedTab("bill")}
             className={
               selectedTab === "bill"
-                ? `w-1/2 py-1 text-center text-white bg-orange-400 rounded-lg transition-all ease-in-out duration-500`
-                : `w-1/2 py-1 text-center rounded-lg text-orange-400 transition-all ease-in-out duration-500`
+                ? "w-1/2 rounded-lg bg-orange-400 py-1 text-center text-white"
+                : "w-1/2 rounded-lg py-1 text-center text-orange-400"
             }
           >
             Bill
           </button>
         </div>
-
         <CartContent
           variant={selectedTab}
-          orders={orders}
           handleSendMessages={handleSendMessages}
-          pending={pending}
+          pending={phase === "sending"}
           statusMessage={statusMessage}
+          canSend={canSend}
+          blocking={issues.blocking}
+          highlightedIds={highlighted}
+          fieldErrors={fieldErrors}
+          phase={phase}
         />
       </div>
     </>
