@@ -1,4 +1,5 @@
 import { useRef, type ChangeEvent, type KeyboardEvent } from "react";
+import { ImagePlus } from "lucide-react";
 import { Button } from "@/Components/ui/button";
 import { notify } from "@/utils/notify";
 
@@ -58,7 +59,9 @@ export const ImageUpload = ({ value, onChange, disabled }: ImageUploadProps) => 
         onKeyDown={handleKeyDown}
         disabled={disabled}
         aria-label="Choose image"
+        className="border-ink/15"
       >
+        <ImagePlus aria-hidden="true" />
         Choose image
       </Button>
       {fileName ? (

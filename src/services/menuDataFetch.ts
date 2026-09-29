@@ -11,18 +11,12 @@ export const fetchMenuItems = (restaurantId?: string | null, params?: Record<str
 
 export const updateMenuItem = (id: string, item: FormData | Record<string, unknown>, restaurantId?: string | null) =>
   api.put(`/menu-items/${id}`, item, {
-    headers: {
-      ...restaurantHeaders(restaurantId),
-      "Content-Type": "multipart/form-data",
-    },
+    headers: restaurantHeaders(restaurantId),
   });
 
 export const addMenuItem = (item: FormData | Record<string, unknown>, restaurantId?: string | null) =>
   api.post("/menu-items", item, {
-    headers: {
-      ...restaurantHeaders(restaurantId),
-      "Content-Type": "multipart/form-data",
-    },
+    headers: restaurantHeaders(restaurantId),
   });
 
 export const deleteMenuItem = (id: string, restaurantId?: string | null) =>

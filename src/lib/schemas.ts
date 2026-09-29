@@ -22,7 +22,7 @@ export const restaurantRegisterSchema = z.object({
     .string()
     .min(2, "Slug is too short")
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Use lowercase letters, numbers, and hyphens"),
-  ownerName: z.string().min(1, "Owner name is required"),
+  employee: z.string().min(1, "Owner name is required"),
   email: z.string().email("Enter a valid email"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });

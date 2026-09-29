@@ -1,26 +1,15 @@
-import { Utensils } from "lucide-react";
 import { useRealtime } from "../../shared/realtime/RealtimeProvider";
-import type { RealtimeStatus } from "../../shared/realtime/protocol";
+import { Lamp } from "../rail";
 
-const dotClass = (status: RealtimeStatus) => {
-  if (status === "open") {
-    return "bg-green-400";
-  }
-  if (status === "connecting" || status === "reconnecting") {
-    return "bg-yellow-400";
-  }
-  return "bg-red-400";
-};
-
+/** The guest's table, shown like the stub of a chit. */
 const TableIcon = ({ tableNum }: { tableNum?: number }) => {
   const { status } = useRealtime();
-  const label = status === "open" ? "Online" : "Connecting";
 
   return (
-    <div className="inline-flex items-center gap-1">
-      <Utensils className="h-6 w-6" />
-      <span className="text-sm">{tableNum || ""}</span>
-      <span className={`h-2 w-2 animate-pulse rounded-full ${dotClass(status)}`} title={label} />
+    <div className="inline-flex h-10 items-center gap-2.5 rounded-md bg-ink pl-3 pr-3 text-paper">
+      <Lamp status={status} showLabel={false} />
+      <span className="text-[0.7rem] font-bold uppercase tracking-[0.12em] text-paper/70">Table</span>
+      <span className="font-mono text-lg font-bold leading-none tabular">{tableNum || "–"}</span>
     </div>
   );
 };

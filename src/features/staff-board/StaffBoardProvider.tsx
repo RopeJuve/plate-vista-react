@@ -16,9 +16,14 @@ import { boardReducer, emptyBoard, type BoardState } from "./boardState";
 type StaffBoardValue = {
   state: BoardState;
   reload: () => Promise<void>;
+  /** True while the snapshot is missing, so live events cannot be applied yet. */
+  snapshotFailed: boolean;
 };
 
 const StaffBoardContext = createContext<StaffBoardValue | undefined>(undefined);
+
+const RETRY_BASE_MS = 1000;
+const RETRY_MAX_MS = 10_000;
 
 const asBoard = (data: unknown): StaffBoard => {
   const record = data && typeof data === "object" ? (data as Record<string, unknown>) : {};
@@ -32,12 +37,16 @@ const asBoard = (data: unknown): StaffBoard => {
     sessions: Array.isArray(source.sessions) ? (source.sessions as StaffBoard["sessions"]) : [],
     orders: Array.isArray(source.orders) ? (source.orders as StaffBoard["orders"]) : [],
     tables: Array.isArray(source.tables) ? (source.tables as StaffBoard["tables"]) : [],
+    recentlyClosed: Array.isArray(source.recentlyClosed)
+      ? (source.recentlyClosed as StaffBoard["recentlyClosed"])
+      : [],
   };
 };
 
 export const StaffBoardProvider = ({ children }: { children?: ReactNode }) => {
   const { status, subscribe } = useRealtime();
   const [state, setState] = useState<BoardState>(emptyBoard);
+  const [failedAttempts, setFailedAttempts] = useState(0);
   const hydratingRef = useRef(false);
   const queueRef = useRef<ServerEvent[]>([]);
   const generationRef = useRef(0);
@@ -87,6 +96,15 @@ export const StaffBoardProvider = ({ children }: { children?: ReactNode }) => {
       }
       const events = queueRef.current.splice(0);
       setState(boardReducer(emptyBoard(), { type: "hydrate", board: asBoard(data), events }));
+      setFailedAttempts(0);
+    } catch {
+      // Without a snapshot the reducer discards every live event, so the board
+      // would stay blank for the rest of the shift. Schedule another attempt
+      // instead of failing silently. Not rethrown: callers await reload() from
+      // inside their own error handling.
+      if (generation === generationRef.current) {
+        setFailedAttempts((attempts) => attempts + 1);
+      }
     } finally {
       if (generation === generationRef.current) {
         const leftover = queueRef.current.splice(0);
@@ -104,7 +122,21 @@ export const StaffBoardProvider = ({ children }: { children?: ReactNode }) => {
     void reload();
   }, [reload, status]);
 
-  const value = useMemo(() => ({ state, reload }), [state, reload]);
+  useEffect(() => {
+    if (failedAttempts === 0 || status !== "open") {
+      return;
+    }
+    const delay = Math.min(RETRY_BASE_MS * 2 ** (failedAttempts - 1), RETRY_MAX_MS);
+    const timer = setTimeout(() => {
+      void reload();
+    }, delay);
+    return () => clearTimeout(timer);
+  }, [failedAttempts, reload, status]);
+
+  const value = useMemo(
+    () => ({ state, reload, snapshotFailed: failedAttempts > 0 }),
+    [state, reload, failedAttempts]
+  );
 
   return <StaffBoardContext.Provider value={value}>{children}</StaffBoardContext.Provider>;
 };

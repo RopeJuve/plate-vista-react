@@ -1,4 +1,22 @@
 import api from "./api";
+import { unwrapList } from "../features/guest-ordering/menu";
+
+const readOrdersPayload = (data: unknown) => {
+  const record = data && typeof data === "object" ? (data as Record<string, unknown>) : null;
+  const orders = unwrapList(data, ["orders", "items", "data"]) as Array<{
+    totalCents?: number;
+    totalPrice?: number;
+    createdAt?: string;
+    menuItems?: unknown[];
+  }>;
+  const total =
+    typeof record?.total === "number"
+      ? record.total
+      : typeof record?.count === "number"
+        ? record.count
+        : orders.length;
+  return { orders, total };
+};
 
 export const fetchOrders = (params?: { page?: number; limit?: number }) => api.get("/orders", { params });
 
@@ -10,16 +28,11 @@ export const fetchAllOrders = async () => {
 
   while (orders.length < total) {
     const { data } = await fetchOrders({ page, limit });
-    const pageOrders = (Array.isArray(data) ? data : data?.orders ?? []) as Array<{
-      totalCents?: number;
-      totalPrice?: number;
-      createdAt?: string;
-      menuItems?: unknown[];
-    }>;
-    total = Array.isArray(data) ? pageOrders.length : data?.total ?? pageOrders.length;
-    orders.push(...pageOrders);
+    const pageResult = readOrdersPayload(data);
+    total = pageResult.total;
+    orders.push(...pageResult.orders);
 
-    if (pageOrders.length === 0 || pageOrders.length < limit) {
+    if (pageResult.orders.length === 0 || pageResult.orders.length < limit) {
       break;
     }
     page += 1;
@@ -27,3 +40,5 @@ export const fetchAllOrders = async () => {
 
   return { orders, total: Number.isFinite(total) ? total : orders.length };
 };
+
+export { readOrdersPayload };

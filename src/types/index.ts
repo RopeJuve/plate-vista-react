@@ -1,7 +1,3 @@
-import { ORDER_STATUS } from "@/constants/orderStatus";
-
-export type OrderStatus = (typeof ORDER_STATUS)[keyof typeof ORDER_STATUS];
-
 export type User = {
   _id?: string;
   id?: string;

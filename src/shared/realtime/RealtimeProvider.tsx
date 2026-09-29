@@ -10,8 +10,8 @@ import {
 import { useLocation } from "react-router-dom";
 import { plateVistaConfig } from "../../Config/plateVista.config";
 import { useAuth } from "../../contexts/AuthContext";
-import api from "../../services/api";
 import { fetchWsTicket } from "../../shared/api/wsTicket";
+import { refreshSession } from "../../shared/api/tokens";
 import { RealtimeClient } from "./client";
 import {
   ProtocolError,
@@ -23,7 +23,7 @@ import {
   type ServerEventName,
 } from "./protocol";
 import { useGuestAuth } from "../../features/guest-ordering/GuestAuthContext";
-import { parseGuestAuth } from "../../features/guest-ordering/guestSession";
+import { joinTable } from "../../features/guest-ordering/guestSession";
 
 type RealtimeContextValue = {
   status: RealtimeStatus;
@@ -45,7 +45,7 @@ const isGuestPath = (pathname: string) => /^\/r\/[^/]+\/t\/[^/]+/.test(pathname)
 
 export const RealtimeProvider = ({ children }: { children?: ReactNode }) => {
   const location = useLocation();
-  const { authToken, login, logout } = useAuth();
+  const { authToken, logout } = useAuth();
   const { session, setSession, clearSession } = useGuestAuth();
   const [status, setStatus] = useState<RealtimeStatus>("closed");
   const [sessionEnded, setSessionEnded] = useState(false);
@@ -56,6 +56,8 @@ export const RealtimeProvider = ({ children }: { children?: ReactNode }) => {
   const guestRef = useRef(session);
   const staffTokenRef = useRef(authToken);
   const guestPathRef = useRef(false);
+  /** Staff get one refresh-and-retry on 4003 before being logged out. */
+  const forbiddenRetriedRef = useRef(false);
   guestRef.current = session;
   staffTokenRef.current = authToken;
   guestPathRef.current = isGuestPath(location.pathname);
@@ -72,19 +74,55 @@ export const RealtimeProvider = ({ children }: { children?: ReactNode }) => {
         if (!token) {
           throw new Error("Missing access token");
         }
-        return fetchWsTicket(token);
+        return fetchWsTicket(guestPathRef.current ? token : undefined);
       },
-      onStatusChange: setStatus,
+      onStatusChange: (next) => {
+        if (next === "open") {
+          forbiddenRetriedRef.current = false;
+        }
+        setStatus(next);
+      },
       onClose: (_code, _reason, action) => {
         setCloseAction(action);
         if (action === "guestThankYou") {
           setSessionEnded(true);
           return;
         }
+        const refreshAndReconnect = async () => {
+          try {
+            if (guestPathRef.current && guestRef.current) {
+              const current = guestRef.current;
+              // Sends the stored guest token, so no join code is needed.
+              const result = await joinTable(current.slug, current.qrCode);
+              if (result.status === "joined") {
+                tokenRef.current = result.session.token;
+                setSession(result.session);
+                clientRef.current?.connect();
+                return;
+              }
+            } else if (!guestPathRef.current) {
+              tokenRef.current = await refreshSession();
+              clientRef.current?.connect();
+              return;
+            }
+          } catch {
+            // Refresh is unavailable. Staff must sign in again.
+          }
+          if (guestPathRef.current) {
+            setFatalMessage("This table session expired. Scan the QR code again.");
+            return;
+          }
+          logout();
+        };
         if (action === "logout") {
           if (guestPathRef.current) {
             clearSession();
             setFatalMessage("This table session is no longer valid.");
+            return;
+          }
+          if (!forbiddenRetriedRef.current) {
+            forbiddenRetriedRef.current = true;
+            void refreshAndReconnect();
             return;
           }
           logout();
@@ -95,38 +133,7 @@ export const RealtimeProvider = ({ children }: { children?: ReactNode }) => {
           return;
         }
         if (action === "refreshToken") {
-          void (async () => {
-            try {
-              if (guestPathRef.current && guestRef.current) {
-                const current = guestRef.current;
-                const { data } = await api.post(`/auth/table/${encodeURIComponent(current.qrCode)}`);
-                const next = parseGuestAuth(data, current.slug, current.qrCode);
-                tokenRef.current = next.token;
-                setSession(next);
-                clientRef.current?.connect();
-                return;
-              }
-              const response = await api.post("/auth/refresh");
-              const refreshed =
-                response.data?.token ||
-                response.data?.accessToken ||
-                response.headers?.authorization;
-              if (typeof refreshed === "string" && refreshed) {
-                const token = refreshed.startsWith("Bearer ") ? refreshed.slice(7) : refreshed;
-                tokenRef.current = token;
-                login(token);
-                clientRef.current?.connect();
-                return;
-              }
-            } catch {
-              // Refresh is unavailable. Staff must sign in again.
-            }
-            if (guestPathRef.current) {
-              setFatalMessage("This table session expired. Scan the QR code again.");
-              return;
-            }
-            logout();
-          })();
+          void refreshAndReconnect();
         }
       },
     });

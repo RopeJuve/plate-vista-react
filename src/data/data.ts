@@ -1,47 +1,41 @@
 import {
-  BarChart2,
-  TrendingUp,
-  PieChart,
-  CreditCard,
+  BookOpen,
+  Coins,
+  Flame,
+  LayoutDashboard,
+  LayoutGrid,
   Medal,
-  UtensilsCrossed,
   QrCode,
-  FileText,
+  ReceiptText,
   ShoppingCart,
   Soup,
+  TrendingUp,
   User,
   DollarSign,
-  Shield,
-  Utensils,
   Users,
 } from "lucide-react";
 import type { ChartConfig } from "@/components/ui/chart";
 
 export const links = [
   {
-    title: "Dashboard",
+    title: "Numbers",
     links: [
-      { name: "overview", label: "Overview", icon: BarChart2 },
+      { name: "overview", label: "Overview", icon: LayoutDashboard },
       { name: "dailysales", label: "Daily Sales", icon: TrendingUp },
-      { name: "totalincome", label: "Total Income", icon: PieChart },
-      { name: "trendingdishes", label: "Trending Dishes", icon: UtensilsCrossed },
+      { name: "totalincome", label: "Total Income", icon: Coins },
+      { name: "trendingdishes", label: "Trending Dishes", icon: Flame },
       { name: "totalorders", label: "Total Orders", icon: ShoppingCart },
       { name: "bestemployees", label: "Best Employees", icon: Medal },
     ],
   },
   {
-    title: "Pages",
+    title: "Restaurant",
     links: [
-      { name: "menu", label: "Menu", icon: Utensils },
-      { name: "orders", label: "Orders", icon: FileText },
-      { name: "tables", label: "Tables", icon: Utensils },
+      { name: "menu", label: "Menu", icon: BookOpen },
+      { name: "orders", label: "Orders", icon: ReceiptText },
+      { name: "tables", label: "Tables", icon: LayoutGrid },
       { name: "employees", label: "Employees", icon: Users },
-    ],
-  },
-  {
-    title: "Apps",
-    links: [
-      { name: "qrcodes", label: "QRCode Generator", icon: QrCode },
+      { name: "qrcodes", label: "QR Codes", icon: QrCode },
     ],
   },
 ];
@@ -138,7 +132,7 @@ export const earningData = [
     icon: Soup,
     amount: "10",
     title: "Trending Dishes",
-    name: "Chicken Alfredo",
+    name: "Chicken Alfredo (sample)",
     iconColor: "#33373E",
     iconBg: "#E5FAFB",
     pcColor: "red-600",
@@ -239,59 +233,9 @@ export const stackedChartRows = [
 ];
 
 export const stackedChartConfig: ChartConfig = {
-  alcoholic: { label: "Alcoholic Beverages", color: "green" },
-  nonAlcoholic: { label: "Non-Alcoholic Beverages", color: "gold" },
-  mainCourse: { label: "Main Course", color: "blue" },
-  salads: { label: "Salads", color: "red" },
-  desserts: { label: "Desserts", color: "pink" },
+  alcoholic: { label: "Alcoholic Beverages", color: "hsl(var(--chart-1))" },
+  nonAlcoholic: { label: "Non-Alcoholic Beverages", color: "hsl(var(--chart-4))" },
+  mainCourse: { label: "Main Course", color: "hsl(var(--chart-2))" },
+  salads: { label: "Salads", color: "hsl(var(--chart-3))" },
+  desserts: { label: "Desserts", color: "hsl(var(--chart-5))" },
 };
-
-export const userProfileData = [
-  {
-    icon: DollarSign,
-    title: "My Profile",
-    desc: "Account Settings",
-    iconColor: "#03C9D7",
-    iconBg: "#E5FAFB",
-  },
-  {
-    icon: Shield,
-    title: "My Inbox",
-    desc: "Messages & Emails",
-    iconColor: "rgb(0, 194, 146)",
-    iconBg: "rgb(235, 250, 242)",
-  },
-  {
-    icon: CreditCard,
-    title: "My Tasks",
-    desc: "To-do and Daily Tasks",
-    iconColor: "rgb(255, 244, 229)",
-    iconBg: "rgb(254, 201, 15)",
-  },
-];
-
-export const chatData = [
-  { message: "Order N123 has been changed", desc: "View order", time: "9:08 AM" },
-  { message: "New order received", desc: "View order", time: "11:56 AM" },
-  { message: "New Payment received", desc: "View order", time: "4:39 AM" },
-  { message: "New item added to the menu", desc: "View item", time: "1:12 AM" },
-];
-
-export const themeColors = [
-  { name: "blue-theme", color: "#1A97F5" },
-  { name: "green-theme", color: "#03C9D7" },
-  { name: "purple-theme", color: "#7352FF" },
-  { name: "red-theme", color: "#FF5C8E" },
-  { name: "indigo-theme", color: "#1E4DB7" },
-  { name: "orange-theme", color: "#FB9678" },
-];
-
-export const tableColors = [
-  "rgb(75, 211, 145)",
-  "rgb(213, 140, 230)",
-  "rgb(255, 122, 103)",
-  "rgb(102, 153, 255)",
-  "rgb(255, 189, 68)",
-  "rgb(144, 224, 239)",
-  "rgb(255, 105, 180)",
-];

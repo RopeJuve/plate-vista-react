@@ -1,5 +1,4 @@
 import { Cell, Pie, PieChart as RechartsPieChart } from "recharts";
-import { useStateContext } from "../../../contexts/ContextProvider";
 import {
   ChartContainer,
   ChartLegend,
@@ -28,13 +27,11 @@ const COLORS = [
   "hsl(var(--chart-3))",
   "hsl(var(--chart-4))",
   "hsl(var(--chart-5))",
-  "#7352FF",
-  "#FF5C8E",
+  "hsl(var(--signal-deep))",
+  "hsl(var(--steel-500))",
 ];
 
 const PieChart = ({ id, data, legendVisiblity = true, height }: PieChartProps) => {
-  const { currentMode } = useStateContext();
-
   const config = data.reduce<ChartConfig>((acc, item, index) => {
     acc[item.x] = {
       label: item.x,
@@ -48,20 +45,20 @@ const PieChart = ({ id, data, legendVisiblity = true, height }: PieChartProps) =
       id={id}
       config={config}
       className="w-full"
-      style={{
-        height: height === "full" ? 420 : height || 400,
-        background: currentMode === "Dark" ? "#33373E" : "#fff",
-      }}
+      style={{ height: height === "full" ? 420 : height || 400 }}
     >
       <RechartsPieChart>
         <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-        {legendVisiblity ? <ChartLegend content={<ChartLegendContent />} /> : null}
+        {legendVisiblity ? <ChartLegend content={<ChartLegendContent className="flex-wrap" />} /> : null}
         <Pie
           data={data}
           dataKey="y"
           nameKey="x"
-          innerRadius="40%"
-          outerRadius="70%"
+          innerRadius="48%"
+          outerRadius="72%"
+          paddingAngle={2}
+          stroke="hsl(var(--card))"
+          strokeWidth={2}
           label={({ payload }) => payload.text || payload.x}
         >
           {data.map((entry, index) => (

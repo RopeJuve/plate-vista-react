@@ -38,7 +38,7 @@ export const errorMessage = (code: ErrorCode, details?: ErrorDetails, fallback?:
       return "That order status change isn't allowed anymore.";
     }
     case "SESSION_CLOSED":
-      return "This table's session has been closed.";
+      return "This table was closed. Please ask your waiter.";
     case "RATE_LIMITED":
       return "Too many requests — please wait a moment and try again.";
     case "TIMEOUT":

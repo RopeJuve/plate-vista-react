@@ -6,6 +6,8 @@ import api from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
 import { restaurantRegisterSchema, type RestaurantRegisterValues } from "@/lib/schemas";
 import { markOnboarding } from "./onboarding";
+import { readRestaurantIdFromUnknown, readTokenFromHeaders } from "../../shared/api/jwt";
+import AuthShell from "../../Components/AdminComponents/Auth/AuthShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -26,7 +28,7 @@ const RestaurantRegister = () => {
     defaultValues: {
       restaurantName: "",
       slug: "",
-      ownerName: "",
+      employee: "",
       email: "",
       password: "",
     },
@@ -38,28 +40,21 @@ const RestaurantRegister = () => {
       const response = await api.post("/auth/register", {
         restaurantName: values.restaurantName,
         slug: values.slug,
-        ownerName: values.ownerName,
+        employee: values.employee,
         email: values.email,
         password: values.password,
       });
-      const rawHeader = response.headers?.authorization ?? response.headers?.Authorization;
-      const headerToken =
-        typeof rawHeader === "string"
-          ? rawHeader.startsWith("Bearer ")
-            ? rawHeader.slice(7)
-            : rawHeader
-          : "";
-      const token = response.data?.token || response.data?.accessToken || headerToken;
-      if (!token) {
+      localStorage.setItem("restaurantSlug", response.data?.slug || values.slug);
+      const loggedIn = login(
+        response.data ?? {},
+        { position: "admin", employee: values.employee, email: values.email, role: "admin" },
+        readRestaurantIdFromUnknown(response.data),
+        readTokenFromHeaders(response.headers)
+      );
+      if (!loggedIn) {
         setServerError("Account created, but no login token was returned.");
         return;
       }
-      localStorage.setItem("restaurantSlug", response.data?.slug || values.slug);
-      login(
-        token,
-        { position: "admin", employee: values.ownerName, email: values.email, role: "admin" },
-        response.data?.restaurantId
-      );
       markOnboarding();
       navigate("/admin/overview");
     } catch (error) {
@@ -69,17 +64,15 @@ const RestaurantRegister = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-main-bg dark:bg-main-dark-bg">
+    <AuthShell>
       <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(handleRegister)}
-          className="w-96 rounded-2xl bg-white p-8 shadow-md dark:bg-secondary-dark-bg"
-        >
-          <h1 className="mb-6 text-center text-2xl font-bold text-gray-800 dark:text-gray-100">
-            Create your restaurant
-          </h1>
+        <form onSubmit={form.handleSubmit(handleRegister)} className="space-y-4">
+          <div className="pb-1">
+            <h1 className="text-[2rem] font-extrabold leading-tight tracking-[-0.025em]">Create your restaurant</h1>
+            <p className="mt-1 text-ink-soft">You’ll be the owner. Add tables, menu and staff next.</p>
+          </div>
           {serverError && (
-            <p className="mb-4 rounded-md bg-red-100 px-3 py-2 text-center text-sm text-red-700" role="alert">
+            <p className="rounded-md bg-alert/10 px-3 py-2 text-sm font-semibold text-alert-ink" role="alert">
               {serverError}
             </p>
           )}
@@ -87,7 +80,7 @@ const RestaurantRegister = () => {
             [
               ["restaurantName", "Restaurant name", "text"],
               ["slug", "URL slug", "text"],
-              ["ownerName", "Your name", "text"],
+              ["employee", "Your name", "text"],
               ["email", "Email", "email"],
               ["password", "Password", "password"],
             ] as const
@@ -97,13 +90,13 @@ const RestaurantRegister = () => {
               control={form.control}
               name={name}
               render={({ field }) => (
-                <FormItem className="mb-4">
-                  <FormLabel className="text-gray-600 dark:text-gray-300">{label}</FormLabel>
+                <FormItem>
+                  <FormLabel>{label}</FormLabel>
                   <FormControl>
                     <Input
                       type={type}
                       autoComplete={name === "password" ? "new-password" : "off"}
-                      className="dark:bg-main-dark-bg dark:text-gray-100"
+                      className={name === "slug" ? "font-mono" : undefined}
                       {...field}
                       onChange={(event) => {
                         if (name === "slug") {
@@ -114,22 +107,28 @@ const RestaurantRegister = () => {
                       }}
                     />
                   </FormControl>
+                  {name === "slug" && (
+                    <p className="text-xs text-ink-soft">
+                      Guests’ links look like <span className="font-mono">/r/{field.value || "your-slug"}/t/…</span>
+                    </p>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
             />
           ))}
-          <Button type="submit" className="w-full bg-dark-yellow-bg text-white hover:bg-yellow-600">
+          <Button type="submit" size="lg" className="w-full">
             Create restaurant
           </Button>
-          <p className="mt-6 text-center text-gray-600 dark:text-gray-300">
-            <Link to="/" className="text-dark-yellow-bg hover:underline">
-              Already have an account? Log in
+          <p className="text-center text-sm text-ink-soft">
+            Already have an account?{" "}
+            <Link to="/" className="font-semibold text-ink underline decoration-signal decoration-2 hover:text-signal-ink">
+              Log in
             </Link>
           </p>
         </form>
       </Form>
-    </div>
+    </AuthShell>
   );
 };
 

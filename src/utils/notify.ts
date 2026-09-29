@@ -1,3 +1,5 @@
+import { clearTokens } from "../shared/api/tokens";
+
 const AUTH_MESSAGE_KEY = "authMessage";
 
 export const AUTH_EVENTS = {
@@ -61,14 +63,11 @@ export const consumeSessionMessage = () => {
   return message;
 };
 
-export const getLoginPath = () => {
-  const restaurantId = localStorage.getItem("restaurantId");
-  return restaurantId ? `/${restaurantId}` : "/";
-};
+export const getLoginPath = () => "/";
 
 export const triggerUnauthorized = () => {
   setSessionMessage("Session expired");
-  localStorage.removeItem("authToken");
+  clearTokens();
   localStorage.removeItem("user");
   window.dispatchEvent(
     new CustomEvent(AUTH_EVENTS.LOGOUT, { detail: { reason: "session-expired" } })

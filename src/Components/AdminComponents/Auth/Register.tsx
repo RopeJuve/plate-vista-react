@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import api from "../../../services/api";
+import Header from "../Header";
 import { apiMessage } from "../../../utils/notify";
 import { registerSchema, type RegisterValues } from "@/lib/schemas";
 import { Button } from "@/components/ui/button";
@@ -46,7 +47,8 @@ const Register = () => {
     };
 
     try {
-      await api.post("/employee", employeeData);
+      // 403s carry a readable reason (rank rules); show it here, not as a toast.
+      await api.post("/employee", employeeData, { skipErrorToast: true });
       navigate("/admin/employees");
     } catch (err: unknown) {
       setError(apiMessage(err, "Registration failed. Please try again."));
@@ -54,17 +56,15 @@ const Register = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-main-bg dark:bg-main-dark-bg">
+    <div>
+      <Header title="Add Staff" description="Bar and kitchen staff sign in to the order board with these details." />
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(handleRegister)}
-          className="bg-white dark:bg-secondary-dark-bg p-8 rounded-2xl shadow-md w-96"
+          className="max-w-lg space-y-5 rounded-xl bg-white p-5 ring-1 ring-ink/[0.07] md:p-6"
         >
-          <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100 text-center">
-            Add Staff
-          </h2>
           {error && (
-            <p className="mb-4 rounded-md bg-red-100 px-3 py-2 text-center text-sm text-red-700" role="alert">
+            <p className="rounded-md bg-alert/10 px-3 py-2 text-sm font-semibold text-alert-ink" role="alert">
               {error}
             </p>
           )}
@@ -73,10 +73,10 @@ const Register = () => {
             control={form.control}
             name="username"
             render={({ field }) => (
-              <FormItem className="mb-6">
-                <FormLabel className="text-gray-600 dark:text-gray-300">Username</FormLabel>
+              <FormItem>
+                <FormLabel>Username</FormLabel>
                 <FormControl>
-                  <Input className="dark:bg-main-dark-bg dark:text-gray-100" {...field} />
+                  <Input autoComplete="off" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -87,10 +87,10 @@ const Register = () => {
             control={form.control}
             name="email"
             render={({ field }) => (
-              <FormItem className="mb-6">
-                <FormLabel className="text-gray-600 dark:text-gray-300">Email</FormLabel>
+              <FormItem>
+                <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input type="email" className="dark:bg-main-dark-bg dark:text-gray-100" {...field} />
+                  <Input type="email" autoComplete="off" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -101,10 +101,10 @@ const Register = () => {
             control={form.control}
             name="password"
             render={({ field }) => (
-              <FormItem className="mb-6">
-                <FormLabel className="text-gray-600 dark:text-gray-300">Password</FormLabel>
+              <FormItem>
+                <FormLabel>Password</FormLabel>
                 <FormControl>
-                  <Input type="password" className="dark:bg-main-dark-bg dark:text-gray-100" {...field} />
+                  <Input type="password" autoComplete="new-password" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -115,11 +115,11 @@ const Register = () => {
             control={form.control}
             name="position"
             render={({ field }) => (
-              <FormItem className="mb-6">
-                <FormLabel className="text-gray-600 dark:text-gray-300">Position</FormLabel>
+              <FormItem>
+                <FormLabel>Position</FormLabel>
                 <Select value={field.value} onValueChange={field.onChange}>
                   <FormControl>
-                    <SelectTrigger className="dark:bg-main-dark-bg dark:text-gray-100">
+                    <SelectTrigger>
                       <SelectValue placeholder="Select a position" />
                     </SelectTrigger>
                   </FormControl>
@@ -133,18 +133,14 @@ const Register = () => {
             )}
           />
 
-          <Button
-            type="submit"
-            className="bg-dark-yellow-bg hover:bg-yellow-600 text-white w-full"
-          >
-            Register
-          </Button>
-
-          <p className="mt-6 text-gray-600 dark:text-gray-300 text-center">
-            <Link to="/admin/employees" className="text-dark-yellow-bg hover:underline">
+          <div className="flex flex-wrap items-center gap-4 pt-1">
+            <Button type="submit" size="lg">
+              Register
+            </Button>
+            <Link to="/admin/employees" className="text-sm font-semibold text-ink-soft hover:text-ink">
               Back to employees
             </Link>
-          </p>
+          </div>
         </form>
       </Form>
     </div>

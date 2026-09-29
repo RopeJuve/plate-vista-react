@@ -10,25 +10,24 @@ const SkeletonList = ({
   isLoading: boolean;
   variant?: "card" | "category";
 }) => {
+  if (!isLoading) {
+    return null;
+  }
   const items = Array.from({ length: itemsCount }, (_, index) => index);
 
-  return (
-    <>
-    {variant === "category" ? (
-        <div  className={isLoading ? "px-6 mt-4 flex items-center gap-3 overflow-x-scroll no-scrollbar scroll-smooth" : "hidden"}>
-            {isLoading ? items.map((index) => <SkeletonCategoryCustomer key={index} />): null}
-        </div>
-    ): ( <div
-        className={
-          isLoading
-            ? "px-6 mt-7 grid grid-flow-row auto-rows-max grid-cols-card gap-3"
-            : "hidden"
-        }
-      >
-        {isLoading ? items.map((index) => <SkeletonCard key={index} />) : null}
-      </div>)}
-     
-    </>
+  return variant === "category" ? (
+    <div className="no-scrollbar mx-auto flex w-full max-w-3xl gap-2 overflow-hidden px-4 py-3 sm:px-6">
+      {items.map((index) => (
+        <SkeletonCategoryCustomer key={index} />
+      ))}
+    </div>
+  ) : (
+    <div className="mx-auto w-full max-w-3xl px-4 sm:px-6">
+      {items.map((index) => (
+        <SkeletonCard key={index} />
+      ))}
+    </div>
   );
 };
+
 export default SkeletonList;

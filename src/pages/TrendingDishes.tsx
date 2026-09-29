@@ -1,13 +1,12 @@
-import React from 'react'
 import Pie from "./Charts/Pie";
 import Header from '../Components/AdminComponents/Header';
 
 const TrendingDishes = () => (
-  <div className="m-4 md:m-10 mt-24 p-10 bg-white dark:bg-d-main-bg rounded-3xl shadow-lg transition-colors duration-300 ease-in-out">
-    <Header title="Trending Dishes"/>
-    <div className="w-full mt-8">
+  <div>
+    <Header title="Trending Dishes" description="Share of orders by dish. Sample data." />
+    <section className="rounded-xl bg-white p-5 ring-1 ring-ink/[0.07] md:p-6">
       <Pie />
-    </div>
+    </section>
   </div>
 );
 

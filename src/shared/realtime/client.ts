@@ -15,7 +15,7 @@ import {
 
 const REQUEST_TIMEOUT_MS = 8000;
 const INITIAL_BACKOFF_MS = 1000;
-const MAX_BACKOFF_MS = 15000;
+const MAX_BACKOFF_MS = 30000;
 const ABUSE_COOLDOWN_MS = 5000;
 
 type Unsubscribe = () => void;

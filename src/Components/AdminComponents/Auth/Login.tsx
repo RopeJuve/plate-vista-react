@@ -1,11 +1,14 @@
 import { useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "../../../contexts/AuthContext";
 import api from "../../../services/api";
 import { apiMessage, consumeSessionMessage } from "../../../utils/notify";
+import { readTokenFromHeaders, readRestaurantIdFromUnknown } from "../../../shared/api/jwt";
+import type { TokenBody } from "../../../shared/api/tokens";
 import { loginSchema, type LoginValues } from "@/lib/schemas";
+import AuthShell from "./AuthShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -18,7 +21,6 @@ import {
 } from "@/components/ui/form";
 
 const Login = () => {
-  const { restaurantId } = useParams();
   const [authMessage, setAuthMessage] = useState(() => consumeSessionMessage());
   const [pending, setPending] = useState(false);
   const navigate = useNavigate();
@@ -28,40 +30,20 @@ const Login = () => {
     defaultValues: { username: "", password: "" },
   });
 
-  const getAuthTokenFromHeaders = (headers: unknown) => {
-    if (!headers || typeof headers !== "object") {
-      return null;
-    }
-    const record = headers as {
-      authorization?: string;
-      Authorization?: string;
-      get?: (name: string) => string | null;
-    };
-    const authHeader =
-      record.authorization ||
-      record.Authorization ||
-      (typeof record.get === "function" ? record.get("authorization") : "");
-    if (!authHeader) {
-      return null;
-    }
-    return authHeader.startsWith("Bearer ")
-      ? authHeader.slice(7)
-      : authHeader.split(" ")[1];
-  };
-
   const handleLogin = async (values: LoginValues) => {
     setPending(true);
     setAuthMessage("");
 
     try {
+      const storedRestaurantId = localStorage.getItem("restaurantId");
       const response = await api.post(
         "/auth/employee/login",
         {
           employee: values.username,
           password: values.password,
         },
-        restaurantId
-          ? { headers: { "x-restaurant-id": restaurantId } }
+        storedRestaurantId
+          ? { headers: { "x-restaurant-id": storedRestaurantId } }
           : undefined
       );
 
@@ -70,15 +52,24 @@ const Login = () => {
         return;
       }
 
-      const token = getAuthTokenFromHeaders(response.headers);
-      const position = response.data.position as string | undefined;
-      if (!token) {
+      const data = response.data as TokenBody & {
+        position?: string;
+        restaurantId?: unknown;
+      };
+      const position = data.position;
+      const restaurantId = readRestaurantIdFromUnknown(data) ?? undefined;
+      const loggedIn = login(
+        data,
+        { position, employee: values.username },
+        restaurantId,
+        readTokenFromHeaders(response.headers)
+      );
+      if (!loggedIn) {
         setAuthMessage("Login failed. Please try again.");
         return;
       }
-      login(token, { position, employee: values.username }, restaurantId);
 
-      if (position === "admin") {
+      if (position === "admin" || position === "owner") {
         navigate(`/admin`);
         return;
       }
@@ -97,17 +88,15 @@ const Login = () => {
   };
 
   return (
-    <div className="flex items-center max-w-screen-lg mx-auto min-h-screen bg-main-bg dark:bg-main-dark-bg">
+    <AuthShell>
       <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(handleLogin)}
-          className="bg-white dark:bg-secondary-dark-bg p-8 rounded-2xl shadow-md w-96 mx-auto md:w-[50%]"
-        >
-          <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100 text-center">
-            Login
-          </h2>
+        <form onSubmit={form.handleSubmit(handleLogin)} className="space-y-5">
+          <div>
+            <h1 className="text-[2rem] font-extrabold leading-tight tracking-[-0.025em]">Sign in</h1>
+            <p className="mt-1 text-ink-soft">Staff and owners use the same login. We’ll take you to the board or the admin.</p>
+          </div>
           {authMessage && (
-            <p className="mb-4 rounded-md bg-red-100 px-3 py-2 text-center text-sm text-red-700" role="alert">
+            <p className="rounded-md bg-alert/10 px-3 py-2 text-sm font-semibold text-alert-ink" role="alert">
               {authMessage}
             </p>
           )}
@@ -116,15 +105,10 @@ const Login = () => {
             control={form.control}
             name="username"
             render={({ field }) => (
-              <FormItem className="mb-6">
-                <FormLabel className="text-gray-600 dark:text-gray-300">Username</FormLabel>
+              <FormItem>
+                <FormLabel>Username</FormLabel>
                 <FormControl>
-                  <Input
-                    id="employee"
-                    autoComplete="username"
-                    className="dark:bg-main-dark-bg dark:text-gray-100"
-                    {...field}
-                  />
+                  <Input id="employee" autoComplete="username" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -135,37 +119,28 @@ const Login = () => {
             control={form.control}
             name="password"
             render={({ field }) => (
-              <FormItem className="mb-6">
-                <FormLabel className="text-gray-600 dark:text-gray-300">Password</FormLabel>
+              <FormItem>
+                <FormLabel>Password</FormLabel>
                 <FormControl>
-                  <Input
-                    id="password"
-                    type="password"
-                    autoComplete="current-password"
-                    className="dark:bg-main-dark-bg dark:text-gray-100"
-                    {...field}
-                  />
+                  <Input id="password" type="password" autoComplete="current-password" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
 
-          <Button
-            type="submit"
-            disabled={pending}
-            className="bg-dark-yellow-bg hover:bg-yellow-600 text-white w-full"
-          >
-            {pending ? "Signing in..." : "Login"}
+          <Button type="submit" size="lg" disabled={pending} className="w-full">
+            {pending ? "Signing in…" : "Login"}
           </Button>
-          <p className="mt-6 text-center text-gray-600 dark:text-gray-300">
-            <Link to="/register" className="text-dark-yellow-bg hover:underline">
+          <p className="text-center text-sm text-ink-soft">
+            New to Plate Vista?{" "}
+            <Link to="/register" className="font-semibold text-ink underline decoration-signal decoration-2 hover:text-signal-ink">
               Create a restaurant
             </Link>
           </p>
         </form>
       </Form>
-    </div>
+    </AuthShell>
   );
 };
 

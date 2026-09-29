@@ -17,7 +17,15 @@ const tables = [];
 const sessions = new Map();
 const orders = new Map();
 const tickets = new Map();
+/** refreshToken -> { payload, used } — single use, like the real API. */
+const refreshTokens = new Map();
+/** guest token -> sessionId, so a device that joined before gets back in. */
+const guestTokens = new Map();
+let sessionCounter = 0;
 const sockets = new Set();
+
+/** Fault injection for the E2E only — see POST /_test/faults. */
+const faults = { dropNextOrderCreate: false, failNextBoard: false };
 
 const menu = [
   {
@@ -38,6 +46,43 @@ const menu = [
 const b64url = (value) => Buffer.from(JSON.stringify(value)).toString("base64url");
 
 const signToken = (payload) => `${b64url({ alg: "none", typ: "JWT" })}.${b64url(payload)}.e2e`;
+
+const JOIN_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const makeJoinCode = () =>
+  Array.from({ length: 4 }, () => JOIN_ALPHABET[Math.floor(Math.random() * JOIN_ALPHABET.length)]).join("");
+
+const openSession = (table) => {
+  sessionCounter += 1;
+  const session = {
+    _id: `session-${table._id}-${sessionCounter}`,
+    tableId: table._id,
+    tableNumber: table.tableNumber,
+    status: "open",
+    openedAt: new Date().toISOString(),
+    closedAt: null,
+    joinCode: makeJoinCode(),
+  };
+  sessions.set(session._id, session);
+  table.status = "occupied";
+  emit("session.opened", { session });
+  return session;
+};
+
+const issueTokens = (payload) => {
+  const refreshToken = randomUUID();
+  refreshTokens.set(refreshToken, { payload, used: false });
+  return {
+    tokenType: "Bearer",
+    accessToken: signToken(payload),
+    expiresIn: 3600,
+    refreshToken,
+  };
+};
+
+const sessionTotal = (sessionId) =>
+  [...orders.values()]
+    .filter((order) => order.sessionId === sessionId && order.status !== "cancelled")
+    .reduce((sum, order) => sum + order.totalCents, 0);
 
 const readToken = (req) => {
   const header = req.headers.authorization || "";
@@ -88,8 +133,12 @@ const readBody = (req) =>
   });
 
 const board = () => ({
-  sessions: [...sessions.values()],
-  orders: [...orders.values()],
+  sessions: [...sessions.values()].filter((session) => session.status === "open"),
+  orders: [...orders.values()].filter((order) => sessions.get(order.sessionId)?.status !== "closed"),
+  recentlyClosed: [...sessions.values()]
+    .filter((session) => session.status === "closed")
+    .sort((a, b) => b.closedAt.localeCompare(a.closedAt))
+    .map(({ joinCode: _joinCode, ...session }) => ({ ...session, totalCents: sessionTotal(session._id) })),
   tables: tables.map((table) => ({
     _id: table._id,
     tableNumber: table.tableNumber,
@@ -122,19 +171,10 @@ const buildOrder = (payload, identity) => {
   const session = identity.sessionId ? sessions.get(identity.sessionId) : null;
   const tableId = payload.tableId || session?.tableId || identity.tableId;
   const table = tables.find((item) => item._id === tableId);
-  let active = session;
+  let active =
+    session || [...sessions.values()].find((item) => item.tableId === tableId && item.status === "open");
   if (!active && table) {
-    active = {
-      _id: `session-${table._id}`,
-      tableId: table._id,
-      tableNumber: table.tableNumber,
-      status: "open",
-      openedAt: new Date().toISOString(),
-      closedAt: null,
-    };
-    sessions.set(active._id, active);
-    table.status = "occupied";
-    emit("session.opened", { session: active });
+    active = openSession(table);
   }
   const items = (payload.items || []).map((line) => {
     const product = menu.find((item) => item._id === line.productId);
@@ -186,10 +226,21 @@ const server = http.createServer(async (req, res) => {
   const body = ["POST", "PUT", "PATCH"].includes(req.method || "") ? await readBody(req) : {};
 
   if (req.method === "POST" && route === "/auth/register") {
+    // One restaurant at a time: this mock has a single global scope where the
+    // real API scopes by restaurantId, so a new registration starts clean and
+    // specs sharing the server do not inherit each other's tables and orders.
+    employees.clear();
+    tables.length = 0;
+    sessions.clear();
+    orders.clear();
+    refreshTokens.clear();
+    guestTokens.clear();
+    faults.dropNextOrderCreate = false;
+    faults.failNextBoard = false;
     restaurant.id = "rest-1";
     restaurant.slug = String(body.slug || "harbor");
     restaurant.name = String(body.restaurantName || "Restaurant");
-    const token = signToken({
+    const tokens = issueTokens({
       position: "admin",
       role: "admin",
       employee: body.ownerName,
@@ -203,7 +254,9 @@ const server = http.createServer(async (req, res) => {
       position: "admin",
     });
     sendJson(res, 200, {
-      token,
+      message: "Registered",
+      ...tokens,
+      position: "admin",
       slug: restaurant.slug,
       restaurantId: restaurant.id,
     });
@@ -241,14 +294,41 @@ const server = http.createServer(async (req, res) => {
       sendJson(res, 401, { message: "Login failed" });
       return;
     }
-    const token = signToken({
+    const tokens = issueTokens({
       position: person.position,
       role: person.position,
       employee: person.employee,
       slug: restaurant.slug,
       restaurantId: restaurant.id,
     });
-    sendJson(res, 200, { token, position: person.position }, { Authorization: `Bearer ${token}` });
+    sendJson(
+      res,
+      200,
+      { message: "Logged in successfully", ...tokens, position: person.position },
+      { Authorization: `Bearer ${tokens.accessToken}` }
+    );
+    return;
+  }
+
+  if (req.method === "POST" && route === "/auth/refresh") {
+    if (!body.refreshToken) {
+      sendJson(res, 400, { code: "VALIDATION", message: "refreshToken is required" });
+      return;
+    }
+    const entry = refreshTokens.get(String(body.refreshToken));
+    if (!entry || entry.used) {
+      sendJson(res, 401, { code: "UNAUTHORIZED", message: "Unauthorized" });
+      return;
+    }
+    entry.used = true;
+    sendJson(res, 200, { message: "Refreshed", ...issueTokens(entry.payload) });
+    return;
+  }
+
+  if (req.method === "POST" && route === "/auth/logout") {
+    refreshTokens.delete(String(body.refreshToken));
+    res.writeHead(204, { "Access-Control-Allow-Origin": "*" });
+    res.end();
     return;
   }
 
@@ -274,30 +354,61 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     let session = [...sessions.values()].find((item) => item.tableId === table._id && item.status === "open");
+    let opened = false;
     if (!session) {
-      session = {
-        _id: `session-${table._id}`,
-        tableId: table._id,
-        tableNumber: table.tableNumber,
-        status: "open",
-        openedAt: new Date().toISOString(),
-        closedAt: null,
-      };
-      sessions.set(session._id, session);
-      table.status = "occupied";
+      session = openSession(table);
+      opened = true;
+    } else {
+      const rejoin = body.guestToken && guestTokens.get(String(body.guestToken)) === session._id;
+      const code = typeof body.joinCode === "string" ? body.joinCode.toUpperCase() : "";
+      if (!rejoin && !code) {
+        sendJson(res, 403, { code: "JOIN_CODE_REQUIRED", message: "Join code required" });
+        return;
+      }
+      if (!rejoin && code !== session.joinCode) {
+        sendJson(res, 403, { code: "JOIN_CODE_INVALID", message: "Wrong join code" });
+        return;
+      }
     }
     const token = signToken({
       sessionId: session._id,
       tableId: table._id,
       tableNumber: table.tableNumber,
       slug: restaurant.slug,
+      nonce: randomUUID(),
     });
+    guestTokens.set(token, session._id);
     sendJson(res, 200, {
       token,
       sessionId: session._id,
-      tableId: table._id,
-      tableNumber: table.tableNumber,
-      session,
+      joinCode: session.joinCode,
+      opened,
+      table: { _id: table._id, tableNumber: table.tableNumber },
+    });
+    return;
+  }
+
+  if (req.method === "GET" && /^\/sessions\/[^/]+\/bill$/.test(route)) {
+    const sessionId = route.split("/")[2];
+    const session = sessions.get(sessionId);
+    const payload = readToken(req);
+    if (!session || !payload || (payload.sessionId && payload.sessionId !== sessionId)) {
+      sendJson(res, 404, { message: "Session not found" });
+      return;
+    }
+    sendJson(res, 200, {
+      sessionId,
+      session: {
+        _id: session._id,
+        tableId: session.tableId,
+        status: session.status,
+        openedAt: session.openedAt,
+        closedAt: session.closedAt,
+      },
+      orders: [...orders.values()].filter(
+        (order) => order.sessionId === sessionId && order.status !== "cancelled"
+      ),
+      totalCents: sessionTotal(sessionId),
     });
     return;
   }
@@ -357,6 +468,12 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === "GET" && route === "/staff/board") {
+    if (faults.failNextBoard) {
+      // One cold-start style failure, as the real API can do on wake-up.
+      faults.failNextBoard = false;
+      sendJson(res, 503, { message: "Board unavailable" });
+      return;
+    }
     sendJson(res, 200, board());
     return;
   }
@@ -379,8 +496,19 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (req.method === "POST" && route === "/_test/faults") {
+    faults.dropNextOrderCreate = Boolean(body.dropNextOrderCreate);
+    faults.failNextBoard = Boolean(body.failNextBoard);
+    sendJson(res, 200, { ...faults });
+    return;
+  }
+
   if (req.method === "GET" && route === "/orders") {
-    sendJson(res, 200, { orders: [], total: 0 });
+    const page = Math.max(1, Number(url.searchParams.get("page")) || 1);
+    const limit = Math.max(1, Number(url.searchParams.get("limit")) || 20);
+    const all = [...orders.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    const start = (page - 1) * limit;
+    sendJson(res, 200, { orders: all.slice(start, start + limit), total: all.length });
     return;
   }
 
@@ -425,6 +553,25 @@ server.on("upgrade", (req, socket, head) => {
         return;
       }
       if (message.type === "order.create") {
+        if (faults.dropNextOrderCreate) {
+          // Drop the connection before the order is built, so the client's
+          // in-flight request fails and it must retry after reconnecting.
+          faults.dropNextOrderCreate = false;
+          ws.terminate();
+          return;
+        }
+        const closed = identity.sessionId && sessions.get(identity.sessionId)?.status === "closed";
+        if (closed) {
+          ws.send(
+            JSON.stringify({
+              type: "ack",
+              requestId: message.requestId,
+              ok: false,
+              error: { code: "SESSION_CLOSED", message: "Session is closed" },
+            })
+          );
+          return;
+        }
         const order = buildOrder(message.payload || {}, identity);
         ws.send(JSON.stringify({ type: "ack", requestId: message.requestId, ok: true, data: { order } }));
         return;

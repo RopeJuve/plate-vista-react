@@ -2,7 +2,6 @@ import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Outlet, useLocation } from "react-router-dom";
 import "./index.css";
 import PrivateRoute from "./pages/PrivateRoute";
-import { OrderProvider } from "./contexts/OrderContext";
 import { GuestAuthProvider } from "./features/guest-ordering/GuestAuthContext";
 import { MenuProvider } from "./features/guest-ordering/MenuProvider";
 import { StaffBoardProvider } from "./features/staff-board/StaffBoardProvider";
@@ -35,7 +34,9 @@ const BarLayout = () => {
     <ErrorBoundary key={location.pathname}>
       <MenuProvider>
         <StaffBoardProvider>
-          <Outlet />
+          <Suspense fallback={<Loading fullScreen={false} />}>
+            <Outlet />
+          </Suspense>
         </StaffBoardProvider>
       </MenuProvider>
     </ErrorBoundary>
@@ -45,44 +46,42 @@ const BarLayout = () => {
 function App() {
   return (
     <GuestAuthProvider>
-      <OrderProvider>
-        <BrowserRouter>
-          <ErrorBoundary>
-            <RealtimeProvider>
-              <Suspense fallback={<Loading />}>
-                <Routes>
-                  <Route path="/" element={<Login />} />
-                  <Route path="/register" element={<RestaurantRegister />} />
-                  <Route path="/admin" element={<PrivateRoute allowedRoles={["admin"]} />}>
-                    <Route element={<AdminDashboard />}>
-                      <Route index element={<Overview />} />
-                      <Route path="overview" element={<Overview />} />
-                      <Route path="menu" element={<Menu />} />
-                      <Route path="orders" element={<Orders />} />
-                      <Route path="tables" element={<Tables />} />
-                      <Route path="employees" element={<Employees />} />
-                      <Route path="register" element={<Register />} />
-                      <Route path="qrcodes" element={<QRCodeGenerator />} />
-                      <Route path="dailysales" element={<DailySales />} />
-                      <Route path="trendingdishes" element={<TrendingDishes />} />
-                      <Route path="totalincome" element={<TotalIncome />} />
-                      <Route path="totalorders" element={<TotalOrders />} />
-                      <Route path="bestemployees" element={<BestEmployees />} />
-                    </Route>
+      <BrowserRouter>
+        <ErrorBoundary>
+          <RealtimeProvider>
+            <Suspense fallback={<Loading />}>
+              <Routes>
+                <Route path="/" element={<Login />} />
+                <Route path="/register" element={<RestaurantRegister />} />
+                <Route path="/admin" element={<PrivateRoute allowedRoles={["admin", "owner"]} />}>
+                  <Route element={<AdminDashboard />}>
+                    <Route index element={<Overview />} />
+                    <Route path="overview" element={<Overview />} />
+                    <Route path="menu" element={<Menu />} />
+                    <Route path="orders" element={<Orders />} />
+                    <Route path="tables" element={<Tables />} />
+                    <Route path="employees" element={<Employees />} />
+                    <Route path="register" element={<Register />} />
+                    <Route path="qrcodes" element={<QRCodeGenerator />} />
+                    <Route path="dailysales" element={<DailySales />} />
+                    <Route path="trendingdishes" element={<TrendingDishes />} />
+                    <Route path="totalincome" element={<TotalIncome />} />
+                    <Route path="totalorders" element={<TotalOrders />} />
+                    <Route path="bestemployees" element={<BestEmployees />} />
                   </Route>
-                  <Route path="/bar" element={<PrivateRoute allowedRoles={["bar", "kitchen"]} />}>
-                    <Route element={<BarLayout />}>
-                      <Route index element={<BarPageTableView />} />
-                      <Route path="table/:tableId" element={<BarPage />} />
-                    </Route>
+                </Route>
+                <Route path="/bar" element={<PrivateRoute allowedRoles={["bar", "kitchen"]} />}>
+                  <Route element={<BarLayout />}>
+                    <Route index element={<BarPageTableView />} />
+                    <Route path="table/:tableId" element={<BarPage />} />
                   </Route>
-                  <Route path="/r/:slug/t/:qrCode" element={<Customer />} />
-                </Routes>
-              </Suspense>
-            </RealtimeProvider>
-          </ErrorBoundary>
-        </BrowserRouter>
-      </OrderProvider>
+                </Route>
+                <Route path="/r/:slug/t/:qrCode" element={<Customer />} />
+              </Routes>
+            </Suspense>
+          </RealtimeProvider>
+        </ErrorBoundary>
+      </BrowserRouter>
     </GuestAuthProvider>
   );
 }

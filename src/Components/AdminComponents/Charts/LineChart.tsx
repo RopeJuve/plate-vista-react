@@ -1,6 +1,5 @@
 import { format } from "date-fns";
 import { CartesianGrid, Line, LineChart as RechartsLineChart, XAxis, YAxis } from "recharts";
-import { useStateContext } from "../../../contexts/ContextProvider";
 import {
   ChartContainer,
   ChartLegend,
@@ -49,10 +48,15 @@ const toChartRows = (series: LineSeries[]) => {
 };
 
 const LineChart = ({ data, color }: LineChartProps) => {
-  const { currentMode } = useStateContext();
-
   if (!data || data.length === 0) {
-    return <div>Loading</div>;
+    return (
+      <div className="grid h-[320px] place-items-center rounded-lg border border-dashed border-ink/15 text-center">
+        <div>
+          <p className="font-semibold">No sales to chart yet</p>
+          <p className="mt-1 text-sm text-ink-soft">Orders appear here as soon as guests start ordering.</p>
+        </div>
+      </div>
+    );
   }
 
   const sortedData = data.map((series) => ({
@@ -72,25 +76,22 @@ const LineChart = ({ data, color }: LineChartProps) => {
   }, {});
 
   return (
-    <ChartContainer
-      config={config}
-      className="h-[400px] w-full"
-      style={{ background: currentMode === "Dark" ? "#33373E" : "#fff" }}
-    >
-      <RechartsLineChart data={rows} margin={{ left: 12, right: 12 }}>
-        <CartesianGrid vertical={false} />
+    <ChartContainer config={config} className="h-[320px] w-full md:h-[360px]">
+      <RechartsLineChart data={rows} margin={{ left: 0, right: 12, top: 8 }}>
+        <CartesianGrid vertical={false} strokeDasharray="3 4" />
         <XAxis
           dataKey="x"
           tickLine={false}
           axisLine={false}
+          tickMargin={8}
           tickFormatter={(value) => {
             const date = new Date(value);
-            return Number.isNaN(date.getTime()) ? String(value) : format(date, "h:mm a");
+            return Number.isNaN(date.getTime()) ? String(value) : format(date, "d MMM");
           }}
         />
-        <YAxis tickLine={false} axisLine={false} allowDecimals={false} />
+        <YAxis tickLine={false} axisLine={false} allowDecimals={false} width={36} />
         <ChartTooltip content={<ChartTooltipContent />} />
-        <ChartLegend content={<ChartLegendContent />} />
+        {sortedData.length > 1 && <ChartLegend content={<ChartLegendContent />} />}
         {sortedData.map((series) => {
           const seriesKey = toSeriesKey(series.name);
           return (
@@ -99,8 +100,9 @@ const LineChart = ({ data, color }: LineChartProps) => {
               type="monotone"
               dataKey={seriesKey}
               stroke={`var(--color-${seriesKey})`}
-              strokeWidth={2}
-              dot={{ r: 4 }}
+              strokeWidth={2.5}
+              dot={false}
+              activeDot={{ r: 5, strokeWidth: 0 }}
             />
           );
         })}

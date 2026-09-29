@@ -30,8 +30,17 @@ const productIdsFrom = (details: ErrorDetails): string[] => {
 
 const RETRYABLE = new Set(["TIMEOUT", "INTERNAL"]);
 
-export const usePlaceOrder = (storageKey: string) => {
+/**
+ * @param onPlaced Runs for every accepted order, including one landed by the
+ *   reconnect retry below. Everything that must settle after a successful
+ *   order (clearing the cart, recording it on the bill) belongs here — a caller
+ *   that only acts on `submit`'s return value misses the retry, leaving a full
+ *   cart behind a placed order and inviting a duplicate.
+ */
+export const usePlaceOrder = (storageKey: string, onPlaced?: (order: Order) => void) => {
   const { request, status, sessionEnded } = useRealtime();
+  const onPlacedRef = useRef(onPlaced);
+  onPlacedRef.current = onPlaced;
   const [phase, setPhase] = useState<PlaceOrderPhase>("idle");
   const [error, setError] = useState<ProtocolError | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -60,6 +69,7 @@ export const usePlaceOrder = (storageKey: string) => {
         clearPending(storageKey);
         setPhase("success");
         retryOnceRef.current = false;
+        onPlacedRef.current?.(data.order);
         return data.order;
       } catch (err) {
         const protocolError =
@@ -71,6 +81,11 @@ export const usePlaceOrder = (storageKey: string) => {
         }
         if (protocolError.code === "OUT_OF_STOCK") {
           setOutOfStockIds(productIdsFrom(protocolError.details));
+        }
+        if (protocolError.code === "SESSION_CLOSED") {
+          // The table was closed while this was in flight. Never resend it:
+          // it would land on the next party's check.
+          clearPending(storageKey);
         }
         if (RETRYABLE.has(protocolError.code) && !autoRetryRef.current) {
           retryOnceRef.current = true;

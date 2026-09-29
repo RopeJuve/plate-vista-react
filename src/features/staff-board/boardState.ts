@@ -1,5 +1,6 @@
 import type {
   BoardTable,
+  ClosedSession,
   Order,
   OrderStatus,
   ServerEvent,
@@ -16,8 +17,12 @@ export type BoardState = {
   sessionsById: Record<string, Session>;
   sessionIdByTable: Record<string, string>;
   tablesById: Record<string, BoardTable>;
+  /** Tables closed in the last 12 hours, newest first. */
+  recentlyClosed: ClosedSession[];
   ready: boolean;
 };
+
+const MAX_RECENTLY_CLOSED = 50;
 
 export const emptyBoard = (): BoardState => ({
   ordersById: {},
@@ -25,6 +30,7 @@ export const emptyBoard = (): BoardState => ({
   sessionsById: {},
   sessionIdByTable: {},
   tablesById: {},
+  recentlyClosed: [],
   ready: false,
 });
 
@@ -56,7 +62,8 @@ export const applySnapshot = (board: StaffBoard): BoardState => {
     const occupied = Boolean(sessionIdByTable[table._id]);
     tablesById[table._id] = {
       ...table,
-      status: occupied ? "occupied" : table.status === "reserved" ? "reserved" : table.status,
+      // Only an open session seats a table; a stored "occupied" can be stale.
+      status: occupied ? "occupied" : table.status === "reserved" ? "reserved" : "vacant",
     };
   });
   state = {
@@ -64,6 +71,7 @@ export const applySnapshot = (board: StaffBoard): BoardState => {
     sessionsById,
     sessionIdByTable,
     tablesById,
+    recentlyClosed: board.recentlyClosed.slice(0, MAX_RECENTLY_CLOSED),
     ready: true,
   };
   board.orders.forEach((order) => {
@@ -120,6 +128,27 @@ export const applyServerEvent = (state: BoardState, event: ServerEvent): BoardSt
     case "session.closed": {
       const { sessionId, tableId } = event.data;
       const ids = state.orderIdsBySession[sessionId] ?? [];
+      const closedSession = state.sessionsById[sessionId];
+      const closedEntry: ClosedSession | null = closedSession
+        ? {
+            _id: sessionId,
+            tableId,
+            tableNumber: state.tablesById[tableId]?.tableNumber ?? closedSession.tableNumber,
+            status: "closed",
+            openedAt: closedSession.openedAt,
+            closedAt: new Date().toISOString(),
+            totalCents: ids.reduce((total, id) => {
+              const order = state.ordersById[id];
+              return order && order.status !== "cancelled" ? total + order.totalCents : total;
+            }, 0),
+          }
+        : null;
+      const recentlyClosed = closedEntry
+        ? [closedEntry, ...state.recentlyClosed.filter((entry) => entry._id !== sessionId)].slice(
+            0,
+            MAX_RECENTLY_CLOSED
+          )
+        : state.recentlyClosed;
       const ordersById = { ...state.ordersById };
       ids.forEach((id) => {
         delete ordersById[id];
@@ -137,6 +166,7 @@ export const applyServerEvent = (state: BoardState, event: ServerEvent): BoardSt
         orderIdsBySession,
         sessionsById,
         sessionIdByTable,
+        recentlyClosed,
         tablesById: table
           ? { ...state.tablesById, [tableId]: { ...table, status: "vacant" } }
           : state.tablesById,

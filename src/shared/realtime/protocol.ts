@@ -97,6 +97,27 @@ export interface Session {
   status: SessionStatus;
   openedAt: string;
   closedAt: string | null;
+  /** Code late guests enter to join this open table. Staff board only. */
+  joinCode?: string;
+}
+
+/** A table closed in the last 12 hours (`GET /staff/board` → `recentlyClosed`). */
+export interface ClosedSession {
+  _id: string;
+  tableId: string;
+  tableNumber: number | null;
+  status: "closed";
+  openedAt: string;
+  closedAt: string;
+  totalCents: number;
+}
+
+/** GET /api/v1/sessions/:sessionId/bill — open or closed, cancelled orders excluded. */
+export interface SessionBill {
+  sessionId: string;
+  session: Pick<Session, "_id" | "tableId" | "status" | "openedAt" | "closedAt">;
+  orders: Order[];
+  totalCents: number;
 }
 
 export interface BoardTable {
@@ -112,6 +133,8 @@ export interface StaffBoard {
   sessions: Session[];
   orders: Order[];
   tables: BoardTable[];
+  /** Newest first, at most 50. Their orders are not in `orders`; load the bill. */
+  recentlyClosed: ClosedSession[];
 }
 
 /** Public/staff menu item shape (REST, `GET /menu-items`, `GET /r/:slug/menu-items`). */

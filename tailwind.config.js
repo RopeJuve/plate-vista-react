@@ -1,5 +1,7 @@
 const { fontFamily } = require("tailwindcss/defaultTheme");
 
+const token = (name) => `hsl(var(--${name}) / <alpha-value>)`;
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: ["class"],
@@ -7,92 +9,93 @@ module.exports = {
   theme: {
     container: {
       center: true,
-      padding: "2rem",
+      padding: "1rem",
       screens: {
         "2xl": "1400px",
       },
     },
     fontFamily: {
-      display: ["Open Sans", "sans-serif"],
-      body: ["Open Sans", "sans-serif"],
-      sans: ["Open Sans", ...fontFamily.sans],
+      sans: ["Archivo", ...fontFamily.sans],
+      mono: ["'Chivo Mono'", ...fontFamily.mono],
     },
     extend: {
-      fontSize: {
-        14: "14px",
-      },
       colors: {
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
+        border: token("border"),
+        input: token("input"),
+        ring: token("ring"),
+        background: token("background"),
+        foreground: token("foreground"),
         primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
+          DEFAULT: token("primary"),
+          foreground: token("primary-foreground"),
         },
         secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
+          DEFAULT: token("secondary"),
+          foreground: token("secondary-foreground"),
         },
         destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
+          DEFAULT: token("destructive"),
+          foreground: token("destructive-foreground"),
         },
         muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
+          DEFAULT: token("muted"),
+          foreground: token("muted-foreground"),
         },
         accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
+          DEFAULT: token("accent"),
+          foreground: token("accent-foreground"),
         },
         popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
+          DEFAULT: token("popover"),
+          foreground: token("popover-foreground"),
         },
         card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+          DEFAULT: token("card"),
+          foreground: token("card-foreground"),
         },
+        steel: {
+          950: token("steel-950"),
+          900: token("steel-900"),
+          850: token("steel-850"),
+          800: token("steel-800"),
+          700: token("steel-700"),
+          500: token("steel-500"),
+          300: token("steel-300"),
+        },
+        paper: {
+          DEFAULT: token("paper"),
+          deep: token("paper-deep"),
+          line: token("paper-line"),
+        },
+        ink: {
+          DEFAULT: token("ink"),
+          soft: token("ink-soft"),
+        },
+        signal: {
+          DEFAULT: token("signal"),
+          deep: token("signal-deep"),
+          ink: token("signal-ink"),
+        },
+        pass: {
+          DEFAULT: token("pass"),
+          ink: token("pass-ink"),
+        },
+        alert: {
+          DEFAULT: token("alert"),
+          ink: token("alert-ink"),
+        },
+        amber: token("amber"),
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
-      backgroundColor: {
-        "main-bg": "#FAFBFB",
-        "d-main-bg": "#222222",
-        "main-dark-bg": "#20232A",
-        "secondary-dark-bg": "#33373E",
-        "dark-yellow-bg": "#DEB236",
-        "light-gray": "#F7F7F7",
-        "half-transparent": "rgba(0, 0, 0, 0.5)",
+      fontSize: {
+        numeral: ["2.75rem", { lineHeight: "0.9", letterSpacing: "-0.03em" }],
       },
-      borderWidth: {
-        1: "1px",
-      },
-      borderColor: {
-        color: "rgba(0, 0, 0, 0.1)",
-      },
-      width: {
-        400: "400px",
-        760: "760px",
-        780: "780px",
-        800: "800px",
-        1000: "1000px",
-        1200: "1200px",
-        1400: "1400px",
-      },
-      height: {
-        80: "80px",
-      },
-      minHeight: {
-        590: "590px",
-      },
-      backgroundImage: {
-        "hero-pattern": "url('https://i.ibb.co/MkvLDfb/Rectangle-4389.png')",
+      transitionTimingFunction: {
+        "out-expo": "cubic-bezier(0.16, 1, 0.3, 1)",
       },
       gridTemplateColumns: {
         card: "repeat(auto-fill,minmax(18.75rem,1fr))",
@@ -111,6 +114,7 @@ module.exports = {
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        lamp: "lamp 1.6s ease-in-out infinite",
       },
     },
   },

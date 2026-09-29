@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyServerEvent, applySnapshot, boardReducer } from "./boardState";
+import { applyServerEvent, applySnapshot, boardReducer, emptyBoard } from "./boardState";
 import type { Order, StaffBoard } from "../../shared/realtime/protocol";
 
 const order = (rev: number, status: Order["status"] = "pending"): Order => ({
@@ -29,6 +29,7 @@ const board = (rev: number, status: Order["status"] = "accepted"): StaffBoard =>
   ],
   orders: [order(rev, status)],
   tables: [{ _id: "table-1", tableNumber: 4, capacity: 4, status: "occupied", qrCode: "qr" }],
+  recentlyClosed: [],
 });
 
 describe("staff board rev rule", () => {
@@ -56,7 +57,7 @@ describe("staff board rev rule", () => {
 
   it("replays buffered events through the same rev rule after a snapshot", () => {
     const state = boardReducer(
-      { ordersById: {}, orderIdsBySession: {}, sessionsById: {}, sessionIdByTable: {}, tablesById: {}, ready: false },
+      emptyBoard(),
       {
         type: "hydrate",
         board: board(3, "preparing"),
@@ -80,5 +81,20 @@ describe("staff board rev rule", () => {
     expect(state.ordersById["order-1"]).toBeUndefined();
     expect(state.sessionsById["session-1"]).toBeUndefined();
     expect(state.tablesById["table-1"].status).toBe("vacant");
+  });
+
+  it("moves a closed session to recently closed with its bill total", () => {
+    let state = applySnapshot(board(1, "pending"));
+    state = applyServerEvent(state, {
+      event: "session.closed",
+      data: { sessionId: "session-1", tableId: "table-1" },
+    });
+    expect(state.recentlyClosed).toHaveLength(1);
+    expect(state.recentlyClosed[0]).toMatchObject({
+      _id: "session-1",
+      tableNumber: 4,
+      status: "closed",
+      totalCents: 500,
+    });
   });
 });

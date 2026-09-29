@@ -2,11 +2,11 @@ import Stacked from "../Components/AdminComponents/Charts/Stacked";
 import Header from "../Components/AdminComponents/Header";
 
 const TotalOrders = () => (
-  <div className="m-4 md:m-10 mt-24 p-10 bg-white dark:bg-d-main-bg rounded-3xl shadow-lg transition-colors duration-300 ease-in-out">
-    <Header title="Total Orders" />
-    <div className="w-full mt-8">
+  <div>
+    <Header title="Total Orders" description="Orders by category across the week. Sample data until the statistics API reports categories." />
+    <section className="rounded-xl bg-white p-5 ring-1 ring-ink/[0.07] md:p-6">
       <Stacked />
-    </div>
+    </section>
   </div>
 );
 
