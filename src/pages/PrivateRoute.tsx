@@ -5,6 +5,7 @@ import api from "../services/api";
 import Loading from "./Loading";
 import { User } from "../types";
 import { decodeJwt, readRestaurantId, readRestaurantIdFromUnknown } from "../shared/api/jwt";
+import { getLoginPath } from "../shared/auth/loginPaths";
 
 const isRoleAllowed = (user: User | null, allowedRoles: string[] = []) => {
   if (!user) {
@@ -83,7 +84,7 @@ const PrivateRoute = ({ allowedRoles }: { allowedRoles?: string[] }) => {
   }
 
   if (!authToken) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={getLoginPath()} replace />;
   }
 
   if (loading) {
@@ -91,7 +92,7 @@ const PrivateRoute = ({ allowedRoles }: { allowedRoles?: string[] }) => {
   }
 
   if (!allowed) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={getLoginPath()} replace />;
   }
 
   return <Outlet context={{ userData }} />;

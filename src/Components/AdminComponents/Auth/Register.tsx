@@ -41,7 +41,7 @@ const Register = () => {
     setError("");
     const employeeData = {
       employee: values.username,
-      email: values.email,
+      email: values.email || undefined,
       password: values.password,
       position: values.position,
     };
@@ -88,7 +88,7 @@ const Register = () => {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel>Email (optional)</FormLabel>
                 <FormControl>
                   <Input type="email" autoComplete="off" {...field} />
                 </FormControl>

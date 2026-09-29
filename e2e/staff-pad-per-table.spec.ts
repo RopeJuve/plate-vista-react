@@ -32,9 +32,9 @@ test("the bar order pad does not carry between tables", async ({ page }) => {
   await page.getByRole("button", { name: "Register" }).click();
   await expect(page).toHaveURL(/\/admin\/employees/);
 
-  await page.goto("/");
-  await page.locator("#employee").fill("mo");
-  await page.locator('input[type="password"]').fill("secret1");
+  await page.goto("/staff/cove/login");
+  await page.getByLabel("Username").fill("mo");
+  await page.getByLabel("Password").fill("secret1");
   await page.getByRole("button", { name: "Login" }).click();
   await expect(page).toHaveURL(/\/bar/);
 

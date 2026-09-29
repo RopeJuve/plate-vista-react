@@ -13,6 +13,7 @@ const restaurant = {
   name: "",
 };
 const employees = new Map();
+const owners = new Map();
 const tables = [];
 const sessions = new Map();
 const orders = new Map();
@@ -247,11 +248,12 @@ const server = http.createServer(async (req, res) => {
       slug: restaurant.slug,
       restaurantId: restaurant.id,
     });
-    employees.set(String(body.email), {
-      employee: body.ownerName,
+    owners.clear();
+    owners.set(String(body.email).toLowerCase(), {
+      employee: body.employee,
       email: body.email,
       password: body.password,
-      position: "admin",
+      position: "owner",
     });
     sendJson(res, 200, {
       message: "Registered",
@@ -264,7 +266,12 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === "POST" && route === "/employee") {
-    employees.set(String(body.employee), {
+    // Like the API: names are unique per restaurant, ignoring case.
+    if (employees.has(String(body.employee).toLowerCase())) {
+      sendJson(res, 409, { code: "VALIDATION", message: "An employee with this name already exists" });
+      return;
+    }
+    employees.set(String(body.employee).toLowerCase(), {
       employee: body.employee,
       email: body.email,
       password: body.password,
@@ -288,10 +295,15 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  if (req.method === "POST" && route === "/auth/employee/login") {
-    const person = employees.get(String(body.employee));
+  if (req.method === "POST" && (route === "/auth/employee/login" || route === "/auth/owner/login")) {
+    const person =
+      route === "/auth/owner/login"
+        ? owners.get(String(body.email).toLowerCase())
+        : body.restaurant === restaurant.slug
+          ? employees.get(String(body.employee).toLowerCase())
+          : undefined;
     if (!person || person.password !== body.password) {
-      sendJson(res, 401, { message: "Login failed" });
+      sendJson(res, 401, { code: "UNAUTHORIZED", message: "Invalid credentials" });
       return;
     }
     const tokens = issueTokens({
@@ -304,7 +316,12 @@ const server = http.createServer(async (req, res) => {
     sendJson(
       res,
       200,
-      { message: "Logged in successfully", ...tokens, position: person.position },
+      {
+        message: "Logged in successfully",
+        ...tokens,
+        position: person.position,
+        restaurant: { id: restaurant.id, name: restaurant.name, slug: restaurant.slug },
+      },
       { Authorization: `Bearer ${tokens.accessToken}` }
     );
     return;

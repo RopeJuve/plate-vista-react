@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { BrowserRouter, Routes, Route, Outlet, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Outlet, Navigate, useLocation } from "react-router-dom";
 import "./index.css";
 import PrivateRoute from "./pages/PrivateRoute";
 import { GuestAuthProvider } from "./features/guest-ordering/GuestAuthContext";
@@ -8,8 +8,10 @@ import { StaffBoardProvider } from "./features/staff-board/StaffBoardProvider";
 import { RealtimeProvider } from "./shared/realtime/RealtimeProvider";
 import ErrorBoundary from "./Components/ErrorBoundary";
 import Loading from "./pages/Loading";
+import { getLoginPath } from "./shared/auth/loginPaths";
 
 const Login = lazy(() => import("./Components/AdminComponents/Auth/Login"));
+const StaffLogin = lazy(() => import("./Components/AdminComponents/Auth/StaffLogin"));
 const RestaurantRegister = lazy(() => import("./features/admin/RestaurantRegister"));
 const AdminDashboard = lazy(() => import("./Components/AdminComponents/AdminDashboard"));
 const Overview = lazy(() => import("./pages/Overview"));
@@ -51,7 +53,10 @@ function App() {
           <RealtimeProvider>
             <Suspense fallback={<Loading />}>
               <Routes>
-                <Route path="/" element={<Login />} />
+                <Route path="/" element={<Navigate to={getLoginPath()} replace />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/staff/login" element={<StaffLogin />} />
+                <Route path="/staff/:slug/login" element={<StaffLogin />} />
                 <Route path="/register" element={<RestaurantRegister />} />
                 <Route path="/admin" element={<PrivateRoute allowedRoles={["admin", "owner"]} />}>
                   <Route element={<AdminDashboard />}>

@@ -1,4 +1,5 @@
 import { clearTokens } from "../shared/api/tokens";
+import { getLoginPath } from "../shared/auth/loginPaths";
 
 const AUTH_MESSAGE_KEY = "authMessage";
 
@@ -62,8 +63,6 @@ export const consumeSessionMessage = () => {
   }
   return message;
 };
-
-export const getLoginPath = () => "/";
 
 export const triggerUnauthorized = () => {
   setSessionMessage("Session expired");

@@ -6,6 +6,7 @@ import api from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
 import { restaurantRegisterSchema, type RestaurantRegisterValues } from "@/lib/schemas";
 import { markOnboarding } from "./onboarding";
+import { OWNER_LOGIN_PATH, rememberLoginKind } from "../../shared/auth/loginPaths";
 import { readRestaurantIdFromUnknown, readTokenFromHeaders } from "../../shared/api/jwt";
 import AuthShell from "../../Components/AdminComponents/Auth/AuthShell";
 import { Button } from "@/components/ui/button";
@@ -55,6 +56,7 @@ const RestaurantRegister = () => {
         setServerError("Account created, but no login token was returned.");
         return;
       }
+      rememberLoginKind("owner");
       markOnboarding();
       navigate("/admin/overview");
     } catch (error) {
@@ -122,7 +124,7 @@ const RestaurantRegister = () => {
           </Button>
           <p className="text-center text-sm text-ink-soft">
             Already have an account?{" "}
-            <Link to="/" className="font-semibold text-ink underline decoration-signal decoration-2 hover:text-signal-ink">
+            <Link to={OWNER_LOGIN_PATH} className="font-semibold text-ink underline decoration-signal decoration-2 hover:text-signal-ink">
               Log in
             </Link>
           </p>

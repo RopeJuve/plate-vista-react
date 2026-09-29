@@ -41,9 +41,9 @@ test("the bar board still shows new orders after a failed snapshot fetch", async
   // The bar's first board snapshot fails.
   await request.post(`${API}/_test/faults`, { data: { failNextBoard: true } });
 
-  await page.goto("/");
-  await page.locator("#employee").fill("kit");
-  await page.locator('input[type="password"]').fill("secret1");
+  await page.goto("/staff/quay/login");
+  await page.getByLabel("Username").fill("kit");
+  await page.getByLabel("Password").fill("secret1");
   await page.getByRole("button", { name: "Login" }).click();
   await expect(page).toHaveURL(/\/bar/);
   await page.getByText("Orders", { exact: true }).click();

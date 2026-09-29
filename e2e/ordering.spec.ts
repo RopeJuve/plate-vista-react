@@ -41,9 +41,9 @@ test("guest order is accepted and the table close ends on thank you", async ({ p
   await guestPage.getByRole("button", { name: "Bill" }).click();
   await expect(guestPage.getByRole("dialog", { name: "Cart" }).getByText("Pending")).toBeVisible();
 
-  await page.goto("/");
-  await page.locator("#employee").fill("sam");
-  await page.locator('input[type="password"]').fill("secret1");
+  await page.goto("/staff/harbor/login");
+  await page.getByLabel("Username").fill("sam");
+  await page.getByLabel("Password").fill("secret1");
   await page.getByRole("button", { name: "Login" }).click();
   await expect(page).toHaveURL(/\/bar/);
 

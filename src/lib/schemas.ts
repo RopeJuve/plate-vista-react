@@ -1,15 +1,24 @@
 import { z } from "zod";
 
-export const loginSchema = z.object({
-  username: z.string().min(1, "Username is required"),
+export const ownerLoginSchema = z.object({
+  email: z.string().trim().email("Enter a valid email"),
   password: z.string().min(1, "Password is required"),
 });
 
-export type LoginValues = z.infer<typeof loginSchema>;
+export type OwnerLoginValues = z.infer<typeof ownerLoginSchema>;
+
+export const staffLoginSchema = z.object({
+  restaurant: z.string().trim().min(1, "Restaurant is required"),
+  username: z.string().trim().min(1, "Username is required"),
+  password: z.string().min(1, "Password is required"),
+});
+
+export type StaffLoginValues = z.infer<typeof staffLoginSchema>;
 
 export const registerSchema = z.object({
   username: z.string().min(1, "Username is required"),
-  email: z.string().email("Enter a valid email"),
+  // Contact info only; staff sign in with restaurant + username.
+  email: z.union([z.literal(""), z.string().trim().email("Enter a valid email")]),
   password: z.string().min(6, "Password must be at least 6 characters"),
   position: z.enum(["bar", "kitchen"]),
 });
