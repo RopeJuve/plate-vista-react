@@ -1,17 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { ChevronUp, Pencil, X } from "lucide-react";
 import { useOrder } from "../../contexts/OrderContext";
 import { useMenu } from "../../features/guest-ordering/MenuProvider";
-import { checkCart } from "../../features/guest-ordering/cartLimits";
-import { invalidatePendingIfCartChanged, toOrderItems } from "../../features/guest-ordering/pendingOrder";
 import { usePlaceOrder } from "../../features/guest-ordering/usePlaceOrder";
 import { useOrderAmendment } from "../../features/order-amendment/useOrderAmendment";
 import { useOrderActions } from "../../features/staff-board/useOrderActions";
 import { useStaffBoard } from "../../features/staff-board/StaffBoardProvider";
 import { formatCents, lineTotalCents, sumCents } from "../../shared/money/formatCents";
 import { errorMessage } from "../../shared/realtime/errorMessages";
-import { ProtocolError } from "../../shared/realtime/protocol";
 import { billedLines } from "../../shared/realtime/tickets";
 import { notify } from "../../utils/notify";
 import { QtyStepper, TicketSteps } from "../rail";
@@ -31,16 +28,20 @@ const OrderDetails = () => {
   const { itemsById } = useMenu();
   const { state } = useStaffBoard();
   const { canSend, closeSession, updateOrder } = useOrderActions();
-  const storageKey = `staff:${tableId}`;
-  const handlePlaced = useCallback(() => {
-    clearOrder();
-    notify("Order placed", "success");
-  }, [clearOrder]);
-  const placeOrder = usePlaceOrder(storageKey, handlePlaced);
+  const placeOrder = usePlaceOrder({
+    storageKey: `staff:${tableId}`,
+    lines: menuItems,
+    menuById: itemsById,
+    tableId,
+    onPlaced: () => {
+      clearOrder();
+      notify("Order placed", "success");
+    },
+    onFailed: (error) => notify(errorMessage(error.code, error.details, error.message)),
+  });
   const [confirmClose, setConfirmClose] = useState(false);
   const amendment = useOrderAmendment(updateOrder);
   const [sheetOpen, setSheetOpen] = useState(false);
-  const issues = checkCart(menuItems, itemsById);
 
   const table = state.tablesById[tableId];
   const sessionId = state.sessionIdByTable[tableId];
@@ -57,25 +58,6 @@ const OrderDetails = () => {
     menuItems.map((line) => lineTotalCents(itemsById[line.productId]?.priceCents ?? 0, line.quantity))
   );
   const padCount = menuItems.reduce((count, line) => count + line.quantity, 0);
-
-  useEffect(() => {
-    invalidatePendingIfCartChanged(storageKey, toOrderItems(menuItems));
-  }, [menuItems, storageKey]);
-
-  const handleSendMessages = async () => {
-    if (placeOrder.phase === "sending" || issues.blocking || menuItems.length === 0) {
-      return;
-    }
-    try {
-      // handlePlaced clears the order, so a retried submit settles the same way.
-      await placeOrder.submit(toOrderItems(menuItems), tableId);
-      placeOrder.resetPhase();
-    } catch (error) {
-      if (error instanceof ProtocolError) {
-        notify(errorMessage(error.code, error.details, error.message));
-      }
-    }
-  };
 
   const handleCloseTable = async () => {
     if (!sessionId) {
@@ -233,7 +215,7 @@ const OrderDetails = () => {
             </ul>
           </div>
         )}
-        {issues.messages[0] && <p className="text-sm font-semibold text-alert-ink">{issues.messages[0]}</p>}
+        {placeOrder.cartIssue && <p className="text-sm font-semibold text-alert-ink">{placeOrder.cartIssue}</p>}
       </div>
 
       <footer className="space-y-3 border-t border-dashed border-ink/20 px-5 pb-5 pt-3">
@@ -258,8 +240,8 @@ const OrderDetails = () => {
           <Button
             type="button"
             size="xl"
-            onClick={handleSendMessages}
-            disabled={menuItems.length === 0 || placeOrder.phase === "sending" || issues.blocking || !canSend}
+            onClick={placeOrder.place}
+            disabled={!placeOrder.canPlace}
             title={canSend ? "" : "Connecting…"}
           >
             {placeOrder.phase === "sending" ? "Placing…" : placeOrder.phase === "error" ? "Retry order" : "Place order"}
