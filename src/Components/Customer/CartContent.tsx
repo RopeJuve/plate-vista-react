@@ -4,12 +4,13 @@ import { useCart } from "../../contexts/CartContext";
 import { useMenu } from "../../features/guest-ordering/MenuProvider";
 import { useGuestBill } from "../../features/guest-ordering/GuestBillProvider";
 import type { PlaceOrderPhase } from "../../features/guest-ordering/usePlaceOrder";
+import { useOrderAmendment, type SaveAmendment } from "../../features/order-amendment/useOrderAmendment";
 import { formatCents, lineTotalCents, sumCents } from "../../shared/money/formatCents";
 import { LIMITS } from "../../shared/realtime/protocol";
 import { useRealtime } from "../../shared/realtime/RealtimeProvider";
 import { errorMessage } from "../../shared/realtime/errorMessages";
 import { ProtocolError } from "../../shared/realtime/protocol";
-import { TICKET_LABEL, isUntouched, ticketsOf } from "../../shared/realtime/tickets";
+import { TICKET_LABEL, ticketsOf } from "../../shared/realtime/tickets";
 import { Chit, QtyStepper, TicketSteps } from "../rail";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -47,8 +48,6 @@ const CartContent = ({
   const { itemsById } = useMenu();
   const { orders, rememberOrder } = useGuestBill();
   const { request, status } = useRealtime();
-  const [editingId, setEditingId] = useState("");
-  const [draftQty, setDraftQty] = useState<Record<string, number>>({});
   const [noteOpen, setNoteOpen] = useState<Record<string, boolean>>({});
   const estimated = sumCents(
     cart.map((line) => lineTotalCents(itemsById[line.productId]?.priceCents ?? 0, line.quantity))
@@ -56,6 +55,25 @@ const CartContent = ({
   const payable = sumCents(orders.filter((order) => order.status !== "cancelled").map((order) => order.totalCents));
   const buttonLabel =
     phase === "sending" ? "Placing…" : phase === "error" ? "Retry order" : phase === "success" ? "Order placed" : "Order now";
+
+  const saveAmendment: SaveAmendment = async (orderId, items) => {
+    try {
+      const data = await request<"order.update", { order: (typeof orders)[number] }>("order.update", {
+        orderId,
+        items,
+      });
+      if (data?.order) {
+        rememberOrder(data.order);
+      }
+      return true;
+    } catch (error) {
+      if (error instanceof ProtocolError) {
+        window.alert(errorMessage(error.code, error.details, error.message));
+      }
+      return false;
+    }
+  };
+  const amendment = useOrderAmendment(saveAmendment);
 
   const handleCancel = async (orderId: string) => {
     const reason = window.prompt("Why are you cancelling this order?") || "";
@@ -223,7 +241,7 @@ const CartContent = ({
           </div>
         )}
         {orders.map((order) => {
-          const editing = editingId === order._id;
+          const editing = amendment.isAmending(order);
           const tickets = ticketsOf(order);
           const split = tickets.length > 1;
           const cancelled = tickets.filter((ticket) => ticket.status === "cancelled");
@@ -254,82 +272,45 @@ const CartContent = ({
                   ) : null;
                 })}
                 <ul className="mt-2">
-                  {order.items.map((item) => {
-                    const quantity = editing ? draftQty[item.productId] ?? item.quantity : item.quantity;
-                    return (
-                      <li
-                        key={`${order._id}-${item.productId}`}
-                        className="flex items-center gap-3 border-b border-dashed border-ink/10 py-2 last:border-0"
-                      >
-                        {editing ? (
-                          <QtyStepper
-                            value={quantity}
-                            label={item.title}
-                            max={LIMITS.MAX_QUANTITY_PER_ITEM}
-                            onDecrease={() =>
-                              setDraftQty((current) => ({
-                                ...current,
-                                [item.productId]: Math.max(1, (current[item.productId] ?? item.quantity) - 1),
-                              }))
-                            }
-                            onIncrease={() =>
-                              setDraftQty((current) => ({
-                                ...current,
-                                [item.productId]: Math.min(LIMITS.MAX_QUANTITY_PER_ITEM, (current[item.productId] ?? item.quantity) + 1),
-                              }))
-                            }
-                          />
-                        ) : (
-                          <span className="w-8 shrink-0 font-mono font-bold tabular">{item.quantity}×</span>
+                  {order.items.map((item) => (
+                    <li
+                      key={`${order._id}-${item.productId}`}
+                      className="flex items-center gap-3 border-b border-dashed border-ink/10 py-2 last:border-0"
+                    >
+                      {editing ? (
+                        <QtyStepper
+                          value={amendment.quantityOf(order, item)}
+                          label={item.title}
+                          max={LIMITS.MAX_QUANTITY_PER_ITEM}
+                          onDecrease={() => amendment.decrease(item)}
+                          onIncrease={() => amendment.increase(item)}
+                        />
+                      ) : (
+                        <span className="w-8 shrink-0 font-mono font-bold tabular">{item.quantity}×</span>
+                      )}
+                      <span
+                        className={cn(
+                          "min-w-0 flex-1 font-mono font-semibold",
+                          struck.has(item.station) && "text-ink-soft line-through"
                         )}
-                        <span
-                          className={cn(
-                            "min-w-0 flex-1 font-mono font-semibold",
-                            struck.has(item.station) && "text-ink-soft line-through"
-                          )}
-                        >
-                          {item.title}
-                        </span>
-                        <span
-                          className={cn(
-                            "font-mono font-semibold tabular",
-                            struck.has(item.station) && "text-ink-soft line-through"
-                          )}
-                        >
-                          {formatCents(item.lineTotalCents)}
-                        </span>
-                      </li>
-                    );
-                  })}
+                      >
+                        {item.title}
+                      </span>
+                      <span
+                        className={cn(
+                          "font-mono font-semibold tabular",
+                          struck.has(item.station) && "text-ink-soft line-through"
+                        )}
+                      >
+                        {formatCents(item.lineTotalCents)}
+                      </span>
+                    </li>
+                  ))}
                 </ul>
-                {isUntouched(order) && status === "open" && (
+                {amendment.canAmend(order) && status === "open" && (
                   <div className="mt-2 flex flex-wrap gap-2">
                     {editing ? (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ink"
-                        onClick={async () => {
-                          try {
-                            const data = await request<"order.update", { order: typeof order }>("order.update", {
-                              orderId: order._id,
-                              items: order.items.map((item) => ({
-                                productId: item.productId,
-                                quantity: draftQty[item.productId] ?? item.quantity,
-                                notes: item.notes,
-                              })),
-                            });
-                            if (data?.order) {
-                              rememberOrder(data.order);
-                            }
-                            setEditingId("");
-                          } catch (error) {
-                            if (error instanceof ProtocolError) {
-                              window.alert(errorMessage(error.code, error.details, error.message));
-                            }
-                          }
-                        }}
-                      >
+                      <Button type="button" size="sm" variant="ink" onClick={() => amendment.save(order)}>
                         Save changes
                       </Button>
                     ) : null}
@@ -338,18 +319,7 @@ const CartContent = ({
                       size="sm"
                       variant="outline"
                       className="border-ink/15"
-                      onClick={() => {
-                        if (editing) {
-                          setEditingId("");
-                          return;
-                        }
-                        const next: Record<string, number> = {};
-                        order.items.forEach((item) => {
-                          next[item.productId] = item.quantity;
-                        });
-                        setDraftQty(next);
-                        setEditingId(order._id);
-                      }}
+                      onClick={() => (editing ? amendment.discard() : amendment.begin(order))}
                     >
                       {editing ? (
                         "Discard"

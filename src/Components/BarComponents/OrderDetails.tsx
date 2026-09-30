@@ -6,12 +6,13 @@ import { useMenu } from "../../features/guest-ordering/MenuProvider";
 import { checkCart } from "../../features/guest-ordering/cartLimits";
 import { invalidatePendingIfCartChanged, toOrderItems } from "../../features/guest-ordering/pendingOrder";
 import { usePlaceOrder } from "../../features/guest-ordering/usePlaceOrder";
+import { useOrderAmendment } from "../../features/order-amendment/useOrderAmendment";
 import { useOrderActions } from "../../features/staff-board/useOrderActions";
 import { useStaffBoard } from "../../features/staff-board/StaffBoardProvider";
 import { formatCents, lineTotalCents, sumCents } from "../../shared/money/formatCents";
 import { errorMessage } from "../../shared/realtime/errorMessages";
 import { ProtocolError } from "../../shared/realtime/protocol";
-import { billedLines, isUntouched } from "../../shared/realtime/tickets";
+import { billedLines } from "../../shared/realtime/tickets";
 import { notify } from "../../utils/notify";
 import { QtyStepper, TicketSteps } from "../rail";
 import { Button } from "@/components/ui/button";
@@ -37,8 +38,7 @@ const OrderDetails = () => {
   }, [clearOrder]);
   const placeOrder = usePlaceOrder(storageKey, handlePlaced);
   const [confirmClose, setConfirmClose] = useState(false);
-  const [editingId, setEditingId] = useState("");
-  const [draftQty, setDraftQty] = useState<Record<string, number>>({});
+  const amendment = useOrderAmendment(updateOrder);
   const [sheetOpen, setSheetOpen] = useState(false);
   const issues = checkCart(menuItems, itemsById);
 
@@ -138,7 +138,7 @@ const OrderDetails = () => {
         )}
 
         {orders.map((order) => {
-          const editing = editingId === order._id;
+          const editing = amendment.isAmending(order);
           return (
             <div key={order._id} className="space-y-2">
               <div className="flex items-center gap-3">
@@ -148,47 +148,32 @@ const OrderDetails = () => {
                 </time>
               </div>
               <ul className="space-y-1.5 font-mono text-[0.92rem]">
-                {billedLines(order).map((item) => {
-                  const key = `${order._id}:${item.productId}`;
-                  const quantity = editing ? draftQty[key] ?? item.quantity : item.quantity;
-                  return (
-                    <li key={`${order._id}-${item.productId}`} className="flex items-center gap-2">
-                      {editing ? (
-                        <QtyStepper
-                          value={quantity}
-                          label={item.title}
-                          onDecrease={() =>
-                            setDraftQty((current) => ({ ...current, [key]: Math.max(1, quantity - 1) }))
-                          }
-                          onIncrease={() =>
-                            setDraftQty((current) => ({ ...current, [key]: Math.min(99, quantity + 1) }))
-                          }
-                        />
-                      ) : (
-                        <span className="w-8 shrink-0 font-bold tabular">{item.quantity}×</span>
-                      )}
-                      <span className="min-w-0 flex-1 truncate">{item.title}</span>
-                      <span className="font-semibold tabular">{formatCents(item.lineTotalCents)}</span>
-                    </li>
-                  );
-                })}
+                {billedLines(order).map((item) => (
+                  <li key={`${order._id}-${item.productId}`} className="flex items-center gap-2">
+                    {editing ? (
+                      <QtyStepper
+                        value={amendment.quantityOf(order, item)}
+                        label={item.title}
+                        onDecrease={() => amendment.decrease(item)}
+                        onIncrease={() => amendment.increase(item)}
+                      />
+                    ) : (
+                      <span className="w-8 shrink-0 font-bold tabular">{item.quantity}×</span>
+                    )}
+                    <span className="min-w-0 flex-1 truncate">{item.title}</span>
+                    <span className="font-semibold tabular">{formatCents(item.lineTotalCents)}</span>
+                  </li>
+                ))}
               </ul>
               <div className="flex items-center justify-between">
                 <span className="font-mono text-xs text-ink-soft">
                   Subtotal <span className="tabular">{formatCents(order.totalCents)}</span>
                 </span>
-                {isUntouched(order) && !editing && (
+                {amendment.canAmend(order) && !editing && (
                   <button
                     type="button"
                     className="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-sm font-semibold text-signal-ink hover:bg-signal/10"
-                    onClick={() => {
-                      const next: Record<string, number> = {};
-                      order.items.forEach((item) => {
-                        next[`${order._id}:${item.productId}`] = item.quantity;
-                      });
-                      setDraftQty(next);
-                      setEditingId(order._id);
-                    }}
+                    onClick={() => amendment.begin(order)}
                   >
                     <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
                     Edit order
@@ -199,7 +184,7 @@ const OrderDetails = () => {
                     <button
                       type="button"
                       className="h-8 rounded-md px-3 text-sm font-semibold text-ink-soft hover:bg-ink/[0.06]"
-                      onClick={() => setEditingId("")}
+                      onClick={amendment.discard}
                     >
                       Discard
                     </button>
@@ -207,19 +192,7 @@ const OrderDetails = () => {
                       type="button"
                       className="h-8 rounded-md bg-ink px-3 text-sm font-semibold text-paper disabled:opacity-40"
                       disabled={!canSend}
-                      onClick={async () => {
-                        const saved = await updateOrder(
-                          order._id,
-                          order.items.map((item) => ({
-                            productId: item.productId,
-                            quantity: draftQty[`${order._id}:${item.productId}`] ?? item.quantity,
-                            notes: item.notes,
-                          }))
-                        );
-                        if (saved) {
-                          setEditingId("");
-                        }
-                      }}
+                      onClick={() => amendment.save(order)}
                     >
                       Save
                     </button>
