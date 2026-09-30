@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { OrderItem, Ticket } from "./protocol";
-import { billedLines, isUntouched } from "./tickets";
+import { billedLines, droppedStations, isUntouched } from "./tickets";
 
 const line = (title: string, station: OrderItem["station"]): OrderItem => ({
   productId: title,
@@ -29,6 +29,12 @@ describe("tickets", () => {
 
   it("still lists the lines of a fully cancelled order", () => {
     expect(billedLines(order("cancelled", "cancelled"))).toHaveLength(2);
+  });
+
+  it("drops the station of a cancelled ticket only while the rest of the order stands", () => {
+    expect([...droppedStations(order("cancelled", "served"))]).toEqual(["kitchen"]);
+    expect(droppedStations(order("preparing", "served")).size).toBe(0);
+    expect(droppedStations(order("cancelled", "cancelled")).size).toBe(0);
   });
 
   it("locks the order once any station has started", () => {

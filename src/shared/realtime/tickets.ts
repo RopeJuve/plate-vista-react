@@ -25,16 +25,21 @@ export const ticketsOf = (order: Ticketed): Ticket[] =>
 export const ticketLines = (order: Pick<Order, "items">, station: Station): OrderItem[] =>
   order.items.filter((item) => item.station === station);
 
+/**
+ * The stations whose lines dropped off the bill: those of a cancelled ticket,
+ * when the rest of the order went ahead. A fully cancelled order drops none,
+ * so it still lists what was cancelled.
+ */
+export const droppedStations = (order: Ticketed): Set<Station> => {
+  const tickets = ticketsOf(order);
+  const cancelled = tickets.filter((ticket) => ticket.status === "cancelled");
+  return new Set(cancelled.length < tickets.length ? cancelled.map((ticket) => ticket.station) : []);
+};
+
 /** The lines that count towards the bill: all but those of a cancelled ticket. */
 export const billedLines = (order: Ticketed): OrderItem[] => {
-  const tickets = ticketsOf(order);
-  const cancelled = new Set(
-    tickets.filter((ticket) => ticket.status === "cancelled").map((ticket) => ticket.station)
-  );
-  // A fully cancelled order still lists what was cancelled.
-  return cancelled.size === tickets.length
-    ? order.items
-    : order.items.filter((item) => !cancelled.has(item.station));
+  const dropped = droppedStations(order);
+  return order.items.filter((item) => !dropped.has(item.station));
 };
 
 /** No station has started yet, so the order can still be edited or cancelled by the guest. */

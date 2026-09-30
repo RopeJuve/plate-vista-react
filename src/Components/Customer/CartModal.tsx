@@ -5,7 +5,8 @@ import { useMenu } from "../../features/guest-ordering/MenuProvider";
 import { useGuestBill } from "../../features/guest-ordering/GuestBillProvider";
 import { usePlaceOrder } from "../../features/guest-ordering/usePlaceOrder";
 import { useGuestAuth } from "../../features/guest-ordering/GuestAuthContext";
-import CartContent from "./CartContent";
+import BillTab from "./BillTab";
+import CartTab from "./CartTab";
 import { cn } from "@/lib/utils";
 
 const CartModal = ({ closeModal }: { closeModal: (open: boolean) => void }) => {
@@ -13,6 +14,8 @@ const CartModal = ({ closeModal }: { closeModal: (open: boolean) => void }) => {
   const { cart, clearCart } = useCart();
   const { itemsById } = useMenu();
   const { orders, rememberOrder } = useGuestBill();
+  // The order being placed lives here, not in the cart tab, so a send or a
+  // retry in flight survives a look at the bill.
   const placeOrder = usePlaceOrder({
     storageKey: `guest:${session?.sessionId || "unknown"}`,
     lines: cart,
@@ -22,7 +25,7 @@ const CartModal = ({ closeModal }: { closeModal: (open: boolean) => void }) => {
       clearCart();
     },
   });
-  const [selectedTab, setSelectedTab] = useState("cart");
+  const [selectedTab, setSelectedTab] = useState<"cart" | "bill">("cart");
   const sheetRef = useRef<HTMLDivElement>(null);
   const cartCount = cart.reduce((total, line) => total + line.quantity, 0);
   const billCount = orders.filter((order) => order.status !== "cancelled").length;
@@ -46,7 +49,7 @@ const CartModal = ({ closeModal }: { closeModal: (open: boolean) => void }) => {
   const tabs = [
     { id: "cart", label: "Cart", count: cartCount },
     { id: "bill", label: "Bill", count: billCount },
-  ];
+  ] as const;
 
   return (
     <>
@@ -109,17 +112,7 @@ const CartModal = ({ closeModal }: { closeModal: (open: boolean) => void }) => {
             <X className="h-5 w-5" />
           </button>
         </div>
-        <CartContent
-          variant={selectedTab}
-          handleSendMessages={placeOrder.place}
-          pending={placeOrder.phase === "sending"}
-          statusMessage={placeOrder.message}
-          canSend={placeOrder.canSend}
-          blocking={placeOrder.blocking}
-          highlightedIds={placeOrder.unavailableIds}
-          fieldErrors={placeOrder.fieldErrors}
-          phase={placeOrder.phase}
-        />
+        {selectedTab === "cart" ? <CartTab placeOrder={placeOrder} /> : <BillTab />}
       </div>
     </>
   );

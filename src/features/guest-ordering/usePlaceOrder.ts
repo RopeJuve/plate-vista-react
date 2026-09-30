@@ -172,3 +172,5 @@ export const usePlaceOrder = ({ storageKey, lines, menuById, tableId, onPlaced, 
     place,
   };
 };
+
+export type PlaceOrder = ReturnType<typeof usePlaceOrder>;
