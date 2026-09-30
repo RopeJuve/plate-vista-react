@@ -1,13 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { useCart } from "../../contexts/CartContext";
 import { useMenu } from "../../features/guest-ordering/MenuProvider";
-import { checkCart } from "../../features/guest-ordering/cartLimits";
 import { useGuestBill } from "../../features/guest-ordering/GuestBillProvider";
 import { usePlaceOrder } from "../../features/guest-ordering/usePlaceOrder";
-import { invalidatePendingIfCartChanged, toOrderItems } from "../../features/guest-ordering/pendingOrder";
-import { errorMessage } from "../../shared/realtime/errorMessages";
-import type { Order } from "../../shared/realtime/protocol";
 import { useGuestAuth } from "../../features/guest-ordering/GuestAuthContext";
 import CartContent from "./CartContent";
 import { cn } from "@/lib/utils";
@@ -17,31 +13,19 @@ const CartModal = ({ closeModal }: { closeModal: (open: boolean) => void }) => {
   const { cart, clearCart } = useCart();
   const { itemsById } = useMenu();
   const { orders, rememberOrder } = useGuestBill();
-  const storageKey = `guest:${session?.sessionId || "unknown"}`;
-  const handlePlaced = useCallback(
-    (order: Order) => {
+  const placeOrder = usePlaceOrder({
+    storageKey: `guest:${session?.sessionId || "unknown"}`,
+    lines: cart,
+    menuById: itemsById,
+    onPlaced: (order) => {
       rememberOrder(order);
       clearCart();
     },
-    [clearCart, rememberOrder]
-  );
-  const { phase, error, fieldErrors, outOfStockIds, submit, resetPhase, canSend } = usePlaceOrder(
-    storageKey,
-    handlePlaced
-  );
+  });
   const [selectedTab, setSelectedTab] = useState("cart");
-  const issues = checkCart(cart, itemsById);
-  const highlighted = [...new Set([...issues.unavailableIds, ...outOfStockIds])];
   const sheetRef = useRef<HTMLDivElement>(null);
   const cartCount = cart.reduce((total, line) => total + line.quantity, 0);
   const billCount = orders.filter((order) => order.status !== "cancelled").length;
-
-  useEffect(() => {
-    invalidatePendingIfCartChanged(storageKey, toOrderItems(cart));
-    if (cart.length === 0 && phase === "success") {
-      resetPhase();
-    }
-  }, [cart, phase, resetPhase, storageKey]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -58,29 +42,6 @@ const CartModal = ({ closeModal }: { closeModal: (open: boolean) => void }) => {
       document.body.style.overflow = previousOverflow;
     };
   }, [closeModal]);
-
-  const handleSendMessages = async () => {
-    if (phase === "sending" || issues.blocking || cart.length === 0) {
-      return;
-    }
-    try {
-      // The cart and bill are settled by handlePlaced, so a retried order
-      // lands the same way as one accepted on the first try.
-      await submit(toOrderItems(cart));
-    } catch {
-      // phase is already "error"
-    }
-  };
-
-  const statusMessage = !canSend
-    ? "Connecting…"
-    : phase === "sending"
-      ? "Placing order…"
-      : phase === "success"
-        ? "Order placed"
-        : error
-          ? errorMessage(error.code, error.details, error.message)
-          : issues.messages[0] || "";
 
   const tabs = [
     { id: "cart", label: "Cart", count: cartCount },
@@ -150,14 +111,14 @@ const CartModal = ({ closeModal }: { closeModal: (open: boolean) => void }) => {
         </div>
         <CartContent
           variant={selectedTab}
-          handleSendMessages={handleSendMessages}
-          pending={phase === "sending"}
-          statusMessage={statusMessage}
-          canSend={canSend}
-          blocking={issues.blocking}
-          highlightedIds={highlighted}
-          fieldErrors={fieldErrors}
-          phase={phase}
+          handleSendMessages={placeOrder.place}
+          pending={placeOrder.phase === "sending"}
+          statusMessage={placeOrder.message}
+          canSend={placeOrder.canSend}
+          blocking={placeOrder.blocking}
+          highlightedIds={placeOrder.unavailableIds}
+          fieldErrors={placeOrder.fieldErrors}
+          phase={placeOrder.phase}
         />
       </div>
     </>
