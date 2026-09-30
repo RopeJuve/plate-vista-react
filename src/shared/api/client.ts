@@ -43,8 +43,6 @@ const apiClient = axios.create({
   baseURL: plateVistaConfig.VITE_VERCEL_API_URL,
 });
 
-export const getAuthToken = getAccessToken;
-
 const readStoredRestaurantId = (token: string | null) => {
   const stored = localStorage.getItem("restaurantId");
   if (stored) {

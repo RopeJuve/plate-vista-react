@@ -128,7 +128,7 @@
 @layer components {
   /*
    * A chit: one printed order slip. Perforated bottom edge via a mask so the
-   * paper looks torn off the roll; `chit-top-torn` does the same at the top.
+   * paper looks torn off the roll.
    */
   .chit {
     --tooth: 7px;
