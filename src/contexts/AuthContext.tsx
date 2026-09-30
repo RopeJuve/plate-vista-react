@@ -10,7 +10,7 @@ import {
 } from "react";
 import { AUTH_EVENTS } from "../utils/notify";
 import { User } from "../types";
-import { decodeJwt, readRestaurantId, readRestaurantIdFromUnknown } from "../shared/api/jwt";
+import { decodeJwt, readRestaurantId, readRestaurantIdFromUnknown, readRestaurantSlug } from "../shared/api/jwt";
 import {
   clearTokens,
   getAccessToken,
@@ -25,12 +25,14 @@ import {
 type AuthState = {
   user: User | null;
   restaurantId: string | null;
+  restaurantSlug: string | null;
 };
 
 type AuthAction =
-  | { type: "LOGIN"; payload: { user?: User | null; restaurantId?: string | null } }
+  | { type: "LOGIN"; payload: { user?: User | null; restaurantId?: string | null; restaurantSlug?: string | null } }
   | { type: "SET_USER"; payload: User }
   | { type: "SET_RESTAURANT"; payload: string }
+  | { type: "SET_RESTAURANT_SLUG"; payload: string }
   | { type: "LOGOUT" };
 
 type AuthContextValue = {
@@ -39,6 +41,8 @@ type AuthContextValue = {
   restoring: boolean;
   user: User | null;
   restaurantId: string | null;
+  /** The restaurant's URL slug, as in `/r/<slug>/t/<qrCode>`. Null until a login or the user lookup has told us. */
+  restaurantSlug: string | null;
   /**
    * Stores the tokens from a login/register response body. `headerToken` is the
    * `Authorization` response header, used only if the body has no access token.
@@ -48,6 +52,7 @@ type AuthContextValue = {
   logout: () => void;
   setUser: (nextUser: User) => void;
   setRestaurantId: (nextId: string) => void;
+  setRestaurantSlug: (nextSlug: string) => void;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -67,13 +72,16 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         ...state,
         user: action.payload.user ?? state.user,
         restaurantId: action.payload.restaurantId ?? state.restaurantId,
+        restaurantSlug: action.payload.restaurantSlug ?? state.restaurantSlug,
       };
     case "SET_USER":
       return { ...state, user: action.payload };
     case "SET_RESTAURANT":
       return { ...state, restaurantId: action.payload };
+    case "SET_RESTAURANT_SLUG":
+      return { ...state, restaurantSlug: action.payload };
     case "LOGOUT":
-      return { ...state, user: null, restaurantId: null };
+      return { ...state, user: null, restaurantId: null, restaurantSlug: null };
     default:
       return state;
   }
@@ -88,15 +96,25 @@ const readInitialRestaurantId = () => {
   return token ? readRestaurantId(decodeJwt(token)) : null;
 };
 
+const readInitialRestaurantSlug = () => {
+  const stored = localStorage.getItem("restaurantSlug");
+  if (stored) {
+    return stored;
+  }
+  const token = getAccessToken();
+  return token ? readRestaurantSlug(decodeJwt(token)) : null;
+};
+
 const AuthProvider = ({ children }: { children?: ReactNode }) => {
   const authToken = useSyncExternalStore(subscribeTokens, getAccessToken);
   const [restoring, setRestoring] = useState(() => !getAccessToken() && Boolean(getRefreshToken()));
   const [state, dispatch] = useReducer(authReducer, {
     user: null,
     restaurantId: readInitialRestaurantId(),
+    restaurantSlug: readInitialRestaurantSlug(),
   });
 
-  const { user, restaurantId } = state;
+  const { user, restaurantId, restaurantSlug } = state;
 
   useEffect(() => {
     localStorage.removeItem("user");
@@ -104,6 +122,12 @@ const AuthProvider = ({ children }: { children?: ReactNode }) => {
       localStorage.setItem("restaurantId", restaurantId);
     }
   }, [restaurantId]);
+
+  useEffect(() => {
+    if (restaurantSlug) {
+      localStorage.setItem("restaurantSlug", restaurantSlug);
+    }
+  }, [restaurantSlug]);
 
   useEffect(() => {
     if (!restoring) {
@@ -118,6 +142,7 @@ const AuthProvider = ({ children }: { children?: ReactNode }) => {
     const handleUnauthorized = () => {
       clearTokens();
       localStorage.removeItem("restaurantId");
+      localStorage.removeItem("restaurantSlug");
       dispatch({ type: "LOGOUT" });
     };
     window.addEventListener(AUTH_EVENTS.LOGOUT, handleUnauthorized);
@@ -133,15 +158,14 @@ const AuthProvider = ({ children }: { children?: ReactNode }) => {
         return false;
       }
       const payload = decodeJwt(token);
-      const slug = payload.slug || payload.restaurantSlug;
-      if (typeof slug === "string" && slug) {
-        localStorage.setItem("restaurantSlug", slug);
-      }
       const restaurantId =
         readRestaurantIdFromUnknown(nextRestaurantId) ||
         readRestaurantId(payload) ||
         undefined;
-      dispatch({ type: "LOGIN", payload: { user: nextUser, restaurantId } });
+      dispatch({
+        type: "LOGIN",
+        payload: { user: nextUser, restaurantId, restaurantSlug: readRestaurantSlug(payload) },
+      });
       return true;
     },
     []
@@ -155,15 +179,31 @@ const AuthProvider = ({ children }: { children?: ReactNode }) => {
     dispatch({ type: "SET_RESTAURANT", payload: nextId });
   }, []);
 
+  const setRestaurantSlug = useCallback((nextSlug: string) => {
+    dispatch({ type: "SET_RESTAURANT_SLUG", payload: nextSlug });
+  }, []);
+
   const logout = useCallback(() => {
     void revokeSession();
     localStorage.removeItem("restaurantId");
+    localStorage.removeItem("restaurantSlug");
     dispatch({ type: "LOGOUT" });
   }, []);
 
   return (
     <AuthContext.Provider
-      value={{ authToken, restoring, login, logout, user, setUser, setRestaurantId, restaurantId }}
+      value={{
+        authToken,
+        restoring,
+        login,
+        logout,
+        user,
+        setUser,
+        restaurantId,
+        setRestaurantId,
+        restaurantSlug,
+        setRestaurantSlug,
+      }}
     >
       {children}
     </AuthContext.Provider>

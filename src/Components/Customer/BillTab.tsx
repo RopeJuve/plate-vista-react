@@ -1,6 +1,6 @@
 import { useGuestBill } from "../../features/guest-ordering/GuestBillProvider";
-import { useGuestOrderActions } from "../../features/guest-ordering/useGuestOrderActions";
-import { useOrderAmendment } from "../../features/order-amendment/useOrderAmendment";
+import { useGuestOrderActions } from "../../features/guest-ordering/hooks/useGuestOrderActions";
+import { useOrderAmendment } from "../../features/order-amendment/hooks/useOrderAmendment";
 import { sumCents } from "../../shared/money/formatCents";
 import BillOrderCard from "./BillOrderCard";
 import TotalLine from "./TotalLine";

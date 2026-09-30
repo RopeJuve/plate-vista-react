@@ -2,7 +2,7 @@ import { useState } from "react";
 import Pie from "./Charts/Pie";
 import Header from "../Components/AdminComponents/Header";
 import RangeSelect from "../features/stats/RangeSelect";
-import { useSummary, useTopDishes } from "../features/stats/useStats";
+import { useSummary, useTopDishes } from "../features/stats/hooks/useStats";
 import { rangeLabel, type StatsRange } from "../features/stats/statsRange";
 import { formatCents } from "../shared/money/formatCents";
 

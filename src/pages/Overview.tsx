@@ -8,7 +8,7 @@ import { Chit } from "../Components/rail";
 import { formatCents } from "../shared/money/formatCents";
 import { consumeOnboarding, dismissOnboarding } from "../features/admin/onboarding";
 import RangeSelect from "../features/stats/RangeSelect";
-import { useSalesByDate, useSummary } from "../features/stats/useStats";
+import { useSalesByDate, useSummary } from "../features/stats/hooks/useStats";
 import { rangeLabel, xFormatFor, type StatsRange } from "../features/stats/statsRange";
 
 type ReportLine = { title: string; name?: string; amount: string | number; icon: LucideIcon; route: string };

@@ -1,16 +1,10 @@
 import { memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Users } from "lucide-react";
+import type { TableSummary } from "../../features/staff-board/boardState";
 import { formatCents } from "../../shared/money/formatCents";
 import { formatElapsed, minutesSince, useNow } from "../rail";
 import { cn } from "@/lib/utils";
-
-export type TableSummary = {
-  open: number;
-  ready: number;
-  totalCents: number;
-  oldestOpenAt: string;
-};
 
 const OldestTimer = ({ since }: { since: string }) => {
   const now = useNow();

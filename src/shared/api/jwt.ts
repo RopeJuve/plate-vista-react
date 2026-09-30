@@ -72,6 +72,27 @@ export const readRestaurantIdFromUnknown = (data: unknown): string | null => {
   );
 };
 
+const asSlug = (value: unknown): string | null => (typeof value === "string" && value ? value : null);
+
+/** The restaurant's URL slug as a token carries it. Guest links are built from it. */
+export const readRestaurantSlug = (payload: Record<string, unknown>): string | null =>
+  asSlug(payload.slug) || asSlug(payload.restaurantSlug);
+
+/** The slug from a login or `/auth/user` response, wherever the API put it. */
+export const readRestaurantSlugFromUnknown = (data: unknown): string | null => {
+  const record = asRecord(data);
+  if (!record) {
+    return null;
+  }
+  const user = asRecord(record.user);
+  return (
+    asSlug(asRecord(record.restaurant)?.slug) ||
+    asSlug(asRecord(user?.restaurant)?.slug) ||
+    asSlug(record.slug) ||
+    asSlug(user?.slug)
+  );
+};
+
 export const readTokenFromHeaders = (headers: unknown): string | null => {
   if (!headers || typeof headers !== "object") {
     return null;

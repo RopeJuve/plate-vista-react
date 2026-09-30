@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ownerLoginSchema, type OwnerLoginValues } from "@/lib/schemas";
-import { useSignIn } from "../../../shared/auth/useSignIn";
+import { useSignIn } from "../../../shared/auth/hooks/useSignIn";
 import { staffLoginPath } from "../../../shared/auth/loginPaths";
 import AuthShell from "./AuthShell";
 import { Button } from "@/components/ui/button";

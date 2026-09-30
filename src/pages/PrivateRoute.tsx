@@ -4,7 +4,12 @@ import { useAuth } from "../contexts/AuthContext";
 import api from "../services/api";
 import Loading from "./Loading";
 import { User } from "../types";
-import { decodeJwt, readRestaurantId, readRestaurantIdFromUnknown } from "../shared/api/jwt";
+import {
+  decodeJwt,
+  readRestaurantId,
+  readRestaurantIdFromUnknown,
+  readRestaurantSlugFromUnknown,
+} from "../shared/api/jwt";
 import { getLoginPath } from "../shared/auth/loginPaths";
 
 const isRoleAllowed = (user: User | null, allowedRoles: string[] = []) => {
@@ -18,7 +23,7 @@ const isRoleAllowed = (user: User | null, allowedRoles: string[] = []) => {
 };
 
 const PrivateRoute = ({ allowedRoles }: { allowedRoles?: string[] }) => {
-  const { authToken, restoring, logout, setUser, setRestaurantId } = useAuth();
+  const { authToken, restoring, logout, setUser, setRestaurantId, setRestaurantSlug } = useAuth();
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null);
   const [allowed, setAllowed] = useState(false);
@@ -52,13 +57,9 @@ const PrivateRoute = ({ allowedRoles }: { allowedRoles?: string[] }) => {
         if (nextRestaurantId) {
           setRestaurantId(nextRestaurantId);
         }
-        const nextSlug =
-          data?.restaurant?.slug ||
-          data?.user?.restaurant?.slug ||
-          data?.slug ||
-          data?.user?.slug;
-        if (typeof nextSlug === "string" && nextSlug) {
-          localStorage.setItem("restaurantSlug", nextSlug);
+        const nextSlug = readRestaurantSlugFromUnknown(data);
+        if (nextSlug) {
+          setRestaurantSlug(nextSlug);
         }
         setAllowed(isRoleAllowed(nextUser, allowedKey.split(",").filter(Boolean)));
       } catch {
@@ -77,7 +78,7 @@ const PrivateRoute = ({ allowedRoles }: { allowedRoles?: string[] }) => {
     return () => {
       cancelled = true;
     };
-  }, [authToken, restoring, allowedKey, logout, setUser, setRestaurantId]);
+  }, [authToken, restoring, allowedKey, logout, setUser, setRestaurantId, setRestaurantSlug]);
 
   if (restoring) {
     return <Loading />;

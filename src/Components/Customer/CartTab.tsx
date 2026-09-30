@@ -1,6 +1,6 @@
 import { useCart } from "../../contexts/CartContext";
 import { useMenu } from "../../features/guest-ordering/MenuProvider";
-import type { PlaceOrder, PlaceOrderPhase } from "../../features/guest-ordering/usePlaceOrder";
+import type { PlaceOrder, PlaceOrderPhase } from "../../features/guest-ordering/hooks/usePlaceOrder";
 import { lineTotalCents, sumCents } from "../../shared/money/formatCents";
 import { Chit } from "../rail";
 import CartLineRow from "./CartLineRow";

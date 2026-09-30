@@ -3,7 +3,7 @@ import { X } from "lucide-react";
 import { useCart } from "../../contexts/CartContext";
 import { useMenu } from "../../features/guest-ordering/MenuProvider";
 import { useGuestBill } from "../../features/guest-ordering/GuestBillProvider";
-import { usePlaceOrder } from "../../features/guest-ordering/usePlaceOrder";
+import { usePlaceOrder } from "../../features/guest-ordering/hooks/usePlaceOrder";
 import { useGuestAuth } from "../../features/guest-ordering/GuestAuthContext";
 import BillTab from "./BillTab";
 import CartTab from "./CartTab";

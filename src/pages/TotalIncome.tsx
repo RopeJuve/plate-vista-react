@@ -2,7 +2,7 @@ import { useState } from "react";
 import Line from "./Charts/Line";
 import Header from "../Components/AdminComponents/Header";
 import RangeSelect from "../features/stats/RangeSelect";
-import { useSalesByDate, useSummary } from "../features/stats/useStats";
+import { useSalesByDate, useSummary } from "../features/stats/hooks/useStats";
 import { rangeLabel, xFormatFor, type StatsRange } from "../features/stats/statsRange";
 import { formatCents } from "../shared/money/formatCents";
 

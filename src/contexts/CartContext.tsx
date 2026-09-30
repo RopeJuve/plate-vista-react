@@ -1,5 +1,6 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, ReactNode } from "react";
-import { LIMITS } from "../shared/realtime/protocol";
+import { createContext, useContext, useEffect, useMemo, ReactNode } from "react";
+import { restoreLines } from "../features/guest-ordering/cartLines";
+import { useCartLines } from "../features/guest-ordering/hooks/useCartLines";
 import type { CartLine } from "../features/guest-ordering/types";
 
 type CartContextValue = {
@@ -21,34 +22,27 @@ const readCart = (storageKey: string): CartLine[] => {
     if (!raw) {
       return [];
     }
-    const parsed = JSON.parse(raw) as { expiresAt?: number; items?: CartLine[] } | CartLine[];
+    const parsed = JSON.parse(raw) as { expiresAt?: number; items?: unknown } | unknown[];
     if (!Array.isArray(parsed) && parsed?.expiresAt && Date.now() > parsed.expiresAt) {
       localStorage.removeItem(storageKey);
       return [];
     }
-    const items = Array.isArray(parsed) ? parsed : parsed.items;
-    if (!Array.isArray(items)) {
-      return [];
-    }
-    return items
-      .filter((item) => item && typeof item.productId === "string")
-      .map((item) => ({
-        productId: item.productId,
-        quantity: Math.min(LIMITS.MAX_QUANTITY_PER_ITEM, Math.max(1, Number(item.quantity) || 1)),
-        notes: String(item.notes || "").slice(0, LIMITS.MAX_NOTES_LENGTH),
-      }));
+    return restoreLines(Array.isArray(parsed) ? parsed : parsed.items);
   } catch {
     return [];
   }
 };
 
+/** The guest's cart: the lines they are about to order, kept on the device for this table session. */
 export const CartProvider = ({ children, sessionId }: { children?: ReactNode; sessionId: string }) => {
   const storageKey = sessionId ? `cart:${sessionId}` : "cart";
-  const [cart, setCart] = useState<CartLine[]>(() => readCart(storageKey));
+  const { lines: cart, addLine, setQuantity, setNotes, removeLine, clearLines, replaceLines } = useCartLines(() =>
+    readCart(storageKey)
+  );
 
   useEffect(() => {
-    setCart(readCart(storageKey));
-  }, [storageKey]);
+    replaceLines(readCart(storageKey));
+  }, [replaceLines, storageKey]);
 
   useEffect(() => {
     localStorage.setItem(
@@ -60,52 +54,9 @@ export const CartProvider = ({ children, sessionId }: { children?: ReactNode; se
     );
   }, [cart, storageKey]);
 
-  const addLine = useCallback((productId: string) => {
-    setCart((current) => {
-      const existing = current.find((line) => line.productId === productId);
-      if (!existing) {
-        if (current.length >= LIMITS.MAX_ITEMS_PER_ORDER) {
-          return current;
-        }
-        return [...current, { productId, quantity: 1, notes: "" }];
-      }
-      if (existing.quantity >= LIMITS.MAX_QUANTITY_PER_ITEM) {
-        return current;
-      }
-      return current.map((line) =>
-        line.productId === productId ? { ...line, quantity: line.quantity + 1 } : line
-      );
-    });
-  }, []);
-
-  const setQuantity = useCallback((productId: string, quantity: number) => {
-    const nextQuantity = Math.min(LIMITS.MAX_QUANTITY_PER_ITEM, Math.max(1, Math.round(quantity)));
-    setCart((current) =>
-      current.map((line) => (line.productId === productId ? { ...line, quantity: nextQuantity } : line))
-    );
-  }, []);
-
-  const setNotes = useCallback((productId: string, notes: string) => {
-    setCart((current) =>
-      current.map((line) =>
-        line.productId === productId
-          ? { ...line, notes: notes.slice(0, LIMITS.MAX_NOTES_LENGTH) }
-          : line
-      )
-    );
-  }, []);
-
-  const removeLine = useCallback((productId: string) => {
-    setCart((current) => current.filter((line) => line.productId !== productId));
-  }, []);
-
-  const clearCart = useCallback(() => {
-    setCart([]);
-  }, []);
-
   const value = useMemo(
-    () => ({ cart, addLine, setQuantity, setNotes, removeLine, clearCart }),
-    [cart, addLine, setQuantity, setNotes, removeLine, clearCart]
+    () => ({ cart, addLine, setQuantity, setNotes, removeLine, clearCart: clearLines }),
+    [cart, addLine, setQuantity, setNotes, removeLine, clearLines]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

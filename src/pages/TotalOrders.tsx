@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import Stacked from "../Components/AdminComponents/Charts/Stacked";
 import Header from "../Components/AdminComponents/Header";
 import RangeSelect from "../features/stats/RangeSelect";
-import { useSalesByCategory, useSummary } from "../features/stats/useStats";
+import { useSalesByCategory, useSummary } from "../features/stats/hooks/useStats";
 import { pivotCategories, rangeLabel, xFormatFor, type StatsRange } from "../features/stats/statsRange";
 
 const TotalOrders = () => {
