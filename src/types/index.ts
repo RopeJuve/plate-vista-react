@@ -20,8 +20,11 @@ export type MenuItem = {
   title: string;
   description?: string;
   price: number | string;
-  image?: string;
+  priceCents?: number;
+  image?: string | null;
+  categoryId?: string;
   category?: string;
+  station?: "bar" | "kitchen";
   popular?: boolean;
   inStock?: boolean;
 };

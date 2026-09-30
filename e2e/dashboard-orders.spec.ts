@@ -54,4 +54,13 @@ test("a guest order reaches the admin dashboard", async ({ page, browser }) => {
 
   await page.goto("/admin/overview");
   await expect(page.getByRole("button", { name: /^Total Orders 1$/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Total Income 4,50/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Trending Dishes 1×$/ })).toContainText("Lager");
+
+  // The statistics pages chart the real order, not sample data.
+  await page.goto("/admin/trendingdishes");
+  await expect(page.getByRole("listitem").filter({ hasText: "Lager" })).toContainText("1 sold");
+  await page.goto("/admin/totalorders");
+  await expect(page.getByText("1 orders and 1 items sold", { exact: false })).toBeVisible();
+  await expect(page.getByText("beer")).toBeVisible();
 });

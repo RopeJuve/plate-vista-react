@@ -38,21 +38,27 @@ export const restaurantRegisterSchema = z.object({
 
 export type RestaurantRegisterValues = z.infer<typeof restaurantRegisterSchema>;
 
-const imageValue = z.union([z.instanceof(File), z.string().min(1)]);
-
+// Image and description are optional; a missing image shows the station's
+// placeholder.
 export const menuItemSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  price: z.number().positive("Price must be greater than 0"),
-  category: z.string().min(1, "Category is required"),
-  description: z.string().optional(),
+  title: z.string().trim().min(3, "Title must be at least 3 characters"),
+  price: z.number({ error: "Price is required" }).positive("Price must be greater than 0"),
+  categoryId: z.string().min(1, "Category is required"),
+  description: z.string().trim().max(500, "Description is too long"),
   popular: z.boolean(),
   inStock: z.boolean(),
-  image: imageValue.optional(),
-});
-
-export const menuItemAddSchema = menuItemSchema.extend({
-  image: imageValue,
+  image: z
+    .string()
+    .url("Enter a valid link")
+    .startsWith("https://", "The link must start with https://")
+    .nullable(),
 });
 
 export type MenuItemValues = z.infer<typeof menuItemSchema>;
-export type MenuItemAddValues = z.infer<typeof menuItemAddSchema>;
+
+export const categorySchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(40, "Name must be at most 40 characters"),
+  station: z.enum(["kitchen", "bar"]),
+});
+
+export type CategoryValues = z.infer<typeof categorySchema>;

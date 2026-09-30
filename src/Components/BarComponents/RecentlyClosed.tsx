@@ -3,6 +3,7 @@ import { fetchBill } from "../../shared/api/bill";
 import { formatCents } from "../../shared/money/formatCents";
 import type { ClosedSession, SessionBill } from "../../shared/realtime/protocol";
 import { ORDER_STATUS_LABEL } from "../../shared/realtime/protocol";
+import { billedLines } from "../../shared/realtime/tickets";
 import {
   Dialog,
   DialogContent,
@@ -66,7 +67,7 @@ const BillDialog = ({ entry, onClose }: { entry: ClosedSession | null; onClose: 
                   {clock(order.createdAt)} · {ORDER_STATUS_LABEL[order.status]}
                 </p>
                 <ul className="space-y-1 text-sm">
-                  {order.items.map((item, index) => (
+                  {billedLines(order).map((item, index) => (
                     <li key={`${item.productId}:${index}`} className="flex items-baseline gap-2">
                       <span className="font-mono tabular text-ink-soft">{item.quantity}×</span>
                       <span className="min-w-0 flex-1 truncate">{item.title}</span>

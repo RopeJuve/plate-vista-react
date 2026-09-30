@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { useRealtime } from "../../shared/realtime/RealtimeProvider";
 import { errorMessage } from "../../shared/realtime/errorMessages";
-import { ProtocolError, type OrderStatus } from "../../shared/realtime/protocol";
+import { ProtocolError, type OrderStatus, type Station } from "../../shared/realtime/protocol";
 import { notify } from "../../utils/notify";
 import api from "../../services/api";
 import { useStaffBoard } from "./StaffBoardProvider";
@@ -12,9 +12,9 @@ export const useOrderActions = () => {
   const canSend = status === "open";
 
   const changeStatus = useCallback(
-    async (orderId: string, next: OrderStatus) => {
+    async (orderId: string, next: OrderStatus, station: Station) => {
       try {
-        await request("order.status", { orderId, status: next });
+        await request("order.status", { orderId, status: next, station });
       } catch (error) {
         if (error instanceof ProtocolError) {
           notify(errorMessage(error.code, error.details, error.message));
@@ -30,15 +30,15 @@ export const useOrderActions = () => {
   );
 
   const cancelOrder = useCallback(
-    async (orderId: string, reason: string) => {
+    async (orderId: string, reason: string, station: Station) => {
       try {
-        await request("order.cancel", { orderId, reason });
+        await request("order.cancel", { orderId, reason, station });
       } catch (error) {
         if (error instanceof ProtocolError) {
           notify(errorMessage(error.code, error.details, error.message));
           return;
         }
-        notify("Could not cancel the order");
+        notify("Could not cancel the ticket");
       }
     },
     [request]

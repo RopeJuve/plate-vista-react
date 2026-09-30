@@ -1,5 +1,5 @@
 /**
- * FE-02 — Protocol v2.1 types.
+ * FE-02 — Protocol v2.2 types.
  *
  * Mirrors `docs/PROTOCOL.md` exactly. This is the single source of truth for
  * every shape that travels over the WebSocket. No optional "alternative"
@@ -76,14 +76,24 @@ export interface OrderItem {
   station: Station;
 }
 
+/** One station's part of an order, with its own status. */
+export interface Ticket {
+  station: Station;
+  status: OrderStatus;
+  cancelReason: string;
+}
+
 export interface Order {
   _id: string;
   restaurantId: string;
   sessionId: string;
   tableId: string;
   clientOrderId: string;
+  /** The slowest ticket that is not cancelled. */
   status: OrderStatus;
   rev: number;
+  /** One per station the order has items for. */
+  tickets: Ticket[];
   items: OrderItem[];
   totalCents: number;
   createdAt: string;
@@ -188,11 +198,15 @@ export interface OrderUpdatePayload {
 export interface OrderStatusPayload {
   orderId: string;
   status: OrderStatus;
+  /** The ticket to move. Without it the server moves the whole order. */
+  station?: Station;
 }
 
 export interface OrderCancelPayload {
   orderId: string;
   reason?: string;
+  /** Staff only: the ticket to cancel. Without it the whole order is cancelled. */
+  station?: Station;
 }
 
 export type ClientMessageType = "order.create" | "order.update" | "order.status" | "order.cancel";
@@ -306,7 +320,16 @@ export interface OrderUpdatedEvent {
 
 export interface OrderStatusChangedEvent {
   event: "order.statusChanged";
-  data: { orderId: string; status: OrderStatus; rev: number; reason?: string };
+  data: {
+    orderId: string;
+    status: OrderStatus;
+    rev: number;
+    tickets: Ticket[];
+    totalCents: number;
+    /** Present when the change was for one ticket. */
+    station?: Station;
+    reason?: string;
+  };
 }
 
 export interface SessionClosedEvent {

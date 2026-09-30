@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import api from "../../services/api";
 import CategoryCustomer from "./CategoryCustomer";
 import SkeletonList from "./SkeletonList";
+import ScrollRow from "../ScrollRow";
 import { useStateContext } from "../../contexts/ContextProvider";
 import { notify, apiMessage } from "../../utils/notify";
 import { toCategoryList } from "../../features/guest-ordering/menu";
@@ -46,19 +47,21 @@ const CategoriesCustomer = ({
   }
 
   return (
-    <div
-      role="tablist"
-      aria-label="Menu categories"
-      className="no-scrollbar mx-auto flex w-full max-w-3xl snap-x scroll-px-4 gap-2 sm:scroll-px-6 overflow-x-auto px-4 py-3 sm:px-6"
-    >
-      {visibleCategories.map((category, i) => (
-        <CategoryCustomer
-          key={`${i}${category}`}
-          category={category}
-          selectedCategory={selectedCategory}
-          setSelectedCategory={setSelectedCategory}
-        />
-      ))}
+    <div className="mx-auto w-full max-w-3xl">
+      <ScrollRow
+        label="Menu categories"
+        activeKey={selectedCategory}
+        className="snap-x scroll-px-4 gap-2 px-4 py-3 sm:scroll-px-6 sm:px-6"
+      >
+        {visibleCategories.map((category, i) => (
+          <CategoryCustomer
+            key={`${i}${category}`}
+            category={category}
+            selectedCategory={selectedCategory}
+            setSelectedCategory={setSelectedCategory}
+          />
+        ))}
+      </ScrollRow>
     </div>
   );
 };

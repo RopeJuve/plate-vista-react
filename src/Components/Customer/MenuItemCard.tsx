@@ -3,6 +3,7 @@ import { useCart } from "../../contexts/CartContext";
 import type { MenuRecord } from "../../features/guest-ordering/menu";
 import { formatCents } from "../../shared/money/formatCents";
 import { cn } from "@/lib/utils";
+import MenuItemImage from "../../features/menu/MenuItemImage";
 
 const MenuItemCard = ({ item }: { item: MenuRecord }) => {
   const { cart, addLine, setQuantity, removeLine } = useCart();
@@ -64,14 +65,12 @@ const MenuItemCard = ({ item }: { item: MenuRecord }) => {
           )}
         </div>
       </div>
-      {item.image ? (
-        <img
-          src={item.image}
-          alt=""
-          loading="lazy"
-          className={cn("h-24 w-24 shrink-0 rounded-lg object-cover sm:h-28 sm:w-28", unavailable && "opacity-50 grayscale")}
-        />
-      ) : null}
+      <MenuItemImage
+        image={item.image}
+        station={item.station}
+        dimmed={unavailable}
+        className="h-24 w-24 shrink-0 rounded-lg sm:h-28 sm:w-28"
+      />
     </article>
   );
 };

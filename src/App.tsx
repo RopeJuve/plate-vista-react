@@ -16,6 +16,7 @@ const RestaurantRegister = lazy(() => import("./features/admin/RestaurantRegiste
 const AdminDashboard = lazy(() => import("./Components/AdminComponents/AdminDashboard"));
 const Overview = lazy(() => import("./pages/Overview"));
 const Menu = lazy(() => import("./pages/Menu"));
+const Categories = lazy(() => import("./pages/Categories"));
 const Orders = lazy(() => import("./pages/Orders"));
 const Tables = lazy(() => import("./pages/Tables"));
 const Employees = lazy(() => import("./pages/Employees"));
@@ -63,6 +64,7 @@ function App() {
                     <Route index element={<Overview />} />
                     <Route path="overview" element={<Overview />} />
                     <Route path="menu" element={<Menu />} />
+                    <Route path="categories" element={<Categories />} />
                     <Route path="orders" element={<Orders />} />
                     <Route path="tables" element={<Tables />} />
                     <Route path="employees" element={<Employees />} />

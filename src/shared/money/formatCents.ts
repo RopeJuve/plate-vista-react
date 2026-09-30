@@ -37,6 +37,10 @@ export const sumCents = (amounts: Array<number | null | undefined>): number =>
 export const lineTotalCents = (unitPriceCents: number, quantity: number): number =>
   Math.round(unitPriceCents) * Math.round(quantity);
 
+/** Cents as a plain euro number, for chart axes. Never feed it back into price math. */
+export const centsToEurosForChart = (cents: number): number =>
+  (Number.isFinite(cents) ? cents : 0) / 100;
+
 /**
  * Converts a euro amount to integer cents.
  * This is the only place a price may be scaled by 100.

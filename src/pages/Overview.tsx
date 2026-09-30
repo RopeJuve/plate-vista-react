@@ -1,80 +1,45 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowUpRight, X } from "lucide-react";
-import { dropdownData, bestEmployees, earningData } from "../data/data";
+import { ArrowUpRight, Coins, ReceiptText, ShoppingCart, Soup, X, type LucideIcon } from "lucide-react";
+import { bestEmployees } from "../data/data";
 import LineChart from "../Components/AdminComponents/Charts/LineChart";
 import { Header } from "../Components/AdminComponents";
 import { Chit } from "../Components/rail";
-import { useFetchOrdersForCharts } from "../utils/fetchOrdersForCharts";
 import { formatCents } from "../shared/money/formatCents";
 import { consumeOnboarding, dismissOnboarding } from "../features/admin/onboarding";
-import { fetchOrders, readOrdersPayload } from "../services/orderDataFetch";
-import { notify } from "../utils/notify";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import RangeSelect from "../features/stats/RangeSelect";
+import { useSalesByDate, useSummary } from "../features/stats/useStats";
+import { rangeLabel, xFormatFor, type StatsRange } from "../features/stats/statsRange";
 
-const DropDown = () => (
-  <div className="w-36">
-    <Select defaultValue="1">
-      <SelectTrigger aria-label="Time range" className="h-9 text-sm">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        {dropdownData.map((item) => (
-          <SelectItem key={item.Id} value={item.Id}>
-            {item.Time}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  </div>
-);
-
-const ROUTES: Record<string, string> = {
-  "Total Income": "/admin/totalincome",
-  "Total Orders": "/admin/totalorders",
-  "Trending Dishes": "/admin/trendingdishes",
-};
+type ReportLine = { title: string; name?: string; amount: string | number; icon: LucideIcon; route: string };
 
 const today = new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long" }).format(new Date());
 
 const Overview = () => {
-  const { lineChartData, totalIncome } = useFetchOrdersForCharts();
-  const [totalOrders, setTotalOrders] = useState(0);
+  const [range, setRange] = useState<StatsRange>("7d");
+  const { data: summary } = useSummary(range);
+  const { revenue } = useSalesByDate(range);
   const [showOnboarding, setShowOnboarding] = useState(() => consumeOnboarding());
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchOrders({ page: 1, limit: 1 })
-      .then((response) => {
-        setTotalOrders(readOrdersPayload(response.data).total);
-      })
-      .catch((error) => {
-        if (import.meta.env.DEV) {
-          console.error("Error fetching order total:", error);
-        }
-        notify(error.response?.data?.message || "Could not load order total");
-      });
-  }, []);
-
-  const updatedEarningData = earningData.map((item) => {
-    if (item.title === "Total Orders") {
-      return { ...item, amount: totalOrders };
-    }
-    if (item.title === "Total Income") {
-      return { ...item, amount: formatCents(totalIncome) };
-    }
-    return item;
-  });
   // The report reads like a till: money first, then covers, then what sold.
-  const reportLines = ["Total Income", "Total Orders", "Trending Dishes"]
-    .map((title) => updatedEarningData.find((item) => item.title === title))
-    .filter((item): item is (typeof updatedEarningData)[number] => Boolean(item));
+  const reportLines: ReportLine[] = [
+    { title: "Total Income", amount: formatCents(summary.totalCents), icon: Coins, route: "/admin/totalincome" },
+    { title: "Total Orders", amount: summary.ordersCount, icon: ShoppingCart, route: "/admin/totalorders" },
+    {
+      title: "Average Order",
+      amount: formatCents(summary.averageOrderCents),
+      icon: ReceiptText,
+      route: "/admin/totalincome",
+    },
+    {
+      title: "Trending Dishes",
+      name: summary.topItem?.menu_item ?? "No sales yet",
+      amount: summary.topItem ? `${summary.topItem.numSold}×` : "–",
+      icon: Soup,
+      route: "/admin/trendingdishes",
+    },
+  ];
 
   return (
     <div>
@@ -122,7 +87,7 @@ const Overview = () => {
         <Chit lift="paper" innerClassName="bg-white px-6 pt-6">
           <div className="text-center">
             <h2 className="text-lg font-black uppercase tracking-[0.12em]">Z-Report</h2>
-            <p className="mt-1 font-mono text-xs uppercase tracking-[0.14em] text-ink-soft">All time</p>
+            <p className="mt-1 font-mono text-xs uppercase tracking-[0.14em] text-ink-soft">{rangeLabel(range)}</p>
           </div>
           <div className="perf my-5" />
           <ul className="space-y-1">
@@ -130,7 +95,7 @@ const Overview = () => {
               <li key={item.title}>
                 <button
                   type="button"
-                  onClick={() => navigate(ROUTES[item.title])}
+                  onClick={() => navigate(item.route)}
                   aria-label={`${item.title} ${item.amount}`}
                   className="group -mx-2 flex w-[calc(100%+1rem)] items-end gap-3 rounded-md px-2 py-3 text-left transition-colors hover:bg-ink/[0.04]"
                 >
@@ -159,9 +124,9 @@ const Overview = () => {
                 Daily Sales
               </button>
             </h2>
-            <DropDown />
+            <RangeSelect value={range} onChange={setRange} />
           </div>
-          <LineChart data={lineChartData} />
+          <LineChart data={revenue} xFormat={xFormatFor(range)} />
         </section>
       </div>
 

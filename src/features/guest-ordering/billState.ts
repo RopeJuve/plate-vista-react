@@ -1,4 +1,5 @@
-import type { Order, OrderStatus, ServerEvent } from "../../shared/realtime/protocol";
+import type { Order, ServerEvent } from "../../shared/realtime/protocol";
+import { withStatusChange } from "../../shared/realtime/tickets";
 
 export type BillOrder = Order & { cancelReason?: string };
 
@@ -43,15 +44,12 @@ export const applyBillEvent = (state: BillState, event: ServerEvent, sessionId: 
       if (!current || !isNewer(current.rev, event.data.rev)) {
         return state;
       }
-      const status: OrderStatus = event.data.status;
       return {
         ...state,
         ordersById: {
           ...state.ordersById,
           [current._id]: {
-            ...current,
-            status,
-            rev: event.data.rev,
+            ...withStatusChange(current, event.data),
             cancelReason: event.data.reason ?? current.cancelReason,
           },
         },

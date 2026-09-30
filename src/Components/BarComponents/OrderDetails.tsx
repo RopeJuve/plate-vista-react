@@ -11,8 +11,9 @@ import { useStaffBoard } from "../../features/staff-board/StaffBoardProvider";
 import { formatCents, lineTotalCents, sumCents } from "../../shared/money/formatCents";
 import { errorMessage } from "../../shared/realtime/errorMessages";
 import { ProtocolError } from "../../shared/realtime/protocol";
+import { billedLines, isUntouched } from "../../shared/realtime/tickets";
 import { notify } from "../../utils/notify";
-import { QtyStepper, StepRow } from "../rail";
+import { QtyStepper, TicketSteps } from "../rail";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -141,13 +142,13 @@ const OrderDetails = () => {
           return (
             <div key={order._id} className="space-y-2">
               <div className="flex items-center gap-3">
-                <StepRow status={order.status} className="flex-1" />
+                <TicketSteps order={order} audience="staff" className="flex-1" />
                 <time className="font-mono text-xs text-ink-soft tabular" dateTime={order.createdAt}>
                   Placed {new Date(order.createdAt).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })}
                 </time>
               </div>
               <ul className="space-y-1.5 font-mono text-[0.92rem]">
-                {order.items.map((item) => {
+                {billedLines(order).map((item) => {
                   const key = `${order._id}:${item.productId}`;
                   const quantity = editing ? draftQty[key] ?? item.quantity : item.quantity;
                   return (
@@ -176,7 +177,7 @@ const OrderDetails = () => {
                 <span className="font-mono text-xs text-ink-soft">
                   Subtotal <span className="tabular">{formatCents(order.totalCents)}</span>
                 </span>
-                {order.status === "pending" && !editing && (
+                {isUntouched(order) && !editing && (
                   <button
                     type="button"
                     className="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-sm font-semibold text-signal-ink hover:bg-signal/10"

@@ -9,7 +9,8 @@ import { LIMITS } from "../../shared/realtime/protocol";
 import { useRealtime } from "../../shared/realtime/RealtimeProvider";
 import { errorMessage } from "../../shared/realtime/errorMessages";
 import { ProtocolError } from "../../shared/realtime/protocol";
-import { Chit, QtyStepper, StepRow } from "../rail";
+import { TICKET_LABEL, isUntouched, ticketsOf } from "../../shared/realtime/tickets";
+import { Chit, QtyStepper, TicketSteps } from "../rail";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -223,18 +224,35 @@ const CartContent = ({
         )}
         {orders.map((order) => {
           const editing = editingId === order._id;
+          const tickets = ticketsOf(order);
+          const split = tickets.length > 1;
+          const cancelled = tickets.filter((ticket) => ticket.status === "cancelled");
+          // Part of the order was cancelled: those lines stay visible, struck out.
+          const struck = new Set(
+            cancelled.length < tickets.length ? cancelled.map((ticket) => ticket.station) : []
+          );
           return (
             <Chit key={order._id} lift="paper" printed innerClassName="bg-white px-4 pt-3">
               <section aria-label={`Order at ${new Date(order.createdAt).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })}`}>
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
                   <time className="font-mono text-xs text-ink-soft tabular" dateTime={order.createdAt}>
                     Placed {new Date(order.createdAt).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })}
                   </time>
-                  <StepRow status={order.status} className="max-w-[14rem] flex-1" />
+                  <TicketSteps
+                    order={order}
+                    audience="guest"
+                    className={split ? "w-full" : "max-w-[14rem] flex-1"}
+                  />
                 </div>
-                {order.cancelReason && (
-                  <p className="mt-2 rounded bg-alert/10 px-2 py-1 text-sm text-alert-ink">{order.cancelReason}</p>
-                )}
+                {cancelled.map((ticket) => {
+                  const what = split ? `${TICKET_LABEL.guest[ticket.station]} cancelled` : "";
+                  const text = [what, ticket.cancelReason].filter(Boolean).join(": ");
+                  return text ? (
+                    <p key={ticket.station} className="mt-2 rounded bg-alert/10 px-2 py-1 text-sm text-alert-ink">
+                      {text}
+                    </p>
+                  ) : null;
+                })}
                 <ul className="mt-2">
                   {order.items.map((item) => {
                     const quantity = editing ? draftQty[item.productId] ?? item.quantity : item.quantity;
@@ -264,13 +282,27 @@ const CartContent = ({
                         ) : (
                           <span className="w-8 shrink-0 font-mono font-bold tabular">{item.quantity}×</span>
                         )}
-                        <span className="min-w-0 flex-1 font-mono font-semibold">{item.title}</span>
-                        <span className="font-mono font-semibold tabular">{formatCents(item.lineTotalCents)}</span>
+                        <span
+                          className={cn(
+                            "min-w-0 flex-1 font-mono font-semibold",
+                            struck.has(item.station) && "text-ink-soft line-through"
+                          )}
+                        >
+                          {item.title}
+                        </span>
+                        <span
+                          className={cn(
+                            "font-mono font-semibold tabular",
+                            struck.has(item.station) && "text-ink-soft line-through"
+                          )}
+                        >
+                          {formatCents(item.lineTotalCents)}
+                        </span>
                       </li>
                     );
                   })}
                 </ul>
-                {order.status === "pending" && status === "open" && (
+                {isUntouched(order) && status === "open" && (
                   <div className="mt-2 flex flex-wrap gap-2">
                     {editing ? (
                       <Button
@@ -349,7 +381,7 @@ const CartContent = ({
       <div className="border-t border-ink/10 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
         <TotalLine label="Total" cents={payable} strong />
         {orders.length > 0 && (
-          <p className="mt-1 text-xs text-ink-soft">Cancelled orders aren’t counted.</p>
+          <p className="mt-1 text-xs text-ink-soft">Cancelled items aren’t counted.</p>
         )}
       </div>
     </>

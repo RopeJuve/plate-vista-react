@@ -17,6 +17,8 @@ type LineSeries = {
 type LineChartProps = {
   data?: LineSeries[];
   color?: string;
+  /** date-fns format for the x axis, e.g. "MMM yy" for monthly data. */
+  xFormat?: string;
 };
 
 const toDateKey = (value: Date | string | number) => {
@@ -47,7 +49,7 @@ const toChartRows = (series: LineSeries[]) => {
   );
 };
 
-const LineChart = ({ data, color }: LineChartProps) => {
+const LineChart = ({ data, color, xFormat = "d MMM" }: LineChartProps) => {
   if (!data || data.length === 0) {
     return (
       <div className="grid h-[320px] place-items-center rounded-lg border border-dashed border-ink/15 text-center">
@@ -86,7 +88,7 @@ const LineChart = ({ data, color }: LineChartProps) => {
           tickMargin={8}
           tickFormatter={(value) => {
             const date = new Date(value);
-            return Number.isNaN(date.getTime()) ? String(value) : format(date, "d MMM");
+            return Number.isNaN(date.getTime()) ? String(value) : format(date, xFormat);
           }}
         />
         <YAxis tickLine={false} axisLine={false} allowDecimals={false} width={36} />

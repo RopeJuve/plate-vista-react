@@ -36,6 +36,7 @@ const menu = [
     priceCents: 450,
     price: 4.5,
     image: "",
+    categoryId: "cat-beer",
     category: "beer",
     inStock: true,
     station: "bar",
@@ -43,6 +44,25 @@ const menu = [
     archived: false,
   },
 ];
+
+// Like the API: each item's category name and station come from its category.
+const categories = [{ _id: "cat-beer", name: "beer", station: "bar", position: 1 }];
+const initialMenuLength = menu.length;
+const withCategory = (item) => {
+  const category = categories.find((entry) => entry._id === item.categoryId);
+  return { ...item, category: category?.name ?? null, station: category?.station ?? "kitchen" };
+};
+const menuInOrder = () =>
+  menu
+    .map(withCategory)
+    .sort(
+      (a, b) =>
+        (categories.find((c) => c._id === a.categoryId)?.position ?? 99) -
+          (categories.find((c) => c._id === b.categoryId)?.position ?? 99) ||
+        Number(b.popular) - Number(a.popular) ||
+        a.title.localeCompare(b.title)
+    );
+
 
 const b64url = (value) => Buffer.from(JSON.stringify(value)).toString("base64url");
 
@@ -164,6 +184,22 @@ const broadcast = (message, filter) => {
 
 const emit = (event, data) => broadcast({ type: "event", event, data });
 
+// Like the API: one ticket per station the order has items for, and the order
+// is as far along as its slowest ticket.
+const STATIONS = ["kitchen", "bar"];
+const LIFECYCLE = ["pending", "accepted", "preparing", "ready", "served"];
+const ticketsFor = (items) =>
+  STATIONS.filter((station) => items.some((item) => item.station === station)).map((station) => ({
+    station,
+    status: "pending",
+    cancelReason: "",
+  }));
+const slowest = (tickets) =>
+  tickets.reduce(
+    (status, ticket) => (LIFECYCLE.indexOf(ticket.status) < LIFECYCLE.indexOf(status) ? ticket.status : status),
+    "served"
+  );
+
 const buildOrder = (payload, identity) => {
   const existing = [...orders.values()].find((order) => order.clientOrderId === payload.clientOrderId);
   if (existing) {
@@ -178,7 +214,8 @@ const buildOrder = (payload, identity) => {
     active = openSession(table);
   }
   const items = (payload.items || []).map((line) => {
-    const product = menu.find((item) => item._id === line.productId);
+    const found = menu.find((item) => item._id === line.productId);
+    const product = found && withCategory(found);
     const quantity = Number(line.quantity) || 0;
     const unitPriceCents = product?.priceCents ?? 0;
     return {
@@ -189,6 +226,7 @@ const buildOrder = (payload, identity) => {
       lineTotalCents: unitPriceCents * quantity,
       notes: typeof line.notes === "string" ? line.notes : "",
       station: product?.station || "kitchen",
+      category: product?.category || "Other",
     };
   });
   const now = new Date().toISOString();
@@ -200,6 +238,7 @@ const buildOrder = (payload, identity) => {
     clientOrderId: payload.clientOrderId,
     status: "pending",
     rev: 1,
+    tickets: ticketsFor(items),
     items,
     totalCents: items.reduce((sum, item) => sum + item.lineTotalCents, 0),
     createdAt: now,
@@ -238,6 +277,8 @@ const server = http.createServer(async (req, res) => {
     guestTokens.clear();
     faults.dropNextOrderCreate = false;
     faults.failNextBoard = false;
+    menu.length = initialMenuLength;
+    categories.length = 1;
     restaurant.id = "rest-1";
     restaurant.slug = String(body.slug || "harbor");
     restaurant.name = String(body.restaurantName || "Restaurant");
@@ -475,13 +516,103 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === "GET" && (route === "/menu-items" || /^\/r\/[^/]+\/menu-items$/.test(route))) {
-    sendJson(res, 200, menu);
+    sendJson(res, 200, menuInOrder());
     return;
   }
 
-  if (req.method === "GET" && route === "/menu-items/category") {
-    sendJson(res, 200, ["beer"]);
+  if (req.method === "GET" && (route === "/menu-items/category" || /^\/r\/[^/]+\/menu-items\/category$/.test(route))) {
+    sendJson(res, 200, [...new Set(menuInOrder().map((item) => item.category))]);
     return;
+  }
+
+  // Uploads need Cloudinary, which the mock does not have.
+  if (req.method === "POST" && route === "/menu-items/upload-signature") {
+    sendJson(res, 503, { code: "INTERNAL", message: "Image uploads are not configured" });
+    return;
+  }
+
+  if (req.method === "POST" && route === "/menu-items") {
+    const item = {
+      _id: `item-${randomUUID()}`,
+      title: String(body.title),
+      description: body.description || "",
+      priceCents: Math.round(Number(body.price) * 100),
+      price: Number(body.price),
+      image: body.image || null,
+      categoryId: body.categoryId,
+      inStock: body.inStock !== false,
+      popular: Boolean(body.popular),
+      archived: false,
+    };
+    menu.push(item);
+    sendJson(res, 201, withCategory(item));
+    return;
+  }
+
+  const menuItemMatch = route.match(/^\/menu-items\/([^/]+)$/);
+  if (req.method === "PUT" && menuItemMatch) {
+    const item = menu.find((entry) => entry._id === menuItemMatch[1]);
+    if (!item) {
+      sendJson(res, 404, { message: "Not found" });
+      return;
+    }
+    Object.assign(item, body, body.price ? { priceCents: Math.round(Number(body.price) * 100) } : {});
+    sendJson(res, 200, withCategory(item));
+    return;
+  }
+
+  if (req.method === "GET" && route === "/categories") {
+    sendJson(res, 200, [...categories].sort((a, b) => a.position - b.position));
+    return;
+  }
+
+  if (req.method === "POST" && route === "/categories") {
+    const name = String(body.name || "").trim();
+    if (categories.some((category) => category.name.toLowerCase() === name.toLowerCase())) {
+      sendJson(res, 409, { code: "VALIDATION", message: "A category with this name already exists" });
+      return;
+    }
+    const category = {
+      _id: `cat-${randomUUID()}`,
+      name,
+      station: body.station === "bar" ? "bar" : "kitchen",
+      position: Math.max(0, ...categories.map((entry) => entry.position)) + 1,
+    };
+    categories.push(category);
+    sendJson(res, 201, category);
+    return;
+  }
+
+  const categoryMatch = route.match(/^\/categories\/([^/]+)(\/move)?$/);
+  if (categoryMatch) {
+    const category = categories.find((entry) => entry._id === categoryMatch[1]);
+    if (!category) {
+      sendJson(res, 404, { message: "Not found" });
+      return;
+    }
+    if (req.method === "PUT") {
+      Object.assign(category, body.name ? { name: String(body.name).trim() } : {}, body.station ? { station: body.station } : {});
+      sendJson(res, 200, category);
+      return;
+    }
+    if (req.method === "POST" && categoryMatch[2]) {
+      const ordered = [...categories].sort((a, b) => a.position - b.position);
+      const index = ordered.indexOf(category);
+      const other = ordered[body.direction === "up" ? index - 1 : index + 1];
+      if (other) [category.position, other.position] = [other.position, category.position];
+      sendJson(res, 200, [...categories].sort((a, b) => a.position - b.position));
+      return;
+    }
+    if (req.method === "DELETE") {
+      const used = menu.filter((item) => item.categoryId === category._id && !item.archived).length;
+      if (used > 0) {
+        sendJson(res, 409, { code: "VALIDATION", message: `Move its ${used} ${used === 1 ? "item" : "items"} to another category first` });
+        return;
+      }
+      categories.splice(categories.indexOf(category), 1);
+      res.writeHead(204, { "Access-Control-Allow-Origin": "*" }).end();
+      return;
+    }
   }
 
   if (req.method === "GET" && route === "/staff/board") {
@@ -529,14 +660,54 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  if (req.method === "GET" && route === "/statistics/sales") {
-    sendJson(res, 200, { totalCents: 0 });
-    return;
-  }
-
-  if (req.method === "GET" && route === "/statistics/orders/by-date") {
-    sendJson(res, 200, []);
-    return;
+  // Statistics over every non-cancelled order; the mock ignores date ranges.
+  if (req.method === "GET" && route.startsWith("/statistics/")) {
+    const sold = [...orders.values()].filter((order) => order.status !== "cancelled");
+    const monthly = url.searchParams.get("group_by") === "month";
+    const dateOf = (order) => order.createdAt.slice(0, monthly ? 7 : 10);
+    const lines = sold.flatMap((order) => order.items.map((item) => ({ ...item, date: dateOf(order) })));
+    const sum = (rows, pick) => rows.reduce((total, row) => total + pick(row), 0);
+    const groupBy = (rows, keyOf) => {
+      const groups = new Map();
+      rows.forEach((row) => groups.set(keyOf(row), [...(groups.get(keyOf(row)) || []), row]));
+      return [...groups.entries()];
+    };
+    const dishes = groupBy(lines, (line) => line.title)
+      .map(([title, rows]) => ({
+        menu_item: title,
+        numSold: sum(rows, (row) => row.quantity),
+        totalCents: sum(rows, (row) => row.lineTotalCents),
+      }))
+      .sort((a, b) => b.numSold - a.numSold);
+    const totalCents = sum(sold, (order) => order.totalCents);
+    const answers = {
+      "/statistics/sales": { totalCents },
+      "/statistics/summary": {
+        ordersCount: sold.length,
+        totalCents,
+        averageOrderCents: sold.length ? Math.round(totalCents / sold.length) : 0,
+        itemsSold: sum(lines, (line) => line.quantity),
+        topItem: dishes[0] || null,
+      },
+      "/statistics/sales/menu-items": dishes.slice(0, Number(url.searchParams.get("limit")) || 100),
+      "/statistics/orders/by-date": groupBy(sold, dateOf).map(([date, rows]) => ({
+        date,
+        ordersCount: rows.length,
+        totalCents: sum(rows, (row) => row.totalCents),
+      })),
+      "/statistics/sales/categories": groupBy(lines, (line) => `${line.date}|${line.category}`).map(
+        ([key, rows]) => ({
+          date: key.split("|")[0],
+          category: key.split("|")[1],
+          numSold: sum(rows, (row) => row.quantity),
+          totalCents: sum(rows, (row) => row.lineTotalCents),
+        })
+      ),
+    };
+    if (route in answers) {
+      sendJson(res, 200, answers[route]);
+      return;
+    }
   }
 
   sendJson(res, 404, { message: `No mock route for ${req.method} ${route}` });
@@ -606,11 +777,24 @@ server.on("upgrade", (req, socket, head) => {
           );
           return;
         }
-        order.status = message.payload.status;
+        const { station, status } = message.payload;
+        order.tickets
+          .filter((ticket) => (station ? ticket.station === station : ticket.status === order.status))
+          .forEach((ticket) => {
+            ticket.status = status;
+          });
+        order.status = slowest(order.tickets);
         order.rev += 1;
         order.updatedAt = new Date().toISOString();
         ws.send(JSON.stringify({ type: "ack", requestId: message.requestId, ok: true, data: { order } }));
-        emit("order.statusChanged", { orderId: order._id, status: order.status, rev: order.rev });
+        emit("order.statusChanged", {
+          orderId: order._id,
+          status: order.status,
+          rev: order.rev,
+          tickets: order.tickets,
+          totalCents: order.totalCents,
+          ...(station ? { station } : {}),
+        });
         return;
       }
       ws.send(

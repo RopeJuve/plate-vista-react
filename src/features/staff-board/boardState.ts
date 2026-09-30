@@ -7,7 +7,9 @@ import type {
   Session,
   StaffBoard,
   Station,
+  Ticket,
 } from "../../shared/realtime/protocol";
+import { ticketsOf, withStatusChange } from "../../shared/realtime/tickets";
 
 export type TrackedOrder = Order & { cancelReason?: string };
 
@@ -107,7 +109,7 @@ export const applyServerEvent = (state: BoardState, event: ServerEvent): BoardSt
       });
     }
     case "order.statusChanged": {
-      const { orderId, status, rev, reason } = event.data;
+      const { orderId, rev, reason } = event.data;
       const current = state.ordersById[orderId];
       if (!current || !isNewer(current.rev, rev)) {
         return state;
@@ -117,9 +119,7 @@ export const applyServerEvent = (state: BoardState, event: ServerEvent): BoardSt
         ordersById: {
           ...state.ordersById,
           [orderId]: {
-            ...current,
-            status,
-            rev,
+            ...withStatusChange(current, event.data),
             cancelReason: reason ?? current.cancelReason,
           },
         },
@@ -191,26 +191,32 @@ export const boardReducer = (state: BoardState, action: BoardAction): BoardState
   return applyServerEvent(state, action.event);
 };
 
-export type ListedOrder = {
+export type ListedTicket = {
   order: TrackedOrder;
+  ticket: Ticket;
   tableNumber: number;
 };
 
-export const listOrders = (
+/** The rail hangs one chit per ticket: an order with drinks and food shows as two. */
+export const listTickets = (
   state: BoardState,
   statuses: OrderStatus[],
   station: Station | "all"
-): ListedOrder[] => {
+): ListedTicket[] => {
   const allowed = new Set(statuses);
   return Object.values(state.ordersById)
-    .filter((order) => allowed.has(order.status))
-    .filter((order) => station === "all" || order.items.some((item) => item.station === station))
-    .map((order) => ({
-      order,
-      tableNumber:
-        state.tablesById[order.tableId]?.tableNumber ??
-        state.sessionsById[order.sessionId]?.tableNumber ??
-        0,
-    }))
+    .flatMap((order) =>
+      ticketsOf(order)
+        .filter((ticket) => allowed.has(ticket.status))
+        .filter((ticket) => station === "all" || ticket.station === station)
+        .map((ticket) => ({
+          order,
+          ticket,
+          tableNumber:
+            state.tablesById[order.tableId]?.tableNumber ??
+            state.sessionsById[order.sessionId]?.tableNumber ??
+            0,
+        }))
+    )
     .sort((a, b) => a.order.createdAt.localeCompare(b.order.createdAt));
 };
