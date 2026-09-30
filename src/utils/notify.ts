@@ -1,3 +1,6 @@
+import { clearTokens } from "../shared/api/tokens";
+import { getLoginPath } from "../shared/auth/loginPaths";
+
 const AUTH_MESSAGE_KEY = "authMessage";
 
 export const AUTH_EVENTS = {
@@ -22,6 +25,16 @@ export const registerToastHandler = (handler: ToastHandler) => {
       toastHandler = null;
     }
   };
+};
+
+export const apiMessage = (error: unknown, fallback: string) => {
+  if (typeof error === "object" && error && "response" in error) {
+    const message = (error as { response?: { data?: { message?: string } } }).response?.data?.message;
+    if (message) {
+      return message;
+    }
+  }
+  return fallback;
 };
 
 export const notify = (message: string, variant: ToastVariant = "error") => {
@@ -51,20 +64,15 @@ export const consumeSessionMessage = () => {
   return message;
 };
 
-export const getLoginPath = () => {
-  const restaurantId = localStorage.getItem("restaurantId");
-  return restaurantId ? `/${restaurantId}` : "/";
-};
-
 export const triggerUnauthorized = () => {
   setSessionMessage("Session expired");
-  localStorage.removeItem("authToken");
+  clearTokens();
   localStorage.removeItem("user");
   window.dispatchEvent(
     new CustomEvent(AUTH_EVENTS.LOGOUT, { detail: { reason: "session-expired" } })
   );
 
-  const isGuestTable = window.location.pathname.startsWith("/table/");
+  const isGuestTable = /^\/r\/[^/]+\/t\//.test(window.location.pathname);
   if (isGuestTable) {
     return;
   }

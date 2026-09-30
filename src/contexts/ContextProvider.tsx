@@ -1,5 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { hexToHsl } from "@/lib/utils";
+import React, { createContext, useContext, useState } from "react";
 
 type ClickedState = {
   userProfile: boolean;
@@ -38,18 +37,15 @@ const initialState: ClickedState = {
 
 export const ContextProvider = ({ children }: { children: React.ReactNode }) => {
   const [screenSize, setScreenSize] = useState<number | undefined>(undefined);
-  const [currentColor, setCurrentColor] = useState("#03C9D7");
+  // The palette lives in index.css now; currentColor stays as the signal hex
+  // for chart code that needs a literal color.
+  const [currentColor, setCurrentColor] = useState("#FF6B1A");
   const [currentMode, setCurrentMode] = useState("Light");
   const [themeSettings, setThemeSettings] = useState(false);
   const [activeMenu, setActiveMenu] = useState(true);
   const [isClicked, setIsClicked] = useState(initialState);
   const [categories, setCategories] = useState<string[]>([]);
   const [search, setSearch] = useState("");
-
-  useEffect(() => {
-    document.documentElement.style.setProperty("--primary", hexToHsl(currentColor));
-    document.documentElement.style.setProperty("--ring", hexToHsl(currentColor));
-  }, [currentColor]);
 
   const setMode = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCurrentMode(e.target.value);

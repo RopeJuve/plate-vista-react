@@ -1,32 +1,54 @@
-import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from "react";
-import { CartItem } from "../types";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, ReactNode } from "react";
+import { LIMITS } from "../shared/realtime/protocol";
+import type { CartLine } from "../features/guest-ordering/types";
 
-const CartContext = createContext<any>(undefined);
+type CartContextValue = {
+  cart: CartLine[];
+  addLine: (productId: string) => void;
+  setQuantity: (productId: string, quantity: number) => void;
+  setNotes: (productId: string, notes: string) => void;
+  removeLine: (productId: string) => void;
+  clearCart: () => void;
+};
 
-export const useCart = () => useContext(CartContext);
+const CartContext = createContext<CartContextValue | undefined>(undefined);
 
 const CART_TTL_MS = 4 * 60 * 60 * 1000;
 
-const readCart = (storageKey: string): CartItem[] => {
+const readCart = (storageKey: string): CartLine[] => {
   try {
     const raw = localStorage.getItem(storageKey);
     if (!raw) {
       return [];
     }
-    const parsed = JSON.parse(raw);
-    if (parsed?.expiresAt && Date.now() > parsed.expiresAt) {
+    const parsed = JSON.parse(raw) as { expiresAt?: number; items?: CartLine[] } | CartLine[];
+    if (!Array.isArray(parsed) && parsed?.expiresAt && Date.now() > parsed.expiresAt) {
       localStorage.removeItem(storageKey);
       return [];
     }
-    return Array.isArray(parsed?.items) ? parsed.items : Array.isArray(parsed) ? parsed : [];
+    const items = Array.isArray(parsed) ? parsed : parsed.items;
+    if (!Array.isArray(items)) {
+      return [];
+    }
+    return items
+      .filter((item) => item && typeof item.productId === "string")
+      .map((item) => ({
+        productId: item.productId,
+        quantity: Math.min(LIMITS.MAX_QUANTITY_PER_ITEM, Math.max(1, Number(item.quantity) || 1)),
+        notes: String(item.notes || "").slice(0, LIMITS.MAX_NOTES_LENGTH),
+      }));
   } catch {
     return [];
   }
 };
 
-export function CartProvider({ children, tableId }: { children?: ReactNode; tableId?: string }) {
-  const storageKey = tableId ? `cart:${tableId}` : "cart";
-  const [cart, setCart] = useState<CartItem[]>(() => readCart(storageKey));
+export const CartProvider = ({ children, sessionId }: { children?: ReactNode; sessionId: string }) => {
+  const storageKey = sessionId ? `cart:${sessionId}` : "cart";
+  const [cart, setCart] = useState<CartLine[]>(() => readCart(storageKey));
+
+  useEffect(() => {
+    setCart(readCart(storageKey));
+  }, [storageKey]);
 
   useEffect(() => {
     localStorage.setItem(
@@ -38,34 +60,61 @@ export function CartProvider({ children, tableId }: { children?: ReactNode; tabl
     );
   }, [cart, storageKey]);
 
-  const addToCart = useCallback((item: CartItem) => {
-    setCart((prevCart) => {
-      const itemExistIndex = prevCart.findIndex((i) => i._id === item._id);
-      if (itemExistIndex === -1) {
-        return [...prevCart, item];
+  const addLine = useCallback((productId: string) => {
+    setCart((current) => {
+      const existing = current.find((line) => line.productId === productId);
+      if (!existing) {
+        if (current.length >= LIMITS.MAX_ITEMS_PER_ORDER) {
+          return current;
+        }
+        return [...current, { productId, quantity: 1, notes: "" }];
       }
-
-      return prevCart.map((cartItem, index) =>
-        index === itemExistIndex
-          ? { ...cartItem, quantity: cartItem.quantity + item.quantity }
-          : cartItem
+      if (existing.quantity >= LIMITS.MAX_QUANTITY_PER_ITEM) {
+        return current;
+      }
+      return current.map((line) =>
+        line.productId === productId ? { ...line, quantity: line.quantity + 1 } : line
       );
     });
   }, []);
 
-  const removeFromCart = useCallback((itemId: string) => {
-    setCart((prevCart) => prevCart.filter((item) => item._id !== itemId));
+  const setQuantity = useCallback((productId: string, quantity: number) => {
+    const nextQuantity = Math.min(LIMITS.MAX_QUANTITY_PER_ITEM, Math.max(1, Math.round(quantity)));
+    setCart((current) =>
+      current.map((line) => (line.productId === productId ? { ...line, quantity: nextQuantity } : line))
+    );
+  }, []);
+
+  const setNotes = useCallback((productId: string, notes: string) => {
+    setCart((current) =>
+      current.map((line) =>
+        line.productId === productId
+          ? { ...line, notes: notes.slice(0, LIMITS.MAX_NOTES_LENGTH) }
+          : line
+      )
+    );
+  }, []);
+
+  const removeLine = useCallback((productId: string) => {
+    setCart((current) => current.filter((line) => line.productId !== productId));
   }, []);
 
   const clearCart = useCallback(() => {
     setCart([]);
   }, []);
 
-  return (
-    <CartContext.Provider
-      value={{ cart, addToCart, removeFromCart, clearCart }}
-    >
-      {children}
-    </CartContext.Provider>
+  const value = useMemo(
+    () => ({ cart, addLine, setQuantity, setNotes, removeLine, clearCart }),
+    [cart, addLine, setQuantity, setNotes, removeLine, clearCart]
   );
-}
+
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+};
+
+export const useCart = () => {
+  const context = useContext(CartContext);
+  if (!context) {
+    throw new Error("useCart must be used within CartProvider");
+  }
+  return context;
+};

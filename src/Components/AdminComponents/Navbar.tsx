@@ -1,68 +1,11 @@
 import { useEffect } from "react";
-import { Bell, ChevronDown, Menu, Search } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import avatar from "../../data/avatar.jpg";
-import mainlogoLight from "../../data/mainlogoLight.svg";
-import mainlogoDark from "../../data/mainlogoDark.svg";
-import { Notification, UserProfile, Searchbar } from ".";
+import { Menu, Search } from "lucide-react";
+import { Searchbar } from ".";
 import { useStateContext } from "../../contexts/ContextProvider";
-import { useAuth } from "../../contexts/AuthContext";
-
-type NavButtonProps = {
-  title: string;
-  customFunc: () => void;
-  icon: React.ReactNode;
-  color: string;
-  dotColor?: string;
-};
-
-const NavButton = ({
-  title,
-  customFunc,
-  icon,
-  color,
-  dotColor,
-}: NavButtonProps) => (
-  <Tooltip>
-    <TooltipTrigger asChild>
-      <button
-        type="button"
-        onClick={customFunc}
-        style={{ color }}
-        className="relative rounded-full p-3 hover:bg-light-gray"
-        aria-label={title}
-      >
-        {dotColor ? (
-          <span
-            style={{ background: dotColor }}
-            className="absolute inline-flex rounded-full h-2 w-2 right-2 top-2"
-          />
-        ) : null}
-        {icon}
-      </button>
-    </TooltipTrigger>
-    <TooltipContent side="bottom" align="center">
-      {title}
-    </TooltipContent>
-  </Tooltip>
-);
+import { Wordmark } from "../rail";
 
 const Navbar = () => {
-  const {
-    activeMenu,
-    setActiveMenu,
-    isClicked,
-    handleClick,
-    screenSize,
-    setScreenSize,
-    currentColor,
-    currentMode,
-  } = useStateContext();
-  const { user } = useAuth();
+  const { setActiveMenu, isClicked, handleClick, screenSize, setScreenSize } = useStateContext();
 
   useEffect(() => {
     const handleResize = () => setScreenSize(window.innerWidth);
@@ -72,71 +15,37 @@ const Navbar = () => {
   }, [setScreenSize]);
 
   useEffect(() => {
-    if (screenSize <= 900) {
+    // The drawer is a small-screen thing; on desktop the rail is always there.
+    if ((screenSize ?? 0) < 1024) {
       setActiveMenu(false);
-    } else {
-      setActiveMenu(true);
     }
   }, [screenSize, setActiveMenu]);
 
   return (
-    <div className="flex justify-between p-2 md:mx-6 relative">
-      <div className="flex items-center gap-4">
-        <NavButton
-          title="Menu"
-          customFunc={() => setActiveMenu((prev) => !prev)}
-          color={currentColor}
-          icon={<Menu className="h-8 w-8" />}
-        />
-        {!activeMenu && (
-          <img
-            src={currentMode === "Dark" ? mainlogoLight : mainlogoDark}
-            alt="Logo"
-            style={{ width: "150px", height: "50px" }}
-            className="cursor-pointer"
-          />
-        )}
-      </div>
-      <div className="flex">
-        <NavButton
-          title="Search"
-          customFunc={() => handleClick("search")}
-          color={currentColor}
-          icon={<Search className="h-5 w-5" />}
-        />
-        <NavButton
-          title="Notifications"
-          customFunc={() => handleClick("notification")}
-          color={currentColor}
-          icon={<Bell className="h-5 w-5" />}
-        />
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              className="flex items-center gap-2 cursor-pointer p-1 hover:bg-light-gray rounded-lg"
-              onClick={() => handleClick("userProfile")}
-              aria-label="Profile"
-            >
-              <img src={avatar} className="w-8 h-8 rounded-full" alt="" />
-              <p>
-                <span className="text-gray-400 text-14">Hi,</span>{" "}
-                <span className="text-gray-400 font-bold ml-1 text-14">
-                  {user?.employee || user?.position || "Guest"}
-                </span>
-              </p>
-              <ChevronDown className="h-4 w-4 text-gray-400" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" align="center">
-            Profile
-          </TooltipContent>
-        </Tooltip>
-        {isClicked.notification && <Notification />}
+    <header className="sticky top-0 z-30 border-b border-ink/[0.07] bg-paper/90 backdrop-blur-sm print:hidden">
+      <div className="relative mx-auto flex h-16 max-w-[1400px] items-center gap-3 px-4 sm:px-6 lg:px-10">
+        <button
+          type="button"
+          onClick={() => setActiveMenu(true)}
+          className="grid h-10 w-10 place-items-center rounded-md hover:bg-ink/[0.06] lg:hidden"
+          aria-label="Open menu"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+        <Wordmark className="text-ink lg:hidden" />
+        <button
+          type="button"
+          onClick={() => handleClick("search")}
+          className="ml-auto flex h-10 items-center gap-2 rounded-full border border-ink/10 bg-white px-4 text-sm text-ink-soft transition-colors hover:border-ink/25 hover:text-ink"
+          aria-label="Search"
+          aria-expanded={isClicked.search}
+        >
+          <Search className="h-4 w-4" aria-hidden="true" />
+          <span className="hidden sm:inline">Find an employee</span>
+        </button>
         {isClicked.search && <Searchbar />}
-        {isClicked.userProfile && <UserProfile />}
       </div>
-    </div>
+    </header>
   );
 };
 

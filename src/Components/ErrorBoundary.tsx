@@ -26,12 +26,12 @@ class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-50 px-6 text-center">
-          <h1 className="text-2xl font-semibold text-gray-800">Something went wrong</h1>
-          <p className="text-gray-600">Please reload the app and try again.</p>
+        <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-paper px-6 text-center text-ink">
+          <h1 className="text-3xl font-extrabold tracking-[-0.02em]">Something went wrong</h1>
+          <p className="max-w-sm text-ink-soft">This screen hit an error. Go back to the login page and try again.</p>
           <button
             type="button"
-            className="rounded-md bg-orange-500 px-4 py-2 text-white"
+            className="h-11 rounded-md bg-ink px-5 font-semibold text-paper hover:bg-ink/85"
             onClick={this.handleReload}
           >
             Go to login

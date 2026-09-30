@@ -1,9 +1,10 @@
 import PieChart from "../../Components/AdminComponents/Charts/PieChart";
-import { pieChartData } from "../../data/data";
 
-const Pie = () => (
+type PieProps = { data: { x: string; y: number; text?: string }[] };
+
+const Pie = ({ data }: PieProps) => (
   <div className="w-full">
-    <PieChart id="chart-pie" data={pieChartData} legendVisiblity height="full" />
+    <PieChart id="chart-pie" data={data} legendVisiblity height="full" />
   </div>
 );
 

@@ -1,19 +1,15 @@
-import { Utensils } from "lucide-react";
+import { useRealtime } from "../../shared/realtime/RealtimeProvider";
+import { Lamp } from "../rail";
 
-const TableIcon = ({ tableNum, connectionStatus }) => {
+/** The guest's table, shown like the stub of a chit. */
+const TableIcon = ({ tableNum }: { tableNum?: number }) => {
+  const { status } = useRealtime();
+
   return (
-    <div className="inline-flex items-center gap-1">
-      <Utensils className="h-6 w-6" />
-      <span className="text-sm">{tableNum}</span>
-      <span
-        className={`w-2 h-2 rounded-full animate-pulse ${
-          connectionStatus === 0
-            ? "bg-yellow-400"
-            : connectionStatus === 1
-            ? "bg-green-400"
-            : "bg-red-400"
-        }`}
-      ></span>
+    <div className="inline-flex h-10 items-center gap-2.5 rounded-md bg-ink pl-3 pr-3 text-paper">
+      <Lamp status={status} showLabel={false} />
+      <span className="text-[0.7rem] font-bold uppercase tracking-[0.12em] text-paper/70">Table</span>
+      <span className="font-mono text-lg font-bold leading-none tabular">{tableNum || "–"}</span>
     </div>
   );
 };

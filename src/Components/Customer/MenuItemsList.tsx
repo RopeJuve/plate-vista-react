@@ -1,14 +1,29 @@
 import MenuItemCard from "./MenuItemCard";
-import { MenuItem } from "../../types";
+import type { MenuRecord } from "../../features/guest-ordering/menu";
 
-const MenuItemsList = ({ items, isLoading }: { items: MenuItem[]; isLoading: boolean }) => {
+const MenuItemsList = ({
+  items,
+  isLoading,
+  heading,
+  emptyMessage = "Nothing here yet.",
+}: {
+  items: MenuRecord[];
+  isLoading: boolean;
+  heading?: string;
+  emptyMessage?: string;
+}) => {
+  if (isLoading) {
+    return null;
+  }
   return (
-    <div className="px-6 mt-6 w-full h-full pb-16 overflow-y-auto">
-      <div className="grid grid-flow-row auto-rows-max grid-cols-card gap-3">
-        {!isLoading && items.map((item) => (
-          <MenuItemCard key={item._id} item={item} />
-        ))}
-      </div>
+    <div className="mx-auto w-full max-w-3xl px-4 sm:px-6">
+      {heading && (
+        <h2 className="pt-2 text-2xl font-extrabold capitalize tracking-[-0.02em]">{heading}</h2>
+      )}
+      {items.map((item) => (
+        <MenuItemCard key={item._id} item={item} />
+      ))}
+      {items.length === 0 && <p className="py-12 text-center text-ink-soft">{emptyMessage}</p>}
     </div>
   );
 };

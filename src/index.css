@@ -1,114 +1,269 @@
-@import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Chivo+Mono:wght@400;500;700&display=swap");
 
 @import "tailwindcss/base";
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 
+/*
+ * Plate Vista: the Ticket Rail.
+ * Steel is the ground staff work on; paper is what an order is printed on.
+ * Every surface shares these tokens; the guest app lives on paper, the board
+ * and the admin chrome on steel.
+ */
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Raw palette (hex kept for charts and inline SVG) */
+    --steel-950: 225 7% 8%; /* #131417 */
+    --steel-900: 225 6% 11%; /* #1A1B1E */
+    --steel-850: 225 6% 14%; /* #212226 */
+    --steel-800: 225 6% 16%; /* #26282D */
+    --steel-700: 225 6% 23%; /* #363940 */
+    --steel-500: 225 5% 45%; /* #6C6F78 */
+    --steel-300: 225 6% 70%; /* #AEB0B7 */
+    --paper: 60 12% 95%; /* #F4F4F0 */
+    --paper-deep: 60 8% 90%; /* #E7E7E2 */
+    --paper-line: 60 5% 80%; /* #CFCFC9 */
+    --ink: 0 0% 5%; /* #0E0E0E */
+    --ink-soft: 60 3% 34%; /* #585852 (thermal fade) */
+    --signal: 22 100% 55%; /* #FF6B1A */
+    --signal-deep: 18 90% 44%; /* #D5501A */
+    --pass: 146 45% 45%; /* #3FA66B */
+    --alert: 358 75% 59%; /* #E5484D */
+    --amber: 38 95% 55%; /* #F7A928 */
+    /* Text-weight variants that hold 4.5:1 on paper */
+    --signal-ink: 18 85% 38%; /* #B3410F */
+    --pass-ink: 146 53% 29%; /* #237145 */
+    --alert-ink: 358 65% 42%; /* #B02530 */
+
+    /* shadcn semantic tokens: default = paper world */
+    --background: var(--paper);
+    --foreground: var(--ink);
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: var(--ink);
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 187 97% 43%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 187 97% 43%;
-    --chart-1: 187 97% 43%;
-    --chart-2: 258 100% 66%;
-    --chart-3: 340 100% 68%;
-    --chart-4: 207 91% 53%;
-    --chart-5: 16 95% 73%;
-    --radius: 0.5rem;
+    --popover-foreground: var(--ink);
+    --primary: var(--signal);
+    --primary-foreground: var(--ink);
+    --secondary: var(--paper-deep);
+    --secondary-foreground: var(--ink);
+    --muted: var(--paper-deep);
+    --muted-foreground: var(--ink-soft);
+    --accent: var(--paper-deep);
+    --accent-foreground: var(--ink);
+    --destructive: var(--alert);
+    --destructive-foreground: 0 0% 100%;
+    --border: var(--paper-line);
+    --input: var(--paper-line);
+    --ring: var(--signal);
+    --chart-1: var(--signal);
+    --chart-2: 225 6% 23%;
+    --chart-3: var(--pass);
+    --chart-4: var(--amber);
+    --chart-5: 225 5% 60%;
+    --radius: 0.625rem;
+
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 47.4% 11.2%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 47.4% 11.2%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 187 97% 43%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 187 97% 43%;
-    --chart-1: 187 97% 43%;
-    --chart-2: 258 100% 66%;
-    --chart-3: 340 100% 68%;
-    --chart-4: 207 91% 53%;
-    --chart-5: 16 95% 73%;
+  /* Steel world: board, admin chrome, anything wrapped in .steel */
+  .steel {
+    --background: var(--steel-900);
+    --foreground: var(--paper);
+    --card: var(--steel-800);
+    --card-foreground: var(--paper);
+    --popover: var(--steel-850);
+    --popover-foreground: var(--paper);
+    --secondary: var(--steel-800);
+    --secondary-foreground: var(--paper);
+    --muted: var(--steel-800);
+    --muted-foreground: var(--steel-300);
+    --accent: var(--steel-700);
+    --accent-foreground: var(--paper);
+    --border: var(--steel-700);
+    --input: var(--steel-700);
+    color-scheme: dark;
   }
 
   * {
     @apply border-border;
   }
-}
 
-body {
-  margin: 0;
-  padding: 0;
-  font-family: "Open Sans", sans-serif;
-}
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
 
-.bar-menu-item-container {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.25rem;
-  height: 93%;
-}
+  body {
+    margin: 0;
+    padding: 0;
+    @apply bg-background font-sans text-foreground antialiased;
+    font-variation-settings: "wdth" 100;
+  }
 
-.sidebar {
-  box-shadow: rgb(113 122 131 / 11%) 0px 7px 30px 0px;
-}
+  ::selection {
+    background: hsl(var(--signal) / 0.28);
+    color: inherit;
+  }
 
-.nav-item,
-.navbar {
-  z-index: 10000;
-}
+  :focus-visible {
+    outline: 2px solid hsl(var(--signal));
+    outline-offset: 2px;
+  }
 
-@media screen and (max-width: 800px) {
-  .sidebar {
-    z-index: 10000000;
+  input,
+  textarea {
+    caret-color: hsl(var(--signal));
+  }
+
+  a {
+    text-underline-offset: 3px;
+  }
+
+  /* Money, times, quantities: always tabular. */
+  .tabular,
+  .font-mono {
+    font-variant-numeric: tabular-nums;
   }
 }
 
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
+@layer components {
+  /*
+   * A chit: one printed order slip. Perforated bottom edge via a mask so the
+   * paper looks torn off the roll; `chit-top-torn` does the same at the top.
+   */
+  .chit {
+    --tooth: 7px;
+    position: relative;
+    background: hsl(var(--paper));
+    color: hsl(var(--ink));
+    -webkit-mask:
+      linear-gradient(#000 0 0) top / 100% calc(100% - var(--tooth)) no-repeat,
+      conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / calc(var(--tooth) * 2) var(--tooth) repeat-x;
+    mask:
+      linear-gradient(#000 0 0) top / 100% calc(100% - var(--tooth)) no-repeat,
+      conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / calc(var(--tooth) * 2) var(--tooth) repeat-x;
+    padding-bottom: calc(var(--tooth) + 0.5rem);
+  }
+
+  .chit-shadow {
+    filter: drop-shadow(0 6px 10px rgb(0 0 0 / 0.28)) drop-shadow(0 1px 1px rgb(0 0 0 / 0.2));
+  }
+
+  .chit-shadow-soft {
+    filter: drop-shadow(0 4px 12px rgb(20 20 20 / 0.10)) drop-shadow(0 1px 1px rgb(20 20 20 / 0.08));
+  }
+
+  /* A dashed tear line printed across the paper */
+  .perf {
+    border: 0;
+    height: 1px;
+    background-image: linear-gradient(to right, hsl(var(--ink) / 0.35) 50%, transparent 50%);
+    background-size: 8px 1px;
+    background-repeat: repeat-x;
+  }
+
+  /* Dotted leaders between a receipt label and its value */
+  .leader {
+    flex: 1 1 auto;
+    min-width: 1rem;
+    height: 0.9em;
+    border-bottom: 1.5px dotted hsl(var(--ink) / 0.3);
+  }
+
+  /* Hazard hatch for overdue tickets: urgency never rides on color alone */
+  .hazard {
+    background-image: repeating-linear-gradient(
+      -45deg,
+      hsl(var(--alert)) 0 8px,
+      hsl(var(--ink)) 8px 16px
+    );
+  }
+
+  /* The rail a chit hangs from */
+  .rail {
+    background: hsl(var(--steel-500));
+    border-top: 1px solid hsl(var(--steel-300) / 0.5);
+    box-shadow: 0 2px 4px rgb(0 0 0 / 0.4);
+  }
+
+  .steel-ground {
+    background-color: hsl(var(--steel-900));
+    background-image:
+      linear-gradient(180deg, hsl(0 0% 100% / 0.025), transparent 240px);
+  }
+
+  .print-in {
+    animation: print-in 620ms var(--ease-out-expo) both;
+    transform-origin: top center;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
 
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+@keyframes print-in {
+  from {
+    clip-path: inset(0 0 100% 0);
+    transform: translateY(-6px);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+    transform: translateY(0);
+  }
+}
+
+@keyframes lamp {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .print-in {
+    animation: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Scrollbars carry the palette too */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--ink) / 0.25) transparent;
+}
+
+.steel,
+.steel * {
+  scrollbar-color: hsl(var(--steel-500)) transparent;
 }
 
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: rgb(216, 216, 216);
-  border-radius: 40px;
+  background-color: hsl(var(--ink) / 0.22);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.steel ::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--steel-500));
 }
 
 ::-webkit-scrollbar-track {

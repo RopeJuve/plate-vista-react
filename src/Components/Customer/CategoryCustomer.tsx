@@ -1,25 +1,25 @@
-import { useStateContext } from "../../contexts/ContextProvider";
+import { cn } from "@/lib/utils";
 
 const CategoryCustomer = ({
   category,
   setSelectedCategory,
   selectedCategory,
+}: {
+  category: string;
+  setSelectedCategory: (category: string) => void;
+  selectedCategory: string;
 }) => {
-  const { currentColor } = useStateContext();
-  const categoryClass =
-    selectedCategory === category
-      ? `flex-grow px-4 py-2 rounded-md mx-2 text-sm font-semibold text-center text-white bg-orange-400 shadow-md`
-      : `flex-grow px-4 py-2 rounded-md mx-2 text-sm font-semibold text-center text-gray-700 bg-white hover:bg-gray-300 shadow-md`;
-
+  const active = selectedCategory === category;
   return (
     <button
-      id={`${category}`}
-      className={`${categoryClass}`}
-      onClick={(e) => setSelectedCategory(e.target.id)}
-      style={{
-        backgroundColor:
-          selectedCategory === category ? currentColor : "",
-      }}
+      type="button"
+      role="tab"
+      aria-selected={active}
+      className={cn(
+        "h-10 shrink-0 snap-start rounded-full px-4 text-sm font-bold capitalize transition-colors",
+        active ? "bg-ink text-paper" : "bg-white text-ink/75 ring-1 ring-inset ring-ink/10 hover:text-ink hover:ring-ink/25"
+      )}
+      onClick={() => setSelectedCategory(category)}
     >
       {category}
     </button>

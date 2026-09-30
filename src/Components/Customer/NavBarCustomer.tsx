@@ -1,88 +1,62 @@
-import { useEffect, useState } from "react";
-import { Menu, Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { useStateContext } from "../../contexts/ContextProvider";
 import TableIcon from "./TableIcon";
-import mainlogoLight from "../../data/mainlogoLight.svg";
-import mainlogoDark from "../../data/mainlogoDark.svg";
-import api from "../../services/api";
-import MenuItemCard from "./MenuItemCard";
-import { notify } from "../../utils/notify";
-import { MenuItem } from "../../types";
+import { Wordmark } from "../rail";
 
-const NavBarCustomer = ({ tableNum, connectionStatus }) => {
+const NavBarCustomer = ({
+  tableNum,
+  joinCode,
+  onShowCode,
+}: {
+  tableNum?: number;
+  /** Shown as a small chip; tapping it brings the big code back. */
+  joinCode?: string;
+  onShowCode?: () => void;
+}) => {
   const { search, setSearch } = useStateContext();
-  const [meals, setMeals] = useState<MenuItem[]>([]);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const { currentMode } = useStateContext();
-
-  useEffect(() => {
-    const getMeals = async () => {
-      try {
-        const { data } = await api.get("/menu-items");
-        setMeals(data);
-      } catch (error) {
-        notify(error.response?.data?.message || "Could not load menu items");
-      }
-    };
-    getMeals();
-  }, []);
-
-  const filteredMeals = meals.filter((meal) =>
-    meal.title.toLowerCase().includes(search.toLowerCase()) ||
-    meal.description.toLowerCase().includes(search.toLowerCase())
-  );
 
   return (
-    <>
-      <div className="px-6 flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <img
-            src={currentMode === "Dark" ? mainlogoLight : mainlogoDark}
-            style={{ width: "200px", height: "100px" }}
-            alt="Logo"
-          />
-          <TableIcon tableNum={tableNum} connectionStatus={connectionStatus} />
+    <div className="mx-auto w-full max-w-3xl px-4 pt-3 sm:px-6">
+      <div className="flex items-center justify-between gap-3">
+        <Wordmark className="text-ink" />
+        <div className="flex items-center gap-2">
+          {joinCode && (
+            <button
+              type="button"
+              onClick={onShowCode}
+              className="h-10 rounded-md border border-ink/15 px-3 font-mono text-sm font-bold tracking-[0.15em] text-ink hover:bg-ink/[0.05]"
+              aria-label={`Show table code ${joinCode.split("").join(" ")}`}
+            >
+              {joinCode}
+            </button>
+          )}
+          <TableIcon tableNum={tableNum} />
         </div>
-        <button
-          type="button"
-          aria-label={menuOpen ? "Hide search" : "Show search"}
-          aria-expanded={menuOpen}
-          onClick={() => setMenuOpen((open) => !open)}
-          className={`w-6 h-6 cursor-pointer ${currentMode === "Dark" ? " text-white" : "bg-white text-black"}`}
-        >
-          <Menu className="h-6 w-6" />
-        </button>
       </div>
-
-      {menuOpen && (
-        <>
-          <div className="w-full px-6">
-            <div className={`flex items-center gap-2 border border-gray-500 rounded-xl p-1 ${currentMode === "Dark" ? "bg-gray-500 text-white" : "bg-white text-black"}`}>
-              <Search className="h-5 w-5" />
-              <input
-                className="flex-grow outline-none bg-transparent"
-                type="text"
-                name="search"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search for meals or ingredients"
-                aria-label="Search for meals or ingredients"
-              />
-            </div>
-          </div>
-
-          <div className="mt-4 grid grid-cols-1 gap-4">
-            {search && filteredMeals.length > 0 ? (
-              filteredMeals.map((meal) => (
-                <MenuItemCard key={meal._id} item={meal} />
-              ))
-            ) : (
-              search && <div className="text-gray-500">No results found</div>
-            )}
-          </div>
-        </>
-      )}
-    </>
+      <div className="relative mt-3">
+        <Search className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-ink/45" aria-hidden="true" />
+        <input
+          className="h-12 w-full rounded-full border border-ink/10 bg-white pl-11 pr-11 text-base text-ink shadow-[0_1px_2px_rgb(0_0_0/0.04)] outline-none transition-[border-color,box-shadow] placeholder:text-ink/45 focus:border-signal focus:ring-[3px] focus:ring-signal/20"
+          type="search"
+          name="search"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Search dishes or ingredients"
+          aria-label="Search for meals or ingredients"
+          autoComplete="off"
+        />
+        {search && (
+          <button
+            type="button"
+            onClick={() => setSearch("")}
+            className="absolute right-1.5 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full text-ink/60 hover:bg-ink/[0.06]"
+            aria-label="Clear search"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+    </div>
   );
 };
 

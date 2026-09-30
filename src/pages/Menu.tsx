@@ -1,200 +1,100 @@
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  fetchMenuItems,
-  updateMenuItem,
-  addMenuItem,
-  deleteMenuItem,
-  fetchCategories,
-} from "../services/menuDataFetch";
-import { useStateContext } from "../contexts/ContextProvider";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { fetchMenuItems, updateMenuItem, addMenuItem, deleteMenuItem } from "../services/menuDataFetch";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
-import { notify } from "../utils/notify";
-import { ImageUpload } from "@/components/ImageUpload";
+import { Header } from "../Components/AdminComponents";
+import { cn } from "@/lib/utils";
+import { notify, apiMessage } from "../utils/notify";
+import { formatCents, readCents } from "../shared/money/formatCents";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  menuItemAddSchema,
-  menuItemSchema,
-  type MenuItemAddValues,
-  type MenuItemValues,
-} from "@/lib/schemas";
+import ScrollRow from "../Components/ScrollRow";
+import type { MenuItemValues } from "@/lib/schemas";
 import type { MenuItem } from "@/types";
+import { readItemId, unwrapList } from "../features/guest-ordering/menu";
+import MenuItemDialog from "../features/menu/MenuItemDialog";
+import MenuItemImage from "../features/menu/MenuItemImage";
+import { fetchCategoryList, type Category } from "../features/menu/categoriesApi";
 
-const EDITABLE_FIELDS = [
-  "title",
-  "description",
-  "price",
-  "image",
-  "category",
-  "popular",
-  "inStock",
-] as const;
+const toMenuItemList = (data: unknown): MenuItem[] =>
+  unwrapList(data).flatMap((item) => {
+    if (!item || typeof item !== "object") {
+      return [];
+    }
+    const record = item as Record<string, unknown> & MenuItem;
+    const id = readItemId(record);
+    if (!id) {
+      return [];
+    }
+    return [{ ...record, _id: id }];
+  });
 
-const MENU_CATEGORIES = [
-  "beer",
-  "burgers",
-  "cold drinks",
-  "desserts",
-  "hot drinks",
-  "pizza",
-  "salads",
-  "wine",
-];
-
-const emptyItem: MenuItemValues = {
+const EMPTY_MENU_ITEM: MenuItemValues = {
   title: "",
   price: undefined as unknown as number,
-  category: "",
+  categoryId: "",
   description: "",
-  image: "",
+  image: null,
   popular: false,
   inStock: true,
 };
 
-const appendEditableFields = (formData: FormData, info: MenuItemValues | MenuItemAddValues) => {
-  EDITABLE_FIELDS.forEach((key) => {
-    if (key === "image" && (!info.image || typeof info.image === "string")) {
-      if (typeof info.image === "string" && info.image) {
-        formData.append("image", info.image);
-      }
-      return;
-    }
-    if (info[key] === undefined || info[key] === null) {
-      return;
-    }
-    formData.append(key, info[key] as string | Blob);
-  });
-};
+const toFormValues = (item: MenuItem): MenuItemValues => ({
+  title: item.title || "",
+  price: Number(item.price) || (undefined as unknown as number),
+  categoryId: item.categoryId || "",
+  description: item.description || "",
+  image: item.image || null,
+  popular: Boolean(item.popular),
+  inStock: item.inStock !== false,
+});
 
 const Menu = () => {
-  const { currentColor } = useStateContext();
   const { restaurantId } = useAuth();
-  const [dialogVisible, setDialogVisible] = useState(false);
-  const [isAddingNewItem, setIsAddingNewItem] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
+  const [editing, setEditing] = useState<MenuItem | null>(null);
+  const [adding, setAdding] = useState(false);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("");
-
-  const editForm = useForm<MenuItemValues>({
-    resolver: zodResolver(menuItemSchema),
-    defaultValues: emptyItem,
-  });
-
-  const addForm = useForm<MenuItemAddValues>({
-    resolver: zodResolver(menuItemAddSchema),
-    defaultValues: emptyItem,
-  });
 
   useEffect(() => {
     fetchMenuItems(restaurantId)
-      .then((response) => setMenuItems(response.data))
-      .catch((error) =>
-        notify(error.response?.data?.message || "Could not load menu items")
-      );
-
-    fetchCategories(restaurantId)
-      .then((response) => setCategories(response.data))
-      .catch((error) =>
-        notify(error.response?.data?.message || "Could not load categories")
-      );
+      .then((response) => setMenuItems(toMenuItemList(response.data)))
+      .catch((error) => notify(apiMessage(error, "Could not load menu items")));
+    fetchCategoryList()
+      .then(setCategories)
+      .catch((error) => notify(apiMessage(error, "Could not load categories")));
   }, [restaurantId]);
 
-  const openDialog = (item: MenuItem) => {
-    setSelectedItem(item);
-    editForm.reset({
-      title: item.title || "",
-      price: Number(item.price) || (undefined as unknown as number),
-      category: item.category || "",
-      description: item.description || "",
-      image: item.image || "",
-      popular: Boolean(item.popular),
-      inStock: item.inStock !== false,
-    });
-    setDialogVisible(true);
-  };
-
-  const closeDialog = () => {
-    setDialogVisible(false);
-  };
-
-  const openAddNewItemDialog = () => {
-    addForm.reset(emptyItem);
-    setIsAddingNewItem(true);
-  };
-
-  const closeAddNewItemDialog = () => {
-    setIsAddingNewItem(false);
-  };
+  // Filter tabs: categories that have items, in menu order.
+  const usedCategories = useMemo(
+    () => categories.filter((category) => menuItems.some((item) => item.categoryId === category._id)),
+    [categories, menuItems]
+  );
+  const editingValues = useMemo(() => (editing ? toFormValues(editing) : EMPTY_MENU_ITEM), [editing]);
 
   const handleSave = async (values: MenuItemValues) => {
-    if (!selectedItem) {
+    if (!editing) {
       return;
     }
     try {
-      const formData = new FormData();
-      appendEditableFields(formData, values);
-      const response = await updateMenuItem(
-        selectedItem._id,
-        formData,
-        restaurantId
-      );
-      setMenuItems((prev) =>
-        prev.map((item) =>
-          item._id === selectedItem._id ? response.data : item
-        )
-      );
-      editForm.reset(emptyItem);
-      setDialogVisible(false);
+      const response = await updateMenuItem(editing._id, values, restaurantId);
+      setMenuItems((prev) => prev.map((item) => (item._id === editing._id ? response.data : item)));
+      setEditing(null);
       notify("Menu item updated", "success");
     } catch (error) {
-      notify(error.response?.data?.message || "Could not save menu item");
+      notify(apiMessage(error, "Could not save menu item"));
     }
   };
 
-  const handleAddNewItem = async (values: MenuItemAddValues) => {
+  const handleAdd = async (values: MenuItemValues) => {
     try {
-      const formData = new FormData();
-      appendEditableFields(formData, values);
-      const response = await addMenuItem(formData, restaurantId);
+      const response = await addMenuItem(values, restaurantId);
       setMenuItems((prev) => [...prev, response.data]);
-      addForm.reset(emptyItem);
-      setIsAddingNewItem(false);
+      setAdding(false);
       notify("Menu item added", "success");
     } catch (error) {
-      notify(error.response?.data?.message || "Could not add menu item");
+      notify(apiMessage(error, "Could not add menu item"));
     }
   };
 
@@ -205,372 +105,142 @@ const Menu = () => {
     }
     try {
       await deleteMenuItem(itemToDelete._id, restaurantId);
-      setMenuItems((prev) =>
-        prev.filter((item) => item._id !== itemToDelete._id)
-      );
+      setMenuItems((prev) => prev.filter((item) => item._id !== itemToDelete._id));
       notify("Menu item deleted", "success");
     } catch (error) {
-      notify(error.response?.data?.message || "Could not delete menu item");
+      notify(apiMessage(error, "Could not delete menu item"));
     }
   };
 
-  const handleCategoryClick = (category: string) => {
-    setSelectedCategory(category);
-  };
-
   const filteredMenuItems = menuItems.filter((item) =>
-    selectedCategory ? item.category === selectedCategory : true
+    selectedCategory ? item.categoryId === selectedCategory : true
   );
 
   return (
-    <div className="flex flex-col p-8">
-      <div className="mb-4">
-        <div className="flex overflow-x-auto bg-gray-200 p-2 rounded-md shadow-md w-full">
-          {categories.map((category) => (
-            <button
-              key={category}
-              type="button"
-              onClick={() => handleCategoryClick(category)}
-              className={`flex-grow px-4 py-2 rounded-md mx-2 text-sm font-semibold text-center ${
-                selectedCategory === category
-                  ? "text-white"
-                  : "text-gray-700 bg-white"
-              } hover:bg-gray-300`}
-              style={{
-                backgroundColor:
-                  selectedCategory === category ? currentColor : "",
-              }}
+    <div>
+      <Header
+        title="Menu"
+        description={`${menuItems.length} ${menuItems.length === 1 ? "item" : "items"} on the menu.`}
+        actions={
+          <>
+            <Button type="button" variant="outline" className="border-ink/15" asChild>
+              <Link to="/admin/categories">Categories</Link>
+            </Button>
+            <Button type="button" onClick={() => setAdding(true)}>
+              <Plus aria-hidden="true" />
+              Add New Item
+            </Button>
+          </>
+        }
+      />
+
+      <div className="mb-6">
+        <ScrollRow label="Filter by category" activeKey={selectedCategory} className="gap-2 px-1 pb-1">
+          {[{ _id: "", name: "All" }, ...usedCategories].map((category) => {
+            const active = selectedCategory === category._id;
+            return (
+              <button
+                key={category._id || "all"}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => setSelectedCategory(category._id)}
+                className={cn(
+                  "h-10 shrink-0 rounded-full px-4 text-sm font-bold transition-colors",
+                  active ? "bg-ink text-paper" : "bg-white text-ink/70 ring-1 ring-inset ring-ink/10 hover:text-ink hover:ring-ink/25"
+                )}
+              >
+                {category.name}
+              </button>
+            );
+          })}
+        </ScrollRow>
+      </div>
+
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-4">
+        {filteredMenuItems.map((item) => {
+          const soldOut = item.inStock === false;
+          return (
+            <article
+              key={item._id}
+              className="flex flex-col overflow-hidden rounded-xl bg-white ring-1 ring-ink/[0.07]"
             >
-              {category}
-            </button>
-          ))}
-          <button
-            type="button"
-            onClick={() => setSelectedCategory("")}
-            className={`flex-grow px-4 py-2 rounded-md mx-2 text-sm font-semibold text-center ${
-              selectedCategory === "" ? "text-white" : "text-gray-700 bg-white"
-            } hover:bg-gray-300`}
-            style={{
-              backgroundColor: selectedCategory === "" ? currentColor : "",
-            }}
-          >
-            All
-          </button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Card
-          onClick={openAddNewItemDialog}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault();
-              openAddNewItemDialog();
-            }
-          }}
-          tabIndex={0}
-          role="button"
+              <div className="relative aspect-[4/3] bg-paper-deep">
+                <MenuItemImage image={item.image} station={item.station} dimmed={soldOut} className="h-full w-full" />
+                <div className="absolute left-2 top-2 flex gap-1.5">
+                  {item.popular && (
+                    <span className="rounded bg-signal px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-[0.08em] text-ink">
+                      Popular
+                    </span>
+                  )}
+                  {soldOut && (
+                    <span className="rounded bg-ink px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-[0.08em] text-paper">
+                      Sold out
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-1 flex-col p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <h3 className="font-bold leading-snug">{item.title}</h3>
+                  <span className="font-mono font-bold tabular">
+                    {formatCents(readCents((item as { priceCents?: number }).priceCents, item.price))}
+                  </span>
+                </div>
+                <p className="mt-0.5 text-xs font-semibold uppercase tracking-[0.08em] text-ink-soft">{item.category}</p>
+                {item.description && <p className="mt-2 line-clamp-2 text-sm text-ink-soft">{item.description}</p>}
+                <div className="mt-auto flex gap-2 pt-4">
+                  <Button type="button" variant="outline" size="sm" className="flex-1 border-ink/15" onClick={() => setEditing(item)}>
+                    <Pencil aria-hidden="true" />
+                    Edit
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="text-ink-soft hover:bg-alert/10 hover:text-alert-ink"
+                    onClick={() => handleDelete(item)}
+                    aria-label={`Delete ${item.title}`}
+                  >
+                    <Trash2 aria-hidden="true" />
+                    Delete
+                  </Button>
+                </div>
+              </div>
+            </article>
+          );
+        })}
+        <button
+          type="button"
+          onClick={() => setAdding(true)}
           aria-label="Add new menu item"
-          className="flex cursor-pointer items-center justify-center bg-gray-200 transition-colors hover:bg-gray-300"
+          className="flex min-h-[14rem] flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-ink/15 text-ink-soft transition-colors hover:border-signal hover:text-signal-ink"
         >
-          <CardContent className="p-4 text-center text-lg font-semibold text-gray-700">
-            Add New Item
-          </CardContent>
-        </Card>
-        {filteredMenuItems.map((item) => (
-          <Card className="overflow-hidden" key={item._id}>
-            <img
-              src={item.image}
-              alt={item.title}
-              className="h-auto w-full"
-            />
-            <CardHeader className="p-4 pb-2">
-              <CardTitle className="text-base">Title: {item.title}</CardTitle>
-              <p className="text-sm text-muted-foreground">Price: {item.price}</p>
-              <p className="text-sm text-muted-foreground">Category: {item.category}</p>
-              <p className="text-sm text-muted-foreground">
-                {item.inStock === false ? "Out of stock" : "In stock"}
-                {item.popular ? " · Popular" : ""}
-              </p>
-            </CardHeader>
-            <CardContent className="p-4 pt-0">{item.description}</CardContent>
-            <CardFooter className="flex gap-2 p-4 pt-0">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => openDialog(item)}
-                style={{ borderColor: currentColor, color: currentColor }}
-              >
-                Edit
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => handleDelete(item)}
-                style={{ borderColor: currentColor, color: currentColor }}
-              >
-                Delete
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
+          <Plus className="h-6 w-6" aria-hidden="true" />
+          <span className="font-bold">Add New Item</span>
+        </button>
       </div>
 
-      <Dialog open={dialogVisible} onOpenChange={setDialogVisible}>
-        <DialogContent className="max-w-[400px]">
-          <DialogHeader>
-            <DialogTitle>Edit Item Information</DialogTitle>
-          </DialogHeader>
-          <Form {...editForm}>
-            <form onSubmit={editForm.handleSubmit(handleSave)} className="space-y-3">
-              <FormField
-                control={editForm.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Input placeholder="Title" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="Price"
-                        value={field.value ?? ""}
-                        onChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="image"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <ImageUpload value={field.value} onChange={field.onChange} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select Category" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {MENU_CATEGORIES.map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {category}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Textarea placeholder="Description" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="inStock"
-                render={({ field }) => (
-                  <FormItem className="flex items-center gap-2 space-y-0">
-                    <FormControl>
-                      <input
-                        type="checkbox"
-                        checked={Boolean(field.value)}
-                        onChange={(event) => field.onChange(event.target.checked)}
-                      />
-                    </FormControl>
-                    <FormLabel>In stock</FormLabel>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="popular"
-                render={({ field }) => (
-                  <FormItem className="flex items-center gap-2 space-y-0">
-                    <FormControl>
-                      <input
-                        type="checkbox"
-                        checked={Boolean(field.value)}
-                        onChange={(event) => field.onChange(event.target.checked)}
-                      />
-                    </FormControl>
-                    <FormLabel>Popular</FormLabel>
-                  </FormItem>
-                )}
-              />
-              <DialogFooter>
-                <Button type="submit">Save</Button>
-                <Button type="button" variant="outline" onClick={closeDialog}>
-                  Cancel
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isAddingNewItem} onOpenChange={setIsAddingNewItem}>
-        <DialogContent className="max-w-[400px]">
-          <DialogHeader>
-            <DialogTitle>Add New Item</DialogTitle>
-          </DialogHeader>
-          <Form {...addForm}>
-            <form onSubmit={addForm.handleSubmit(handleAddNewItem)} className="space-y-3">
-              <FormField
-                control={addForm.control}
-                name="image"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Input
-                        placeholder="Image"
-                        value={typeof field.value === "string" ? field.value : ""}
-                        onChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={addForm.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Input placeholder="Title" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={addForm.control}
-                name="price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="Price"
-                        value={field.value ?? ""}
-                        onChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={addForm.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Category" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {MENU_CATEGORIES.map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {category}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={addForm.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Textarea placeholder="Description" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={addForm.control}
-                name="inStock"
-                render={({ field }) => (
-                  <FormItem className="flex items-center gap-2 space-y-0">
-                    <FormControl>
-                      <input
-                        type="checkbox"
-                        checked={Boolean(field.value)}
-                        onChange={(event) => field.onChange(event.target.checked)}
-                      />
-                    </FormControl>
-                    <FormLabel>In stock</FormLabel>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={addForm.control}
-                name="popular"
-                render={({ field }) => (
-                  <FormItem className="flex items-center gap-2 space-y-0">
-                    <FormControl>
-                      <input
-                        type="checkbox"
-                        checked={Boolean(field.value)}
-                        onChange={(event) => field.onChange(event.target.checked)}
-                      />
-                    </FormControl>
-                    <FormLabel>Popular</FormLabel>
-                  </FormItem>
-                )}
-              />
-              <DialogFooter>
-                <Button type="submit">Add</Button>
-                <Button type="button" variant="outline" onClick={closeAddNewItemDialog}>
-                  Cancel
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+      <MenuItemDialog
+        open={editing !== null}
+        onOpenChange={(open) => {
+          if (!open) setEditing(null);
+        }}
+        title="Edit menu item"
+        submitLabel="Save"
+        initial={editingValues}
+        categories={categories}
+        onSubmit={handleSave}
+      />
+      <MenuItemDialog
+        open={adding}
+        onOpenChange={setAdding}
+        title="New menu item"
+        submitLabel="Add"
+        initial={EMPTY_MENU_ITEM}
+        categories={categories}
+        onSubmit={handleAdd}
+      />
     </div>
   );
 };

@@ -1,0 +1,671 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-28T23:43:41+00:00",
+  "title": "Design System: Plate Vista",
+  "extensions": {
+    "colorMeta": {
+      "steel-950": {
+        "role": "neutral",
+        "displayName": "Deep Steel",
+        "canonical": "hsl(225 7% 8%)",
+        "oklch": "oklch(19.1% 0.006 271.1)",
+        "cssVar": "--steel-950",
+        "tonalRamp": [
+          "oklch(15% 0.006 271.1)",
+          "oklch(26% 0.006 271.1)",
+          "oklch(37% 0.006 271.1)",
+          "oklch(48% 0.006 271.1)",
+          "oklch(59% 0.006 271.1)",
+          "oklch(70% 0.006 271.1)",
+          "oklch(82% 0.006 271.1)",
+          "oklch(95% 0.002 271.1)"
+        ]
+      },
+      "steel-900": {
+        "role": "neutral",
+        "displayName": "Brushed Steel",
+        "canonical": "hsl(225 6% 11%)",
+        "oklch": "oklch(22.2% 0.006 271.1)",
+        "cssVar": "--steel-900",
+        "tonalRamp": [
+          "oklch(15% 0.006 271.1)",
+          "oklch(26% 0.006 271.1)",
+          "oklch(37% 0.006 271.1)",
+          "oklch(48% 0.006 271.1)",
+          "oklch(59% 0.006 271.1)",
+          "oklch(70% 0.006 271.1)",
+          "oklch(82% 0.006 271.1)",
+          "oklch(95% 0.002 271.1)"
+        ]
+      },
+      "steel-850": {
+        "role": "neutral",
+        "displayName": "Lane Steel",
+        "canonical": "hsl(225 6% 14%)",
+        "oklch": "oklch(25.3% 0.008 274.6)",
+        "cssVar": "--steel-850",
+        "tonalRamp": [
+          "oklch(15% 0.008 274.6)",
+          "oklch(26% 0.008 274.6)",
+          "oklch(37% 0.008 274.6)",
+          "oklch(48% 0.008 274.6)",
+          "oklch(59% 0.008 274.6)",
+          "oklch(70% 0.008 274.6)",
+          "oklch(82% 0.008 274.6)",
+          "oklch(95% 0.003 274.6)"
+        ]
+      },
+      "steel-800": {
+        "role": "neutral",
+        "displayName": "Rail Steel",
+        "canonical": "hsl(225 6% 16%)",
+        "oklch": "oklch(27.7% 0.010 268.3)",
+        "cssVar": "--steel-800",
+        "tonalRamp": [
+          "oklch(15% 0.010 268.3)",
+          "oklch(26% 0.010 268.3)",
+          "oklch(37% 0.010 268.3)",
+          "oklch(48% 0.010 268.3)",
+          "oklch(59% 0.010 268.3)",
+          "oklch(70% 0.010 268.3)",
+          "oklch(82% 0.010 268.3)",
+          "oklch(95% 0.003 268.3)"
+        ]
+      },
+      "steel-700": {
+        "role": "neutral",
+        "displayName": "Seam Steel",
+        "canonical": "hsl(225 6% 23%)",
+        "oklch": "oklch(34.4% 0.013 267.2)",
+        "cssVar": "--steel-700",
+        "tonalRamp": [
+          "oklch(15% 0.013 267.2)",
+          "oklch(26% 0.013 267.2)",
+          "oklch(37% 0.013 267.2)",
+          "oklch(48% 0.013 267.2)",
+          "oklch(59% 0.013 267.2)",
+          "oklch(70% 0.013 267.2)",
+          "oklch(82% 0.013 267.2)",
+          "oklch(95% 0.005 267.2)"
+        ]
+      },
+      "steel-500": {
+        "role": "neutral",
+        "displayName": "Clip Steel",
+        "canonical": "hsl(225 5% 45%)",
+        "oklch": "oklch(54.2% 0.014 271.1)",
+        "cssVar": "--steel-500",
+        "tonalRamp": [
+          "oklch(15% 0.014 271.1)",
+          "oklch(26% 0.014 271.1)",
+          "oklch(37% 0.014 271.1)",
+          "oklch(48% 0.014 271.1)",
+          "oklch(59% 0.014 271.1)",
+          "oklch(70% 0.014 271.1)",
+          "oklch(82% 0.014 271.1)",
+          "oklch(95% 0.005 271.1)"
+        ]
+      },
+      "steel-300": {
+        "role": "neutral",
+        "displayName": "Brushed Label",
+        "canonical": "hsl(225 6% 70%)",
+        "oklch": "oklch(75.8% 0.010 273.3)",
+        "cssVar": "--steel-300",
+        "tonalRamp": [
+          "oklch(15% 0.010 273.3)",
+          "oklch(26% 0.010 273.3)",
+          "oklch(37% 0.010 273.3)",
+          "oklch(48% 0.010 273.3)",
+          "oklch(59% 0.010 273.3)",
+          "oklch(70% 0.010 273.3)",
+          "oklch(82% 0.010 273.3)",
+          "oklch(95% 0.004 273.3)"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Thermal Paper",
+        "canonical": "hsl(60 12% 95%)",
+        "oklch": "oklch(96.6% 0.005 106.5)",
+        "cssVar": "--paper",
+        "tonalRamp": [
+          "oklch(15% 0.005 106.5)",
+          "oklch(26% 0.005 106.5)",
+          "oklch(37% 0.005 106.5)",
+          "oklch(48% 0.005 106.5)",
+          "oklch(59% 0.005 106.5)",
+          "oklch(70% 0.005 106.5)",
+          "oklch(82% 0.005 106.5)",
+          "oklch(95% 0.002 106.5)"
+        ]
+      },
+      "paper-deep": {
+        "role": "neutral",
+        "displayName": "Paper Fold",
+        "canonical": "hsl(60 8% 90%)",
+        "oklch": "oklch(92.7% 0.007 106.5)",
+        "cssVar": "--paper-deep",
+        "tonalRamp": [
+          "oklch(15% 0.007 106.5)",
+          "oklch(26% 0.007 106.5)",
+          "oklch(37% 0.007 106.5)",
+          "oklch(48% 0.007 106.5)",
+          "oklch(59% 0.007 106.5)",
+          "oklch(70% 0.007 106.5)",
+          "oklch(82% 0.007 106.5)",
+          "oklch(95% 0.002 106.5)"
+        ]
+      },
+      "paper-line": {
+        "role": "neutral",
+        "displayName": "Paper Rule",
+        "canonical": "hsl(60 5% 80%)",
+        "oklch": "oklch(85.3% 0.008 106.6)",
+        "cssVar": "--paper-line",
+        "tonalRamp": [
+          "oklch(15% 0.008 106.6)",
+          "oklch(26% 0.008 106.6)",
+          "oklch(37% 0.008 106.6)",
+          "oklch(48% 0.008 106.6)",
+          "oklch(59% 0.008 106.6)",
+          "oklch(70% 0.008 106.6)",
+          "oklch(82% 0.008 106.6)",
+          "oklch(95% 0.003 106.6)"
+        ]
+      },
+      "sheet-white": {
+        "role": "neutral",
+        "displayName": "Sheet White",
+        "canonical": "hsl(0 0% 100%)",
+        "oklch": "oklch(100.0% 0.000 89.9)",
+        "cssVar": "--card (paper scope)",
+        "tonalRamp": [
+          "oklch(15% 0.000 89.9)",
+          "oklch(26% 0.000 89.9)",
+          "oklch(37% 0.000 89.9)",
+          "oklch(48% 0.000 89.9)",
+          "oklch(59% 0.000 89.9)",
+          "oklch(70% 0.000 89.9)",
+          "oklch(82% 0.000 89.9)",
+          "oklch(95% 0.000 89.9)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Thermal Ink",
+        "canonical": "hsl(0 0% 5%)",
+        "oklch": "oklch(16.4% 0.000 89.9)",
+        "cssVar": "--ink",
+        "tonalRamp": [
+          "oklch(15% 0.000 89.9)",
+          "oklch(26% 0.000 89.9)",
+          "oklch(37% 0.000 89.9)",
+          "oklch(48% 0.000 89.9)",
+          "oklch(59% 0.000 89.9)",
+          "oklch(70% 0.000 89.9)",
+          "oklch(82% 0.000 89.9)",
+          "oklch(95% 0.000 89.9)"
+        ]
+      },
+      "ink-soft": {
+        "role": "neutral",
+        "displayName": "Faded Ink",
+        "canonical": "hsl(60 3% 34%)",
+        "oklch": "oklch(45.8% 0.010 106.8)",
+        "cssVar": "--ink-soft",
+        "tonalRamp": [
+          "oklch(15% 0.010 106.8)",
+          "oklch(26% 0.010 106.8)",
+          "oklch(37% 0.010 106.8)",
+          "oklch(48% 0.010 106.8)",
+          "oklch(59% 0.010 106.8)",
+          "oklch(70% 0.010 106.8)",
+          "oklch(82% 0.010 106.8)",
+          "oklch(95% 0.003 106.8)"
+        ]
+      },
+      "signal": {
+        "role": "primary",
+        "displayName": "Signal Orange",
+        "canonical": "hsl(22 100% 55%)",
+        "oklch": "oklch(70.3% 0.198 43.4)",
+        "cssVar": "--signal",
+        "tonalRamp": [
+          "oklch(15% 0.198 43.4)",
+          "oklch(26% 0.198 43.4)",
+          "oklch(37% 0.198 43.4)",
+          "oklch(48% 0.198 43.4)",
+          "oklch(59% 0.198 43.4)",
+          "oklch(70% 0.198 43.4)",
+          "oklch(82% 0.198 43.4)",
+          "oklch(95% 0.069 43.4)"
+        ]
+      },
+      "signal-deep": {
+        "role": "primary",
+        "displayName": "Scorched Signal",
+        "canonical": "hsl(18 90% 44%)",
+        "oklch": "oklch(60.3% 0.178 39.5)",
+        "cssVar": "--signal-deep",
+        "tonalRamp": [
+          "oklch(15% 0.178 39.5)",
+          "oklch(26% 0.178 39.5)",
+          "oklch(37% 0.178 39.5)",
+          "oklch(48% 0.178 39.5)",
+          "oklch(59% 0.178 39.5)",
+          "oklch(70% 0.178 39.5)",
+          "oklch(82% 0.178 39.5)",
+          "oklch(95% 0.062 39.5)"
+        ]
+      },
+      "signal-ink": {
+        "role": "primary",
+        "displayName": "Signal Ink",
+        "canonical": "hsl(18 85% 38%)",
+        "oklch": "oklch(52.8% 0.158 39.9)",
+        "cssVar": "--signal-ink",
+        "tonalRamp": [
+          "oklch(15% 0.158 39.9)",
+          "oklch(26% 0.158 39.9)",
+          "oklch(37% 0.158 39.9)",
+          "oklch(48% 0.158 39.9)",
+          "oklch(59% 0.158 39.9)",
+          "oklch(70% 0.158 39.9)",
+          "oklch(82% 0.158 39.9)",
+          "oklch(95% 0.055 39.9)"
+        ]
+      },
+      "pass": {
+        "role": "secondary",
+        "displayName": "Pass Green",
+        "canonical": "hsl(146 45% 45%)",
+        "oklch": "oklch(65.0% 0.130 154.9)",
+        "cssVar": "--pass",
+        "tonalRamp": [
+          "oklch(15% 0.130 154.9)",
+          "oklch(26% 0.130 154.9)",
+          "oklch(37% 0.130 154.9)",
+          "oklch(48% 0.130 154.9)",
+          "oklch(59% 0.130 154.9)",
+          "oklch(70% 0.130 154.9)",
+          "oklch(82% 0.130 154.9)",
+          "oklch(95% 0.046 154.9)"
+        ]
+      },
+      "pass-ink": {
+        "role": "secondary",
+        "displayName": "Pass Ink",
+        "canonical": "hsl(146 53% 29%)",
+        "oklch": "oklch(48.9% 0.103 154.6)",
+        "cssVar": "--pass-ink",
+        "tonalRamp": [
+          "oklch(15% 0.103 154.6)",
+          "oklch(26% 0.103 154.6)",
+          "oklch(37% 0.103 154.6)",
+          "oklch(48% 0.103 154.6)",
+          "oklch(59% 0.103 154.6)",
+          "oklch(70% 0.103 154.6)",
+          "oklch(82% 0.103 154.6)",
+          "oklch(95% 0.036 154.6)"
+        ]
+      },
+      "alert": {
+        "role": "tertiary",
+        "displayName": "Alert Red",
+        "canonical": "hsl(358 75% 59%)",
+        "oklch": "oklch(62.6% 0.193 23.0)",
+        "cssVar": "--alert",
+        "tonalRamp": [
+          "oklch(15% 0.193 23.0)",
+          "oklch(26% 0.193 23.0)",
+          "oklch(37% 0.193 23.0)",
+          "oklch(48% 0.193 23.0)",
+          "oklch(59% 0.193 23.0)",
+          "oklch(70% 0.193 23.0)",
+          "oklch(82% 0.193 23.0)",
+          "oklch(95% 0.068 23.0)"
+        ]
+      },
+      "alert-ink": {
+        "role": "tertiary",
+        "displayName": "Alert Ink",
+        "canonical": "hsl(358 65% 42%)",
+        "oklch": "oklch(49.7% 0.174 22.6)",
+        "cssVar": "--alert-ink",
+        "tonalRamp": [
+          "oklch(15% 0.174 22.6)",
+          "oklch(26% 0.174 22.6)",
+          "oklch(37% 0.174 22.6)",
+          "oklch(48% 0.174 22.6)",
+          "oklch(59% 0.174 22.6)",
+          "oklch(70% 0.174 22.6)",
+          "oklch(82% 0.174 22.6)",
+          "oklch(95% 0.061 22.6)"
+        ]
+      },
+      "amber": {
+        "role": "tertiary",
+        "displayName": "Lamp Amber",
+        "canonical": "hsl(38 95% 55%)",
+        "oklch": "oklch(79.2% 0.158 73.5)",
+        "cssVar": "--amber",
+        "tonalRamp": [
+          "oklch(15% 0.158 73.5)",
+          "oklch(26% 0.158 73.5)",
+          "oklch(37% 0.158 73.5)",
+          "oklch(48% 0.158 73.5)",
+          "oklch(59% 0.158 73.5)",
+          "oklch(70% 0.158 73.5)",
+          "oklch(82% 0.158 73.5)",
+          "oklch(95% 0.055 73.5)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "numeral": {
+        "displayName": "Numeral",
+        "purpose": "Table numbers on chits (2.75rem, width 78) and floor tiles (2.5rem, width 80)."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Admin page title, 1.75rem on mobile, 2.125rem from 768px."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card, panel, dialog titles; dish names at 1.05rem."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "UI copy and descriptions."
+      },
+      "button": {
+        "displayName": "Button",
+        "purpose": "Button, chip and tab labels; 1rem on lg/xl buttons and the bump."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Uppercase status words, tags, receipt 'Total'; lane headings at 0.875rem / 0.12em."
+      },
+      "wordmark": {
+        "displayName": "Wordmark",
+        "purpose": "The Plate Vista wordmark only, uppercase at width 118."
+      },
+      "receipt": {
+        "displayName": "Receipt",
+        "purpose": "Chit item lines, prices, quantities, totals, receipt annotations."
+      },
+      "timer": {
+        "displayName": "Timer",
+        "purpose": "Live m:ss timer on each chit; alert-ink when overdue."
+      }
+    },
+    "shadows": [
+      {
+        "name": "hanging-chit",
+        "value": "drop-shadow(0 6px 10px rgb(0 0 0 / 0.28)) drop-shadow(0 1px 1px rgb(0 0 0 / 0.2))",
+        "purpose": "filter on the wrapper of a chit hanging on steel."
+      },
+      {
+        "name": "lying-chit",
+        "value": "drop-shadow(0 4px 12px rgb(20 20 20 / 0.10)) drop-shadow(0 1px 1px rgb(20 20 20 / 0.08))",
+        "purpose": "filter on the wrapper of a chit lying on paper."
+      },
+      {
+        "name": "rail",
+        "value": "0 2px 4px rgb(0 0 0 / 0.4)",
+        "purpose": "The steel bar chits hang from."
+      },
+      {
+        "name": "clip",
+        "value": "0 2px 3px rgb(0 0 0 / 0.45)",
+        "purpose": "Chit clip."
+      },
+      {
+        "name": "seated-table",
+        "value": "0 8px 20px -8px rgb(0 0 0 / 0.6)",
+        "purpose": "Floor tile that has turned paper."
+      },
+      {
+        "name": "floating-bar",
+        "value": "0 16px 40px -10px rgb(0 0 0 / 0.55)",
+        "purpose": "Guest cart bar; toasts use 0 12px 32px -8px rgb(0 0 0 / 0.5)."
+      },
+      {
+        "name": "button-primary-rest",
+        "value": "0 1px 0 rgb(255 255 255 / 0.25) inset, 0 2px 4px hsl(var(--signal-deep) / 0.35)",
+        "purpose": "Signal button at rest."
+      },
+      {
+        "name": "focus-ring",
+        "value": "outline: 2px solid hsl(var(--signal)); outline-offset: 2px",
+        "purpose": "Global :focus-visible. Inputs use a signal border plus a 3px ring at 20%."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out-expo",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "The only signature easing (--ease-out-expo)."
+      },
+      {
+        "name": "print-in",
+        "value": "620ms ease-out-expo; clip-path inset(0 0 100% 0) to inset(0); translateY(-6px) to 0; origin top",
+        "purpose": "Anything that arrives: chits, the guest's placed order, cart bar, toasts. Stagger 45ms per chit, capped at 8."
+      },
+      {
+        "name": "lamp",
+        "value": "1.6s ease-in-out infinite, opacity 1 to 0.35",
+        "purpose": "Connecting/reconnecting lamp only."
+      },
+      {
+        "name": "state-fast",
+        "value": "150ms",
+        "purpose": "Button color/transform; press translateY(1px)."
+      },
+      {
+        "name": "tile-lift",
+        "value": "200ms ease-out-expo, translateY(-2px) on hover",
+        "purpose": "Floor table tiles."
+      },
+      {
+        "name": "step-fill",
+        "value": "500ms color",
+        "purpose": "Step row cells lighting up."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "print-in removed; all durations 0.01ms",
+        "purpose": "prefers-reduced-motion: reduce."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      },
+      {
+        "name": "container-2xl",
+        "value": "1400px"
+      },
+      {
+        "name": "board-max",
+        "value": "1920px"
+      }
+    ],
+    "patterns": [
+      {
+        "name": "perforated-edge",
+        "value": "mask with 7px conic-gradient teeth at the bottom (.chit)",
+        "purpose": "Torn edge of every chit."
+      },
+      {
+        "name": "tear-line",
+        "value": "1px, linear-gradient ink/35% 50% transparent 50%, 8px period (.perf)",
+        "purpose": "Dashed divider inside a slip."
+      },
+      {
+        "name": "leader",
+        "value": "1.5px dotted ink/30% bottom border, flex 1 (.leader)",
+        "purpose": "Joins a receipt label and its amount."
+      },
+      {
+        "name": "hazard-hatch",
+        "value": "repeating-linear-gradient(-45deg, alert 0 8px, ink 8px 16px) (.hazard)",
+        "purpose": "Overdue marker; never color alone."
+      },
+      {
+        "name": "steel-ground",
+        "value": "steel-900 + linear-gradient(180deg, white/2.5%, transparent 240px) (.steel-ground)",
+        "purpose": "Brushed steel ground."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one primary action on a surface. Ink label on signal (Ink-On-Lamp Rule).",
+      "html": "<button class=\"ds-btn-primary\">Place order</button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:0 16px;border:0;border-radius:8px;background:hsl(var(--signal,22 100% 55%));color:hsl(var(--ink,0 0% 5%));font:600 0.875rem/1.25 Archivo,system-ui,sans-serif;box-shadow:0 1px 0 rgb(255 255 255/.25) inset,0 2px 4px hsl(18 90% 44%/.35);cursor:pointer;transition:background-color 150ms,transform 150ms}.ds-btn-primary:hover{background:hsl(var(--signal-deep,18 90% 44%))}.ds-btn-primary:active{transform:translateY(1px)}.ds-btn-primary:focus-visible{outline:2px solid hsl(22 100% 55%);outline-offset:2px}"
+    },
+    {
+      "name": "Ink Button",
+      "kind": "button",
+      "refersTo": "button-ink",
+      "description": "Strong secondary action on paper (retry, add to order).",
+      "html": "<button class=\"ds-btn-ink\">Retry</button>",
+      "css": ".ds-btn-ink{height:40px;padding:0 16px;border:0;border-radius:8px;background:hsl(var(--ink,0 0% 5%));color:hsl(var(--paper,60 12% 95%));font:600 0.875rem/1.25 Archivo,system-ui,sans-serif;cursor:pointer;transition:background-color 150ms,transform 150ms}.ds-btn-ink:hover{background:hsl(0 0% 5%/.85)}.ds-btn-ink:active{transform:translateY(1px)}.ds-btn-ink:focus-visible{outline:2px solid hsl(22 100% 55%);outline-offset:2px}"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "44px sheet-white field; signal border and 20% ring on focus.",
+      "html": "<input class=\"ds-input\" placeholder=\"Search the menu\" />",
+      "css": ".ds-input{height:44px;width:100%;max-width:320px;padding:8px 12px;border:1px solid hsl(var(--paper-line,60 5% 80%));border-radius:8px;background:#fff;color:hsl(0 0% 5%);caret-color:hsl(22 100% 55%);font:400 0.95rem Archivo,system-ui,sans-serif;transition:border-color 150ms,box-shadow 150ms}.ds-input::placeholder{color:hsl(60 3% 34%)}.ds-input:hover{border-color:hsl(0 0% 5%/.3)}.ds-input:focus-visible{outline:none;border-color:hsl(22 100% 55%);box-shadow:0 0 0 3px hsl(22 100% 55%/.2)}"
+    },
+    {
+      "name": "Station Chips",
+      "kind": "chip",
+      "refersTo": "chip-active",
+      "description": "Board station filter on steel: idle outline, active turns paper.",
+      "html": "<div class=\"ds-chips\" role=\"radiogroup\"><button class=\"ds-chip\" role=\"radio\" aria-checked=\"true\">All stations</button><button class=\"ds-chip\" role=\"radio\" aria-checked=\"false\">Kitchen</button><button class=\"ds-chip\" role=\"radio\" aria-checked=\"false\">Bar</button></div>",
+      "css": ".ds-chips{display:flex;gap:6px;padding:12px;background:hsl(225 6% 11%)}.ds-chip{height:40px;padding:0 16px;border-radius:9999px;border:1px solid hsl(225 6% 23%);background:transparent;color:hsl(225 6% 70%);font:600 0.875rem Archivo,system-ui,sans-serif;cursor:pointer;transition:color 150ms,border-color 150ms}.ds-chip:hover{border-color:hsl(225 5% 45%);color:hsl(60 12% 95%)}.ds-chip[aria-checked=true]{background:hsl(60 12% 95%);border-color:hsl(60 12% 95%);color:hsl(0 0% 5%)}.ds-chip:focus-visible{outline:2px solid hsl(22 100% 55%);outline-offset:2px}"
+    },
+    {
+      "name": "Admin Sidebar Nav",
+      "kind": "nav",
+      "refersTo": "nav-item-active",
+      "description": "Steel sidebar; the active row turns paper with a signal-ink icon.",
+      "html": "<nav class=\"ds-nav\"><p class=\"ds-nav-group\">Pages</p><a class=\"ds-nav-item is-active\" href=\"#\"><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><rect x=\"3\" y=\"3\" width=\"7\" height=\"9\" rx=\"1\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"5\" rx=\"1\"/><rect x=\"14\" y=\"12\" width=\"7\" height=\"9\" rx=\"1\"/><rect x=\"3\" y=\"16\" width=\"7\" height=\"5\" rx=\"1\"/></svg>Overview</a><a class=\"ds-nav-item\" href=\"#\"><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z\"/><path d=\"M16 8H8M16 12H8M13 16H8\"/></svg>Orders</a></nav>",
+      "css": ".ds-nav{width:240px;padding:12px;background:hsl(225 6% 11%);font-family:Archivo,system-ui,sans-serif}.ds-nav-group{margin:0;padding:0 12px 8px;font-size:0.68rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:hsl(225 6% 70%)}.ds-nav-item{display:flex;align-items:center;gap:12px;height:40px;padding:0 12px;border-radius:8px;color:hsl(225 6% 70%);font-size:0.925rem;font-weight:600;text-decoration:none;transition:background-color 150ms,color 150ms}.ds-nav-item:hover{background:rgb(255 255 255/.06);color:hsl(60 12% 95%)}.ds-nav-item.is-active{background:hsl(60 12% 95%);color:hsl(0 0% 5%)}.ds-nav-item.is-active svg{color:hsl(18 85% 38%)}.ds-nav-item:focus-visible{outline:2px solid hsl(22 100% 55%);outline-offset:2px}"
+    },
+    {
+      "name": "Chit",
+      "kind": "custom",
+      "refersTo": "chit",
+      "description": "The signature order slip hanging on a rail: clip, numeral, timer, step row, tear lines, mono lines, leader total, bump.",
+      "html": "<div class=\"ds-ground\"><div class=\"ds-rail\"></div><div class=\"ds-chit-wrap\"><span class=\"ds-clip\"></span><article class=\"ds-chit\"><div class=\"ds-chit-head\"><h3><span class=\"ds-t\">TABLE</span><span class=\"ds-num\">12</span></h3><div class=\"ds-meta\"><span class=\"ds-timer\">4:07</span><span class=\"ds-id\">#A3F2 · 3 items</span></div></div><div class=\"ds-steps\"><span class=\"on\"></span><span class=\"on\"></span><span class=\"on\"></span><span></span><span></span><b>Preparing</b></div><hr class=\"ds-perf\"><ul class=\"ds-lines\"><li><span>2×</span>Margherita</li><li><span>1×</span>Caesar salad</li></ul><hr class=\"ds-perf\"><div class=\"ds-total\"><span>TOTAL</span><i></i><span>€31.50</span></div><button class=\"ds-bump\">Ready</button></article></div></div>",
+      "css": ".ds-ground{padding:16px;background:hsl(225 6% 14%);border-radius:12px;width:300px}.ds-rail{height:10px;border-radius:9999px;background:hsl(225 5% 45%);border-top:1px solid hsl(225 6% 70%/.5);box-shadow:0 2px 4px rgb(0 0 0/.4)}.ds-chit-wrap{position:relative;margin-top:-4px;padding-top:8px;filter:drop-shadow(0 6px 10px rgb(0 0 0/.28)) drop-shadow(0 1px 1px rgb(0 0 0/.2));animation:ds-print 620ms cubic-bezier(.16,1,.3,1) both}.ds-clip{position:absolute;left:50%;top:0;z-index:1;width:48px;height:16px;transform:translateX(-50%);background:hsl(225 5% 45%);border-radius:2px 2px 6px 6px;box-shadow:0 2px 3px rgb(0 0 0/.45)}.ds-chit{--tooth:7px;background:hsl(60 12% 95%);color:hsl(0 0% 5%);border-radius:3px 3px 0 0;padding:16px 12px calc(var(--tooth) + 8px);font-family:Archivo,system-ui,sans-serif;-webkit-mask:linear-gradient(#000 0 0) top/100% calc(100% - var(--tooth)) no-repeat,conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) bottom/calc(var(--tooth)*2) var(--tooth) repeat-x;mask:linear-gradient(#000 0 0) top/100% calc(100% - var(--tooth)) no-repeat,conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) bottom/calc(var(--tooth)*2) var(--tooth) repeat-x}.ds-chit-head{display:flex;justify-content:space-between;align-items:flex-end;padding:0 4px}.ds-chit h3{margin:0;display:flex;align-items:baseline;gap:6px;line-height:1}.ds-t{font-size:1.125rem;font-weight:800}.ds-num{font-size:2.75rem;font-weight:900;line-height:.9;letter-spacing:-.03em;font-variation-settings:'wdth' 78}.ds-meta{display:flex;flex-direction:column;align-items:flex-end;gap:6px}.ds-timer{font:700 1.25rem/1 'Chivo Mono',monospace;font-variant-numeric:tabular-nums}.ds-id{font:400 .7rem 'Chivo Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:hsl(60 3% 34%)}.ds-steps{display:flex;align-items:center;gap:3px;padding:12px 4px 0}.ds-steps span{flex:1;height:6px;background:hsl(0 0% 5%/.1)}.ds-steps span:first-child{border-radius:9999px 0 0 9999px}.ds-steps span:nth-child(5){border-radius:0 9999px 9999px 0}.ds-steps span.on{background:hsl(0 0% 5%)}.ds-steps b{margin-left:5px;min-width:4.5rem;text-align:right;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase}.ds-perf{border:0;height:1px;margin:12px 4px 0;background:linear-gradient(to right,hsl(0 0% 5%/.35) 50%,transparent 50%) 0 0/8px 1px repeat-x}.ds-lines{list-style:none;margin:0;padding:12px 4px;font:500 .95rem/1.375 'Chivo Mono',monospace}.ds-lines li{display:flex;gap:8px}.ds-lines li+li{margin-top:8px}.ds-lines span{width:32px;font-weight:700}.ds-total{display:flex;align-items:baseline;gap:8px;padding:10px 4px;font:700 .875rem 'Chivo Mono',monospace}.ds-total span:first-child{letter-spacing:.08em}.ds-total i{flex:1;height:.9em;border-bottom:1.5px dotted hsl(0 0% 5%/.3)}.ds-bump{width:100%;height:48px;border:0;border-radius:8px;background:hsl(22 100% 55%);color:hsl(0 0% 5%);font:600 1rem Archivo,system-ui,sans-serif;cursor:pointer;transition:background-color 150ms,transform 150ms}.ds-bump:hover{background:hsl(18 90% 44%)}.ds-bump:active{transform:translateY(1px)}.ds-bump:focus-visible{outline:2px solid hsl(22 100% 55%);outline-offset:2px}@keyframes ds-print{from{clip-path:inset(0 0 100% 0);transform:translateY(-6px)}to{clip-path:inset(0);transform:none}}@media (prefers-reduced-motion:reduce){.ds-chit-wrap{animation:none}}"
+    },
+    {
+      "name": "Step Row",
+      "kind": "custom",
+      "refersTo": "chit",
+      "description": "Five-cell order lifecycle, lit to now; pass green once ready.",
+      "html": "<div class=\"ds-steprow\" role=\"img\" aria-label=\"Step 4 of 5: Ready\"><span class=\"lit\"></span><span class=\"lit\"></span><span class=\"lit\"></span><span class=\"lit\"></span><span></span><b>Ready</b></div>",
+      "css": ".ds-steprow{display:flex;align-items:center;gap:3px;width:280px;padding:12px;background:hsl(60 12% 95%);font-family:Archivo,system-ui,sans-serif}.ds-steprow span{flex:1;height:6px;background:hsl(0 0% 5%/.1);transition:background-color 500ms}.ds-steprow span:first-child{border-radius:9999px 0 0 9999px}.ds-steprow span:nth-child(5){border-radius:0 9999px 9999px 0}.ds-steprow span.lit{background:hsl(146 45% 45%)}.ds-steprow b{margin-left:5px;min-width:4.5rem;text-align:right;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:hsl(146 53% 29%)}"
+    },
+    {
+      "name": "Connection Lamp",
+      "kind": "custom",
+      "refersTo": "status-tag",
+      "description": "Live, connecting and offline lamp, always with its word.",
+      "html": "<div class=\"ds-lamps\"><span class=\"ds-lamp live\"><i></i>Live</span><span class=\"ds-lamp wait\"><i></i>Reconnecting</span><span class=\"ds-lamp dead\"><i></i>Offline</span></div>",
+      "css": ".ds-lamps{display:flex;gap:20px;padding:14px;background:hsl(225 7% 8%)}.ds-lamp{display:inline-flex;align-items:center;gap:8px;color:hsl(225 6% 70%);font:600 .75rem Archivo,system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase}.ds-lamp i{width:10px;height:10px;border-radius:50%}.live i{background:hsl(146 45% 45%);box-shadow:0 0 0 3px hsl(146 45% 45%/.22)}.wait i{background:hsl(38 95% 55%);box-shadow:0 0 0 3px hsl(38 95% 55%/.22);animation:ds-lamp 1.6s ease-in-out infinite}.dead i{background:hsl(358 75% 59%);box-shadow:0 0 0 3px hsl(358 75% 59%/.22)}@keyframes ds-lamp{50%{opacity:.35}}@media (prefers-reduced-motion:reduce){.wait i{animation:none}}"
+    },
+    {
+      "name": "Floor Table Tile",
+      "kind": "card",
+      "refersTo": "table-tile-seated",
+      "description": "A free table is a dashed outline on steel; a seated table turns paper.",
+      "html": "<div class=\"ds-floor\"><button class=\"ds-tile seated\"><span class=\"ds-tile-top\"><span class=\"ds-tile-num\">7</span><span class=\"ds-tag\">Seated</span></span><span class=\"ds-tile-foot\"><span>CHECK</span><b>€48.20</b></span></button><button class=\"ds-tile\"><span class=\"ds-tile-top\"><span class=\"ds-tile-num\">8</span><span class=\"ds-tag free\">Free</span></span><span class=\"ds-tile-foot\"><span>4 seats</span></span></button></div>",
+      "css": ".ds-floor{display:grid;grid-template-columns:repeat(2,160px);gap:12px;padding:16px;background:hsl(225 6% 11%)}.ds-tile{display:flex;flex-direction:column;justify-content:space-between;height:144px;padding:14px;border-radius:12px;border:1px dashed hsl(225 6% 23%);background:hsl(225 6% 14%/.4);color:hsl(225 6% 70%);text-align:left;font-family:Archivo,system-ui,sans-serif;cursor:pointer;transition:transform 200ms cubic-bezier(.16,1,.3,1),border-color 200ms}.ds-tile:hover{transform:translateY(-2px);border-color:hsl(225 5% 45%);color:hsl(60 12% 95%)}.ds-tile.seated{border:0;background:hsl(60 12% 95%);color:hsl(0 0% 5%);box-shadow:0 8px 20px -8px rgb(0 0 0/.6)}.ds-tile:focus-visible{outline:2px solid hsl(22 100% 55%);outline-offset:2px}.ds-tile-top{display:flex;justify-content:space-between;align-items:flex-start}.ds-tile-num{font-size:2.5rem;font-weight:900;line-height:.85;letter-spacing:-.04em;font-variation-settings:'wdth' 80}.ds-tag{padding:2px 6px;border-radius:4px;background:hsl(0 0% 5%);color:hsl(60 12% 95%);font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase}.ds-tag.free{background:none;color:inherit}.ds-tile-foot{display:flex;justify-content:space-between;align-items:baseline;font-size:.7rem;font-weight:700;letter-spacing:.1em}.ds-tile-foot b{font:700 1rem 'Chivo Mono',monospace;letter-spacing:0}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Ticket Rail",
+    "overview": "The order is the chit. One printed slip of thermal paper is the same object on the guest's phone, hanging from a clip on the kitchen rail, and lying on the owner's Z-report. Everything else in the system exists to hold that slip: brushed steel is the ground staff work on (the board, the admin sidebar, the sign-in panel), and paper is what an order is printed on (the guest app, every chit, the admin content area). A screen is always one of those two materials, and the scope class `.steel` flips every semantic token from paper to steel.\n\nThe world is dense and service-grade. Type is Archivo, pushed narrow and black for huge table numerals and wide for the wordmark; everything that would be printed by a till (quantities, item lines, prices, times, totals) is set in Chivo Mono with tabular figures. Paper carries receipt devices native to the material: torn perforated edges, dashed tear lines, and dotted leaders between a label and its amount. Color is almost absent; signal orange, pass green and alert red are status lights, not decoration.\n\nMotion has one verb: print. A new chit unrolls downward from its clip with an exponential ease-out, and the same motion prints the guest's placed order, the cart bar and toasts. Nothing else animates by default; hover and press responses are short state changes, and all motion collapses under `prefers-reduced-motion`. The world explicitly rejects the category default of floating rounded status cards on a generic dashboard.",
+    "keyCharacteristics": [
+      "Two materials only: steel ground and thermal paper, switched by scope, never blended.",
+      "The chit (clip, torn edge, perforation, mono lines, step row, full-width bump) is the reusable signature on all three surfaces.",
+      "Mono tabular figures for every number a till would print.",
+      "Status is carried by position (lane, step row) and pattern (hazard hatch) first, color second.",
+      "A single print-in motion; everything else is still."
+    ],
+    "rules": [
+      {
+        "name": "The Two Materials Rule",
+        "body": "Every region is steel or paper. Steel regions wrap in `.steel`; the semantic tokens (background, card, border, muted) follow. Do not invent a third ground.",
+        "section": "colors"
+      },
+      {
+        "name": "The Lamp Rule",
+        "body": "Signal, pass, alert and amber mark state, never ornament. If a colored element does not answer \"what state is this order in?\" or \"what do I press next?\", it should be ink or steel.",
+        "section": "colors"
+      },
+      {
+        "name": "The Ink-On-Lamp Rule",
+        "body": "Labels on a signal, pass or alert fill are set in ink (signal 6.8:1, pass 6.3:1, alert 4.9:1). White on those fills does not reach 4.5:1 and is not part of the system.",
+        "section": "colors"
+      },
+      {
+        "name": "The Till Rule",
+        "body": "If a till would print it (money, quantity, time, order number, item lines, and the small uppercase annotations a receipt carries such as \"#A3F2 · 3 items\" or \"Rail is clear\"), it is Chivo Mono with tabular figures. Controls, headings and body copy are Archivo.",
+        "section": "typography"
+      },
+      {
+        "name": "The Width Axis Rule",
+        "body": "Condense Archivo (width 78–80) only for table numerals; widen it (118) only for the wordmark. Everything else sits at width 100.",
+        "section": "typography"
+      },
+      {
+        "name": "The Hang-Or-Lie Rule",
+        "body": "A shadow means an object is hanging from something or lying on something. Flat UI (panels, inputs, nav) takes no shadow.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do set every region on steel (`.steel`) or on paper, and let the active state of a steel control become paper.",
+      "Do build any new order-bearing view from the chit: clip or no clip, torn edge, tear lines, mono lines, leader total.",
+      "Do set every price, quantity, time and order number in Chivo Mono with tabular figures.",
+      "Do reuse the five-cell step row wherever an order's status appears.",
+      "Do pair every alert color with a pattern or text cue (hazard hatch, strike-through, a word).",
+      "Do use the -ink variants (signal-ink, pass-ink, alert-ink) for colored text on paper.",
+      "Do keep touch targets at 40px or more, and one bump per chit.",
+      "Do use print-in (620ms, cubic-bezier(0.16, 1, 0.3, 1)) for anything that arrives, and nothing else for idle motion."
+    ],
+    "donts": [
+      "Don't put white labels on signal, pass or alert fills; they measure 2.9:1, 3.1:1 and 3.9:1.",
+      "Don't use signal, pass or alert as decoration or as the ground of a whole region.",
+      "Don't replace the chit with a floating rounded status card.",
+      "Don't put a `box-shadow` on a masked chit; shadow the wrapper with `drop-shadow`.",
+      "Don't set controls, headings or body copy in mono, or condense Archivo outside table numerals.",
+      "Don't use steel-500 for text; it is the rail and clip metal."
+    ]
+  }
+}

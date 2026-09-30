@@ -1,7 +1,3 @@
-import { ORDER_STATUS } from "@/constants/orderStatus";
-
-export type OrderStatus = (typeof ORDER_STATUS)[keyof typeof ORDER_STATUS];
-
 export type User = {
   _id?: string;
   id?: string;
@@ -24,8 +20,11 @@ export type MenuItem = {
   title: string;
   description?: string;
   price: number | string;
-  image?: string;
+  priceCents?: number;
+  image?: string | null;
+  categoryId?: string;
   category?: string;
+  station?: "bar" | "kitchen";
   popular?: boolean;
   inStock?: boolean;
 };

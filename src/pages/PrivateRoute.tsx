@@ -4,16 +4,21 @@ import { useAuth } from "../contexts/AuthContext";
 import api from "../services/api";
 import Loading from "./Loading";
 import { User } from "../types";
+import { decodeJwt, readRestaurantId, readRestaurantIdFromUnknown } from "../shared/api/jwt";
+import { getLoginPath } from "../shared/auth/loginPaths";
 
-const isRoleAllowed = (user, allowedRoles: string[] = []) => {
+const isRoleAllowed = (user: User | null, allowedRoles: string[] = []) => {
   if (!user) {
     return false;
   }
-  return allowedRoles.includes(user.position) || allowedRoles.includes(user.role);
+  return Boolean(
+    (user.position && allowedRoles.includes(user.position)) ||
+      (user.role && allowedRoles.includes(user.role))
+  );
 };
 
 const PrivateRoute = ({ allowedRoles }: { allowedRoles?: string[] }) => {
-  const { authToken, logout, setUser } = useAuth();
+  const { authToken, restoring, logout, setUser, setRestaurantId } = useAuth();
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null);
   const [allowed, setAllowed] = useState(false);
@@ -23,6 +28,9 @@ const PrivateRoute = ({ allowedRoles }: { allowedRoles?: string[] }) => {
     let cancelled = false;
 
     const verifyUser = async () => {
+      if (restoring) {
+        return;
+      }
       if (!authToken) {
         setLoading(false);
         setAllowed(false);
@@ -38,6 +46,20 @@ const PrivateRoute = ({ allowedRoles }: { allowedRoles?: string[] }) => {
         const nextUser = (data?.user ?? data) as User;
         setUserData(data);
         setUser(nextUser);
+        const nextRestaurantId =
+          readRestaurantIdFromUnknown(data) ||
+          (authToken ? readRestaurantId(decodeJwt(authToken)) : null);
+        if (nextRestaurantId) {
+          setRestaurantId(nextRestaurantId);
+        }
+        const nextSlug =
+          data?.restaurant?.slug ||
+          data?.user?.restaurant?.slug ||
+          data?.slug ||
+          data?.user?.slug;
+        if (typeof nextSlug === "string" && nextSlug) {
+          localStorage.setItem("restaurantSlug", nextSlug);
+        }
         setAllowed(isRoleAllowed(nextUser, allowedKey.split(",").filter(Boolean)));
       } catch {
         if (!cancelled) {
@@ -55,10 +77,14 @@ const PrivateRoute = ({ allowedRoles }: { allowedRoles?: string[] }) => {
     return () => {
       cancelled = true;
     };
-  }, [authToken, allowedKey, logout, setUser]);
+  }, [authToken, restoring, allowedKey, logout, setUser, setRestaurantId]);
+
+  if (restoring) {
+    return <Loading />;
+  }
 
   if (!authToken) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={getLoginPath()} replace />;
   }
 
   if (loading) {
@@ -66,7 +92,7 @@ const PrivateRoute = ({ allowedRoles }: { allowedRoles?: string[] }) => {
   }
 
   if (!allowed) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={getLoginPath()} replace />;
   }
 
   return <Outlet context={{ userData }} />;

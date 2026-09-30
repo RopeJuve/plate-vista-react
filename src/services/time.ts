@@ -1,4 +1,4 @@
-export const timeSinceOrder = (orderTimestamp) => {
+export const timeSinceOrder = (orderTimestamp: string | number | Date) => {
   const now = new Date();
   const orderDate = new Date(orderTimestamp);
   const secondsPast = Math.floor((now.getTime() - orderDate.getTime()) / 1000);

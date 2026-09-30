@@ -1,6 +1,5 @@
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { barChartRows, barChartConfig } from "../../data/data";
-import { useStateContext } from "../../contexts/ContextProvider";
 import {
   ChartContainer,
   ChartLegend,
@@ -10,16 +9,10 @@ import {
 } from "@/components/ui/chart";
 
 const BarPage = () => {
-  const { currentMode } = useStateContext();
-
   return (
-    <ChartContainer
-      config={barChartConfig}
-      className="h-[400px] w-full"
-      style={{ background: currentMode === "Dark" ? "#33373E" : "#fff" }}
-    >
+    <ChartContainer config={barChartConfig} className="h-[400px] w-full">
       <BarChart data={barChartRows}>
-        <CartesianGrid vertical={false} />
+        <CartesianGrid vertical={false} strokeDasharray="3 4" />
         <XAxis dataKey="day" tickLine={false} axisLine={false} />
         <YAxis tickLine={false} axisLine={false} hide />
         <ChartTooltip content={<ChartTooltipContent />} />

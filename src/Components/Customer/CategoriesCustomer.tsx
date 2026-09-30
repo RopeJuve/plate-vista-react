@@ -2,49 +2,67 @@ import { useEffect, useState } from "react";
 import api from "../../services/api";
 import CategoryCustomer from "./CategoryCustomer";
 import SkeletonList from "./SkeletonList";
+import ScrollRow from "../ScrollRow";
 import { useStateContext } from "../../contexts/ContextProvider";
-import { notify } from "../../utils/notify";
+import { notify, apiMessage } from "../../utils/notify";
+import { toCategoryList } from "../../features/guest-ordering/menu";
 
-const CategoriesCustomer = ({ selectedCategory, setSelectedCategory }) => {
+const CategoriesCustomer = ({
+  selectedCategory,
+  setSelectedCategory,
+  categories: providedCategories,
+}: {
+  selectedCategory: string;
+  setSelectedCategory: (category: string) => void;
+  categories?: string[];
+}) => {
   const { categories, setCategories, search } = useStateContext();
   const [isLoading, setIsLoading] = useState(false);
+  const visibleCategories = providedCategories ?? categories;
 
   useEffect(() => {
+    if (providedCategories) {
+      return;
+    }
     const getCategories = async () => {
       try {
         setIsLoading(true);
         const { data } = await api.get("/menu-items/category");
-        setCategories(data);
+        setCategories(toCategoryList(data));
         setIsLoading(false);
-      } catch (error) {
+      } catch (error: unknown) {
         setIsLoading(false);
-        notify(error.response?.data?.message || "Could not load categories");
+        notify(apiMessage(error, "Could not load categories"));
       }
     };
     getCategories();
-  }, [setCategories]);
+  }, [providedCategories, setCategories]);
+
+  if (search) {
+    return null;
+  }
+
+  if (isLoading) {
+    return <SkeletonList itemsCount={6} isLoading={isLoading} variant="category" />;
+  }
 
   return (
-    <>
-      {!search && (
-        isLoading ? (
-          <SkeletonList itemsCount={8} isLoading={isLoading} variant="category" />
-        ) : (
-          <div className="px-6 mt-6 w-full pb-16 overflow-x-auto">
-            <div className="grid grid-flow-row auto-rows-max grid-cols-card gap-3 p-2 rounded-md shadow-md">
-              {categories.map((category, i) => (
-                <CategoryCustomer
-                  key={`${i}${category}`}
-                  category={category}
-                  selectedCategory={selectedCategory}
-                  setSelectedCategory={setSelectedCategory}
-                />
-              ))}
-            </div>
-          </div>
-        )
-      )}
-    </>
+    <div className="mx-auto w-full max-w-3xl">
+      <ScrollRow
+        label="Menu categories"
+        activeKey={selectedCategory}
+        className="snap-x scroll-px-4 gap-2 px-4 py-3 sm:scroll-px-6 sm:px-6"
+      >
+        {visibleCategories.map((category, i) => (
+          <CategoryCustomer
+            key={`${i}${category}`}
+            category={category}
+            selectedCategory={selectedCategory}
+            setSelectedCategory={setSelectedCategory}
+          />
+        ))}
+      </ScrollRow>
+    </div>
   );
 };
 

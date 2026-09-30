@@ -1,53 +1,123 @@
-import { createContext, useReducer, useContext, useEffect, useCallback, ReactNode } from "react";
+import {
+  createContext,
+  useReducer,
+  useContext,
+  useEffect,
+  useCallback,
+  useState,
+  useSyncExternalStore,
+  ReactNode,
+} from "react";
 import { AUTH_EVENTS } from "../utils/notify";
 import { User } from "../types";
+import { decodeJwt, readRestaurantId, readRestaurantIdFromUnknown } from "../shared/api/jwt";
+import {
+  clearTokens,
+  getAccessToken,
+  getRefreshToken,
+  refreshSession,
+  revokeSession,
+  saveTokens,
+  subscribeTokens,
+  type TokenBody,
+} from "../shared/api/tokens";
 
-const AuthContext = createContext<any>(undefined);
+type AuthState = {
+  user: User | null;
+  restaurantId: string | null;
+};
 
-const useAuth = () => useContext(AuthContext);
+type AuthAction =
+  | { type: "LOGIN"; payload: { user?: User | null; restaurantId?: string | null } }
+  | { type: "SET_USER"; payload: User }
+  | { type: "SET_RESTAURANT"; payload: string }
+  | { type: "LOGOUT" };
 
-const authReducer = (state, action) => {
+type AuthContextValue = {
+  authToken: string | null;
+  /** True while a reload trades the stored refresh token for an access token. */
+  restoring: boolean;
+  user: User | null;
+  restaurantId: string | null;
+  /**
+   * Stores the tokens from a login/register response body. `headerToken` is the
+   * `Authorization` response header, used only if the body has no access token.
+   * Returns false when the response carried no access token.
+   */
+  login: (tokens: TokenBody, nextUser?: User, nextRestaurantId?: unknown, headerToken?: string | null) => boolean;
+  logout: () => void;
+  setUser: (nextUser: User) => void;
+  setRestaurantId: (nextId: string) => void;
+};
+
+const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+
+const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within AuthProvider");
+  }
+  return context;
+};
+
+const authReducer = (state: AuthState, action: AuthAction): AuthState => {
   switch (action.type) {
     case "LOGIN":
       return {
         ...state,
-        authToken: action.payload.token,
         user: action.payload.user ?? state.user,
         restaurantId: action.payload.restaurantId ?? state.restaurantId,
       };
     case "SET_USER":
       return { ...state, user: action.payload };
+    case "SET_RESTAURANT":
+      return { ...state, restaurantId: action.payload };
     case "LOGOUT":
-      return { ...state, authToken: null, user: null, restaurantId: null };
+      return { ...state, user: null, restaurantId: null };
     default:
       return state;
   }
 };
 
+const readInitialRestaurantId = () => {
+  const stored = localStorage.getItem("restaurantId");
+  if (stored) {
+    return stored;
+  }
+  const token = getAccessToken();
+  return token ? readRestaurantId(decodeJwt(token)) : null;
+};
+
 const AuthProvider = ({ children }: { children?: ReactNode }) => {
+  const authToken = useSyncExternalStore(subscribeTokens, getAccessToken);
+  const [restoring, setRestoring] = useState(() => !getAccessToken() && Boolean(getRefreshToken()));
   const [state, dispatch] = useReducer(authReducer, {
-    authToken: localStorage.getItem("authToken") || null,
     user: null,
-    restaurantId: localStorage.getItem("restaurantId") || null,
+    restaurantId: readInitialRestaurantId(),
   });
 
-  const { authToken, user, restaurantId } = state;
+  const { user, restaurantId } = state;
 
   useEffect(() => {
     localStorage.removeItem("user");
-    if (authToken) {
-      localStorage.setItem("authToken", authToken);
-      if (restaurantId) {
-        localStorage.setItem("restaurantId", restaurantId);
-      }
-    } else {
-      localStorage.removeItem("authToken");
-      localStorage.removeItem("restaurantId");
+    if (restaurantId) {
+      localStorage.setItem("restaurantId", restaurantId);
     }
-  }, [authToken, restaurantId]);
+  }, [restaurantId]);
+
+  useEffect(() => {
+    if (!restoring) {
+      return;
+    }
+    refreshSession()
+      .catch(() => undefined)
+      .finally(() => setRestoring(false));
+  }, [restoring]);
 
   useEffect(() => {
     const handleUnauthorized = () => {
+      clearTokens();
+      localStorage.removeItem("restaurantId");
       dispatch({ type: "LOGOUT" });
     };
     window.addEventListener(AUTH_EVENTS.LOGOUT, handleUnauthorized);
@@ -56,24 +126,44 @@ const AuthProvider = ({ children }: { children?: ReactNode }) => {
     };
   }, []);
 
-  const login = useCallback((token, nextUser?: User, nextRestaurantId?: string) => {
-    dispatch({
-      type: "LOGIN",
-      payload: { token, user: nextUser, restaurantId: nextRestaurantId },
-    });
-  }, []);
+  const login = useCallback(
+    (tokens: TokenBody, nextUser?: User, nextRestaurantId?: unknown, headerToken?: string | null) => {
+      const token = saveTokens(tokens, headerToken);
+      if (!token) {
+        return false;
+      }
+      const payload = decodeJwt(token);
+      const slug = payload.slug || payload.restaurantSlug;
+      if (typeof slug === "string" && slug) {
+        localStorage.setItem("restaurantSlug", slug);
+      }
+      const restaurantId =
+        readRestaurantIdFromUnknown(nextRestaurantId) ||
+        readRestaurantId(payload) ||
+        undefined;
+      dispatch({ type: "LOGIN", payload: { user: nextUser, restaurantId } });
+      return true;
+    },
+    []
+  );
 
   const setUser = useCallback((nextUser: User) => {
     dispatch({ type: "SET_USER", payload: nextUser });
   }, []);
 
+  const setRestaurantId = useCallback((nextId: string) => {
+    dispatch({ type: "SET_RESTAURANT", payload: nextId });
+  }, []);
+
   const logout = useCallback(() => {
+    void revokeSession();
+    localStorage.removeItem("restaurantId");
     dispatch({ type: "LOGOUT" });
   }, []);
 
   return (
     <AuthContext.Provider
-      value={{ authToken, login, logout, user, setUser, restaurantId }}
+      value={{ authToken, restoring, login, logout, user, setUser, setRestaurantId, restaurantId }}
     >
       {children}
     </AuthContext.Provider>

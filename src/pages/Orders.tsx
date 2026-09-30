@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ColumnDef, PaginationState } from "@tanstack/react-table";
 import { Header } from "../Components/AdminComponents";
-import { fetchOrders } from "../services/orderDataFetch";
-import { ORDER_STATUS } from "../constants/orderStatus";
+import { fetchOrders, readOrdersPayload } from "../services/orderDataFetch";
+import { fetchTables } from "../services/tableDataFetch";
 import { notify } from "../utils/notify";
 import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
@@ -13,17 +13,46 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { Order, OrderRow } from "@/types";
+import { formatCents, readCents } from "../shared/money/formatCents";
+import { ORDER_STATUS_LABEL, type OrderStatus } from "../shared/realtime/protocol";
 
 const PAGE_SIZE = 20;
 
-const transformOrders = (orders: Order[] = []): OrderRow[] =>
+/**
+ * Keyed by protocol `OrderStatus` — the lowercase values the API actually sends.
+ * Same meaning as on the board: signal = new, ink = on the line, green = done.
+ */
+const STATUS_BADGE_CLASSES: Record<OrderStatus, string> = {
+  pending: "bg-signal text-ink",
+  accepted: "bg-ink text-paper",
+  preparing: "bg-ink text-paper",
+  ready: "bg-pass text-ink",
+  served: "bg-pass/15 text-pass-ink",
+  cancelled: "bg-ink/10 text-ink-soft line-through",
+};
+
+/**
+ * A protocol order carries only `tableId`, so the table number has to be
+ * resolved against `GET /table`. Legacy payloads that already embed the number
+ * still win.
+ */
+const transformOrders = (
+  orders: Order[] = [],
+  tableNumbersById: Record<string, number> = {}
+): OrderRow[] =>
   orders.map((order) => {
-    const menuItemsDetails = (order.menuItems || [])
-      .filter((item) => typeof item === "object" && item.product)
-      .map((item) => ({
-        title: typeof item === "object" ? item.product?.title ?? "Unavailable item" : "Unavailable item",
-        quantity: typeof item === "object" ? item.quantity || 0 : 0,
-      }));
+    const protocolItems = (order as { items?: Array<{ title?: string; quantity?: number }> }).items;
+    const menuItemsDetails = protocolItems
+      ? protocolItems.map((item) => ({
+          title: item.title || "Unavailable item",
+          quantity: item.quantity || 0,
+        }))
+      : (order.menuItems || [])
+          .filter((item) => typeof item === "object" && item.product)
+          .map((item) => ({
+            title: typeof item === "object" ? item.product?.title ?? "Unavailable item" : "Unavailable item",
+            quantity: typeof item === "object" ? item.quantity || 0 : 0,
+          }));
 
     const totalQuantity = menuItemsDetails.reduce(
       (acc, item) => acc + (item.quantity || 0),
@@ -39,27 +68,37 @@ const transformOrders = (orders: Order[] = []): OrderRow[] =>
       user: username,
       menuItems: menuItemsDetails,
       quantity: totalQuantity,
-      totalPrice: order.totalPrice || 0,
-      orderStatus: order.orderStatus,
-      location: order.tableNumber ?? order.table?.tableNumber ?? "",
+      totalPrice: readCents((order as { totalCents?: number }).totalCents, order.totalPrice),
+      orderStatus: (order as { status?: string }).status || order.orderStatus,
+      location:
+        order.tableNumber ??
+        order.table?.tableNumber ??
+        tableNumbersById[String((order as { tableId?: string }).tableId ?? "")] ??
+        "",
       orderId: order._id,
     };
   });
 
 const Orders = () => {
-  const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [rawOrders, setRawOrders] = useState<Order[]>([]);
+  const [tableNumbersById, setTableNumbersById] = useState<Record<string, number>>({});
   const [total, setTotal] = useState(0);
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: PAGE_SIZE,
   });
 
+  const orders = useMemo(
+    () => transformOrders(rawOrders, tableNumbersById),
+    [rawOrders, tableNumbersById]
+  );
+
   const loadOrders = (page: number) => {
     fetchOrders({ page, limit: PAGE_SIZE })
       .then((response) => {
-        const pageOrders = response.data?.orders ?? [];
-        setOrders(transformOrders(pageOrders));
-        setTotal(response.data?.total ?? pageOrders.length);
+        const { orders: pageOrders, total: pageTotal } = readOrdersPayload(response.data);
+        setRawOrders(pageOrders as Order[]);
+        setTotal(pageTotal);
       })
       .catch((error) => {
         if (import.meta.env.DEV) {
@@ -72,6 +111,23 @@ const Orders = () => {
   useEffect(() => {
     loadOrders(pagination.pageIndex + 1);
   }, [pagination.pageIndex]);
+
+  useEffect(() => {
+    fetchTables()
+      .then((response) => {
+        const raw = Array.isArray(response.data) ? response.data : response.data?.tables || [];
+        const byId: Record<string, number> = {};
+        (raw as Array<{ _id?: string; tableNumber?: number }>).forEach((table) => {
+          if (table?._id && Number.isFinite(Number(table.tableNumber))) {
+            byId[String(table._id)] = Number(table.tableNumber);
+          }
+        });
+        setTableNumbersById(byId);
+      })
+      .catch(() => {
+        // Without the table list the Location column stays blank; orders still render.
+      });
+  }, []);
 
   const columns = useMemo<ColumnDef<OrderRow>[]>(
     () => [
@@ -115,21 +171,20 @@ const Orders = () => {
       {
         accessorKey: "totalPrice",
         header: "Total Price",
+        cell: ({ row }) => <span className="font-mono font-semibold">{formatCents(row.original.totalPrice)}</span>,
       },
       {
         accessorKey: "orderStatus",
         header: "Order Status",
         cell: ({ row }) => {
-          const statusColorClasses = {
-            [ORDER_STATUS.PROCESSING]: "bg-red-500 text-gray-100",
-            [ORDER_STATUS.PENDING]: "bg-orange-500 text-gray-100",
-            [ORDER_STATUS.COMPLETE]: "bg-green-500 text-gray-100",
-          };
-          const statusClasses = statusColorClasses[row.original.orderStatus] || "";
+          const status = row.original.orderStatus as OrderStatus | undefined;
+          const statusClasses = status ? STATUS_BADGE_CLASSES[status] ?? "" : "";
           return (
-            <div className={`inline-block rounded-full px-2 py-2 text-center ${statusClasses}`}>
-              {row.original.orderStatus}
-            </div>
+            <span
+              className={`inline-flex h-6 items-center rounded px-2 text-[0.7rem] font-bold uppercase tracking-[0.08em] ${statusClasses}`}
+            >
+              {(status && ORDER_STATUS_LABEL[status]) || row.original.orderStatus}
+            </span>
           );
         },
       },
@@ -140,14 +195,19 @@ const Orders = () => {
       {
         accessorKey: "orderId",
         header: "Order ID",
+        cell: ({ row }) => (
+          <span className="font-mono text-xs text-ink-soft" title={row.original.orderId}>
+            {row.original.orderId ? `#${row.original.orderId.slice(-6).toUpperCase()}` : ""}
+          </span>
+        ),
       },
     ],
     []
   );
 
   return (
-    <div className="m-4 md:m-10 mt-24 p-10 bg-white dark:bg-d-main-bg rounded-3xl shadow-lg transition-colors duration-300 ease-in-out">
-      <Header title="Orders" />
+    <div>
+      <Header title="Orders" description={total ? `${total} orders in total.` : "Every order from every table."} />
       <DataTable
         columns={columns}
         data={orders}
