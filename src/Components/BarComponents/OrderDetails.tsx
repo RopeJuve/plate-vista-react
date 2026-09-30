@@ -10,6 +10,7 @@ import { useStaffBoard } from "../../features/staff-board/StaffBoardProvider";
 import { formatCents, lineTotalCents, sumCents } from "../../shared/money/formatCents";
 import { errorMessage } from "../../shared/realtime/errorMessages";
 import { billedLines } from "../../shared/realtime/tickets";
+import { clockTime } from "../../services/time";
 import { notify } from "../../utils/notify";
 import { QtyStepper, TicketSteps } from "../rail";
 import { Button } from "@/components/ui/button";
@@ -126,7 +127,7 @@ const OrderDetails = () => {
               <div className="flex items-center gap-3">
                 <TicketSteps order={order} audience="staff" className="flex-1" />
                 <time className="font-mono text-xs text-ink-soft tabular" dateTime={order.createdAt}>
-                  Placed {new Date(order.createdAt).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })}
+                  Placed {clockTime(order.createdAt)}
                 </time>
               </div>
               <ul className="space-y-1.5 font-mono text-[0.92rem]">

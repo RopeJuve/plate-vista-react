@@ -797,6 +797,50 @@ server.on("upgrade", (req, socket, head) => {
         });
         return;
       }
+      if (message.type === "order.update" || message.type === "order.cancel") {
+        const order = orders.get(message.payload?.orderId);
+        if (!order) {
+          ws.send(
+            JSON.stringify({
+              type: "ack",
+              requestId: message.requestId,
+              ok: false,
+              error: { code: "NOT_FOUND", message: "Order not found" },
+            })
+          );
+          return;
+        }
+        order.rev += 1;
+        order.updatedAt = new Date().toISOString();
+        if (message.type === "order.update") {
+          const quantities = new Map((message.payload.items || []).map((line) => [line.productId, line.quantity]));
+          order.items.forEach((item) => {
+            item.quantity = Number(quantities.get(item.productId)) || item.quantity;
+            item.lineTotalCents = item.unitPriceCents * item.quantity;
+          });
+          order.totalCents = order.items.reduce((sum, item) => sum + item.lineTotalCents, 0);
+          ws.send(JSON.stringify({ type: "ack", requestId: message.requestId, ok: true, data: { order } }));
+          emit("order.updated", { order });
+          return;
+        }
+        // Without a station the whole order is cancelled.
+        const reason = message.payload.reason || "";
+        order.tickets.forEach((ticket) => {
+          ticket.status = "cancelled";
+          ticket.cancelReason = reason;
+        });
+        order.status = "cancelled";
+        ws.send(JSON.stringify({ type: "ack", requestId: message.requestId, ok: true, data: { order } }));
+        emit("order.statusChanged", {
+          orderId: order._id,
+          status: order.status,
+          rev: order.rev,
+          tickets: order.tickets,
+          totalCents: order.totalCents,
+          reason,
+        });
+        return;
+      }
       ws.send(
         JSON.stringify({
           type: "ack",

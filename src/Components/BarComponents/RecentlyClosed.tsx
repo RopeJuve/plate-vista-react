@@ -4,6 +4,7 @@ import { formatCents } from "../../shared/money/formatCents";
 import type { ClosedSession, SessionBill } from "../../shared/realtime/protocol";
 import { ORDER_STATUS_LABEL } from "../../shared/realtime/protocol";
 import { billedLines } from "../../shared/realtime/tickets";
+import { clockTime } from "../../services/time";
 import {
   Dialog,
   DialogContent,
@@ -11,9 +12,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-const clock = (iso: string) =>
-  new Date(iso).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 
 const BillDialog = ({ entry, onClose }: { entry: ClosedSession | null; onClose: () => void }) => {
   const [bill, setBill] = useState<SessionBill | null>(null);
@@ -49,7 +47,7 @@ const BillDialog = ({ entry, onClose }: { entry: ClosedSession | null; onClose: 
         <DialogHeader>
           <DialogTitle>Table {entry?.tableNumber ?? "–"} bill</DialogTitle>
           <DialogDescription>
-            {entry ? `Open ${clock(entry.openedAt)} – closed ${clock(entry.closedAt)}` : ""}
+            {entry ? `Open ${clockTime(entry.openedAt)} – closed ${clockTime(entry.closedAt)}` : ""}
           </DialogDescription>
         </DialogHeader>
         {error && (
@@ -62,9 +60,9 @@ const BillDialog = ({ entry, onClose }: { entry: ClosedSession | null; onClose: 
           <div className="max-h-[60dvh] space-y-4 overflow-y-auto">
             {bill.orders.length === 0 && <p className="text-sm text-ink-soft">Nothing was ordered.</p>}
             {bill.orders.map((order) => (
-              <section key={order._id} aria-label={`Order at ${clock(order.createdAt)}`}>
+              <section key={order._id} aria-label={`Order at ${clockTime(order.createdAt)}`}>
                 <p className="mb-1 font-mono text-xs uppercase tracking-[0.1em] text-ink-soft">
-                  {clock(order.createdAt)} · {ORDER_STATUS_LABEL[order.status]}
+                  {clockTime(order.createdAt)} · {ORDER_STATUS_LABEL[order.status]}
                 </p>
                 <ul className="space-y-1 text-sm">
                   {billedLines(order).map((item, index) => (
@@ -109,11 +107,11 @@ const RecentlyClosed = ({ entries }: { entries: ClosedSession[] }) => {
               type="button"
               onClick={() => setSelected(entry)}
               className="flex w-full items-baseline gap-4 px-4 py-3 text-left text-steel-300 transition-colors hover:bg-white/[0.04] hover:text-paper"
-              aria-label={`Show bill for table ${entry.tableNumber ?? ""}, closed ${clock(entry.closedAt)}`}
+              aria-label={`Show bill for table ${entry.tableNumber ?? ""}, closed ${clockTime(entry.closedAt)}`}
             >
               <span className="w-16 text-base font-black text-paper">T{entry.tableNumber ?? "–"}</span>
               <span className="font-mono text-sm tabular">
-                {clock(entry.openedAt)} – {clock(entry.closedAt)}
+                {clockTime(entry.openedAt)} – {clockTime(entry.closedAt)}
               </span>
               <span className="ml-auto font-mono text-sm font-bold tabular text-paper">
                 {formatCents(entry.totalCents)}
