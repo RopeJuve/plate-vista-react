@@ -43,10 +43,6 @@ export type RestaurantTable = {
 
 export type Table = RestaurantTable;
 
-export type CartItem = MenuItem & {
-  quantity: number;
-};
-
 export type OrderMenuItem = {
   title?: string;
   name?: string;

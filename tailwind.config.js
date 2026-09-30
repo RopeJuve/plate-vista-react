@@ -4,16 +4,8 @@ const token = (name) => `hsl(var(--${name}) / <alpha-value>)`;
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  darkMode: ["class"],
   content: ["./src/**/*.{js,jsx,ts,tsx}", "./index.html"],
   theme: {
-    container: {
-      center: true,
-      padding: "1rem",
-      screens: {
-        "2xl": "1400px",
-      },
-    },
     fontFamily: {
       sans: ["Archivo", ...fontFamily.sans],
       mono: ["'Chivo Mono'", ...fontFamily.mono],
@@ -97,23 +89,7 @@ module.exports = {
       transitionTimingFunction: {
         "out-expo": "cubic-bezier(0.16, 1, 0.3, 1)",
       },
-      gridTemplateColumns: {
-        card: "repeat(auto-fill,minmax(18.75rem,1fr))",
-        table: "repeat(auto-fill,minmax(10rem,1fr))",
-      },
-      keyframes: {
-        "accordion-down": {
-          from: { height: "0" },
-          to: { height: "var(--radix-accordion-content-height)" },
-        },
-        "accordion-up": {
-          from: { height: "var(--radix-accordion-content-height)" },
-          to: { height: "0" },
-        },
-      },
       animation: {
-        "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out",
         lamp: "lamp 1.6s ease-in-out infinite",
       },
     },

@@ -84,7 +84,6 @@ export default [
             "useCart",
             "useStateContext",
             "useOrder",
-            "useWebSocketContext",
             "useRealtime",
             "useGuestAuth",
             "useGuestBill",

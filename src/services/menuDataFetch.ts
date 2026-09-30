@@ -23,8 +23,3 @@ export const deleteMenuItem = (id: string, restaurantId?: string | null) =>
   api.delete(`/menu-items/${id}`, {
     headers: restaurantHeaders(restaurantId),
   });
-
-export const fetchCategories = (restaurantId?: string | null) =>
-  api.get("/menu-items/category", {
-    headers: restaurantHeaders(restaurantId),
-  });
