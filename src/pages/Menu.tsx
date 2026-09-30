@@ -165,8 +165,13 @@ const Menu = () => {
               key={item._id}
               className="flex flex-col overflow-hidden rounded-xl bg-white ring-1 ring-ink/[0.07]"
             >
-              <div className="relative aspect-[4/3] bg-paper-deep">
-                <MenuItemImage image={item.image} station={item.station} dimmed={soldOut} className="h-full w-full" />
+              <div className="relative aspect-[4/3] overflow-hidden bg-paper-deep">
+                <MenuItemImage
+                  image={item.image}
+                  station={item.station}
+                  dimmed={soldOut}
+                  className="absolute inset-0 h-full w-full"
+                />
                 <div className="absolute left-2 top-2 flex gap-1.5">
                   {item.popular && (
                     <span className="rounded bg-signal px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-[0.08em] text-ink">
