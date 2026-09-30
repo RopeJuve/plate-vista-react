@@ -1,9 +1,9 @@
 import { useId } from "react";
 import { listTickets } from "../../features/staff-board/boardState";
-import { useOrderActions } from "../../features/staff-board/useOrderActions";
+import { useOrderActions } from "../../features/staff-board/hooks/useOrderActions";
 import { useStaffBoard } from "../../features/staff-board/StaffBoardProvider";
 import type { OrderStatus, Station } from "../../shared/realtime/protocol";
-import OrderCard from "./OrderCard";
+import TicketCard from "./TicketCard";
 
 /** One lane of the rail: a steel bar with the tickets at this status hanging from it. */
 const BarOrders = ({
@@ -44,11 +44,12 @@ const BarOrders = ({
       </header>
       <div className="rail mx-2 h-2.5 shrink-0 rounded-full" aria-hidden="true" />
       <div className="-mt-1 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-3 pb-6 pt-0">
-        {shown.map(({ order, ticket, tableNumber }, index) => (
-          <OrderCard
+        {shown.map(({ order, ticket, split, tableNumber }, index) => (
+          <TicketCard
             key={`${order._id}:${ticket.station}:${ticket.status}`}
             order={order}
-            station={ticket.station}
+            ticket={ticket}
+            split={split}
             tableNumber={tableNumber}
             canSend={canSend}
             compact={compact}

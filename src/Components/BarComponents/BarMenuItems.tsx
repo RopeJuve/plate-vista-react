@@ -5,9 +5,9 @@ import { cn } from "@/lib/utils";
 
 const BarMenuItems = ({ category }: { category: string }) => {
   const { items, loading } = useMenu();
-  const { menuItems } = useOrder();
+  const { pad } = useOrder();
   const visible = items.filter((item) => item.category === category && !item.archived);
-  const inPad = Object.fromEntries(menuItems.map((line) => [line.productId, line.quantity]));
+  const inPad = Object.fromEntries(pad.map((line) => [line.productId, line.quantity]));
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-44 sm:px-5 lg:px-0 lg:pb-2">
@@ -48,7 +48,7 @@ const BarMenuItemButton = ({
   inStock: boolean;
   quantity: number;
 }) => {
-  const { addOrder } = useOrder();
+  const { addLine } = useOrder();
   return (
     <button
       type="button"
@@ -57,7 +57,7 @@ const BarMenuItemButton = ({
         quantity > 0 ? "bg-paper text-ink" : "bg-steel-800 text-paper hover:bg-steel-700",
         !inStock && "cursor-not-allowed bg-steel-850 text-steel-300 hover:bg-steel-850"
       )}
-      onClick={() => addOrder(productId)}
+      onClick={() => addLine(productId)}
       disabled={!inStock}
       aria-label={`${title} · ${formatCents(priceCents)}`}
     >

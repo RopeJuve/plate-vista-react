@@ -22,7 +22,7 @@ import {
 
 const RestaurantRegister = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, setRestaurantSlug } = useAuth();
   const [serverError, setServerError] = useState("");
   const form = useForm<RestaurantRegisterValues>({
     resolver: zodResolver(restaurantRegisterSchema),
@@ -45,7 +45,7 @@ const RestaurantRegister = () => {
         email: values.email,
         password: values.password,
       });
-      localStorage.setItem("restaurantSlug", response.data?.slug || values.slug);
+      setRestaurantSlug(response.data?.slug || values.slug);
       const loggedIn = login(
         response.data ?? {},
         { position: "admin", employee: values.employee, email: values.email, role: "admin" },

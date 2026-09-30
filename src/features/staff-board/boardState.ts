@@ -9,6 +9,7 @@ import type {
   Station,
   Ticket,
 } from "../../shared/realtime/protocol";
+import { sumCents } from "../../shared/money/formatCents";
 import { ticketsOf, withStatusChange } from "../../shared/realtime/tickets";
 
 export type TrackedOrder = Order & { cancelReason?: string };
@@ -194,6 +195,8 @@ export const boardReducer = (state: BoardState, action: BoardAction): BoardState
 export type ListedTicket = {
   order: TrackedOrder;
   ticket: Ticket;
+  /** The order has a ticket at the other station too. */
+  split: boolean;
   tableNumber: number;
 };
 
@@ -205,18 +208,82 @@ export const listTickets = (
 ): ListedTicket[] => {
   const allowed = new Set(statuses);
   return Object.values(state.ordersById)
-    .flatMap((order) =>
-      ticketsOf(order)
+    .flatMap((order) => {
+      const tickets = ticketsOf(order);
+      return tickets
         .filter((ticket) => allowed.has(ticket.status))
         .filter((ticket) => station === "all" || ticket.station === station)
         .map((ticket) => ({
           order,
           ticket,
+          split: tickets.length > 1,
           tableNumber:
             state.tablesById[order.tableId]?.tableNumber ??
             state.sessionsById[order.sessionId]?.tableNumber ??
             0,
-        }))
-    )
+        }));
+    })
     .sort((a, b) => a.order.createdAt.localeCompare(b.order.createdAt));
+};
+
+export type TableSummary = {
+  /** Tickets not served yet. */
+  open: number;
+  /** Tickets waiting at the pass. */
+  ready: number;
+  totalCents: number;
+  /** When the oldest open ticket was ordered; empty when everything is served. */
+  oldestOpenAt: string;
+};
+
+/** What each table's tile shows, by table id. A table with no live order has no entry. */
+export const summariseTables = (state: BoardState): Record<string, TableSummary> => {
+  const byTable: Record<string, TableSummary> = {};
+  Object.values(state.ordersById).forEach((order) => {
+    if (order.status === "cancelled") {
+      return;
+    }
+    const summary = (byTable[order.tableId] ??= { open: 0, ready: 0, totalCents: 0, oldestOpenAt: "" });
+    summary.totalCents = sumCents([summary.totalCents, order.totalCents]);
+    ticketsOf(order).forEach((ticket) => {
+      if (ticket.status === "cancelled") {
+        return;
+      }
+      if (ticket.status === "ready") {
+        summary.ready += 1;
+      }
+      if (ticket.status !== "served") {
+        summary.open += 1;
+        if (!summary.oldestOpenAt || order.createdAt < summary.oldestOpenAt) {
+          summary.oldestOpenAt = order.createdAt;
+        }
+      }
+    });
+  });
+  return byTable;
+};
+
+export type TableCheck = {
+  table?: BoardTable;
+  /** The open session at the table; none while the table is free. */
+  sessionId?: string;
+  joinCode?: string;
+  /** The orders that count towards the check, oldest first. */
+  orders: TrackedOrder[];
+  totalCents: number;
+};
+
+/** The check for one table: who is sitting there and what they owe so far. */
+export const tableCheck = (state: BoardState, tableId: string): TableCheck => {
+  const sessionId = state.sessionIdByTable[tableId];
+  const orders = Object.values(state.ordersById)
+    .filter((order) => order.tableId === tableId && order.status !== "cancelled")
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  return {
+    table: state.tablesById[tableId],
+    sessionId,
+    joinCode: sessionId ? state.sessionsById[sessionId]?.joinCode : undefined,
+    orders,
+    totalCents: sumCents(orders.map((order) => order.totalCents)),
+  };
 };

@@ -1,41 +1,14 @@
 import { useMemo } from "react";
-import Table, { type TableSummary } from "./Table";
+import Table from "./Table";
 import RecentlyClosed from "./RecentlyClosed";
+import { summariseTables } from "../../features/staff-board/boardState";
 import { useStaffBoard } from "../../features/staff-board/StaffBoardProvider";
-import { sumCents } from "../../shared/money/formatCents";
-import { ticketsOf } from "../../shared/realtime/tickets";
 
 const TableList = () => {
   const { state } = useStaffBoard();
   const tables = Object.values(state.tablesById).sort((a, b) => a.tableNumber - b.tableNumber);
 
-  // One pass over the orders gives every tile its bill, its open and ready
-  // tickets, and its oldest open ticket.
-  const summaries = useMemo(() => {
-    const byTable: Record<string, TableSummary> = {};
-    Object.values(state.ordersById).forEach((order) => {
-      if (order.status === "cancelled") {
-        return;
-      }
-      const summary = (byTable[order.tableId] ??= { open: 0, ready: 0, totalCents: 0, oldestOpenAt: "" });
-      summary.totalCents = sumCents([summary.totalCents, order.totalCents]);
-      ticketsOf(order).forEach((ticket) => {
-        if (ticket.status === "cancelled") {
-          return;
-        }
-        if (ticket.status === "ready") {
-          summary.ready += 1;
-        }
-        if (ticket.status !== "served") {
-          summary.open += 1;
-          if (!summary.oldestOpenAt || order.createdAt < summary.oldestOpenAt) {
-            summary.oldestOpenAt = order.createdAt;
-          }
-        }
-      });
-    });
-    return byTable;
-  }, [state.ordersById]);
+  const summaries = useMemo(() => summariseTables(state), [state]);
 
   const occupied = tables.filter((table) => table.status === "occupied").length;
 

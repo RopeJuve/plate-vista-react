@@ -3,9 +3,10 @@ import { useParams } from "react-router-dom";
 import { ChevronUp, Pencil, X } from "lucide-react";
 import { useOrder } from "../../contexts/OrderContext";
 import { useMenu } from "../../features/guest-ordering/MenuProvider";
-import { usePlaceOrder } from "../../features/guest-ordering/usePlaceOrder";
-import { useOrderAmendment } from "../../features/order-amendment/useOrderAmendment";
-import { useOrderActions } from "../../features/staff-board/useOrderActions";
+import { usePlaceOrder } from "../../features/guest-ordering/hooks/usePlaceOrder";
+import { useOrderAmendment } from "../../features/order-amendment/hooks/useOrderAmendment";
+import { tableCheck } from "../../features/staff-board/boardState";
+import { useOrderActions } from "../../features/staff-board/hooks/useOrderActions";
 import { useStaffBoard } from "../../features/staff-board/StaffBoardProvider";
 import { formatCents, lineTotalCents, sumCents } from "../../shared/money/formatCents";
 import { errorMessage } from "../../shared/realtime/errorMessages";
@@ -25,17 +26,17 @@ import { cn } from "@/lib/utils";
 
 const OrderDetails = () => {
   const { tableId = "" } = useParams();
-  const { menuItems, clearOrder, setQuantity, removeItemFromOrder } = useOrder();
+  const { pad, clearPad, setQuantity, removeLine } = useOrder();
   const { itemsById } = useMenu();
   const { state } = useStaffBoard();
   const { canSend, closeSession, updateOrder } = useOrderActions();
   const placeOrder = usePlaceOrder({
     storageKey: `staff:${tableId}`,
-    lines: menuItems,
+    lines: pad,
     menuById: itemsById,
     tableId,
     onPlaced: () => {
-      clearOrder();
+      clearPad();
       notify("Order placed", "success");
     },
     onFailed: (error) => notify(errorMessage(error.code, error.details, error.message)),
@@ -44,21 +45,14 @@ const OrderDetails = () => {
   const amendment = useOrderAmendment(updateOrder);
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  const table = state.tablesById[tableId];
-  const sessionId = state.sessionIdByTable[tableId];
-  const joinCode = sessionId ? state.sessionsById[sessionId]?.joinCode : undefined;
-  const orders = useMemo(
-    () =>
-      Object.values(state.ordersById)
-        .filter((order) => order.tableId === tableId && order.status !== "cancelled")
-        .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
-    [state.ordersById, tableId]
+  const { table, sessionId, joinCode, orders, totalCents: total } = useMemo(
+    () => tableCheck(state, tableId),
+    [state, tableId]
   );
-  const total = sumCents(orders.map((order) => order.totalCents));
   const padTotal = sumCents(
-    menuItems.map((line) => lineTotalCents(itemsById[line.productId]?.priceCents ?? 0, line.quantity))
+    pad.map((line) => lineTotalCents(itemsById[line.productId]?.priceCents ?? 0, line.quantity))
   );
-  const padCount = menuItems.reduce((count, line) => count + line.quantity, 0);
+  const padCount = pad.reduce((count, line) => count + line.quantity, 0);
 
   const handleCloseTable = async () => {
     if (!sessionId) {
@@ -114,7 +108,7 @@ const OrderDetails = () => {
         id="check-lines"
         className={cn("min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4", !sheetOpen && "hidden lg:block")}
       >
-        {orders.length === 0 && menuItems.length === 0 && (
+        {orders.length === 0 && pad.length === 0 && (
           <p className="py-8 text-center text-sm text-ink-soft">
             Nothing on this check yet. Tap items on the menu to start it.
           </p>
@@ -187,11 +181,11 @@ const OrderDetails = () => {
           );
         })}
 
-        {menuItems.length > 0 && (
+        {pad.length > 0 && (
           <div className="space-y-2">
             <h3 className="text-xs font-extrabold uppercase tracking-[0.14em] text-signal-ink">Not sent yet</h3>
             <ul className="space-y-2">
-              {menuItems.map((line) => {
+              {pad.map((line) => {
                 const title = itemsById[line.productId]?.title || "Item";
                 return (
                   <li key={line.productId} className="flex items-center gap-2">
@@ -205,7 +199,7 @@ const OrderDetails = () => {
                     <button
                       type="button"
                       className="grid h-10 w-10 place-items-center rounded-md text-ink-soft hover:bg-alert/10 hover:text-alert-ink"
-                      onClick={() => removeItemFromOrder(line.productId)}
+                      onClick={() => removeLine(line.productId)}
                       aria-label={`Remove ${title}`}
                     >
                       <X className="h-4 w-4" />

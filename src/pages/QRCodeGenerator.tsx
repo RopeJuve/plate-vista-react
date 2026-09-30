@@ -2,9 +2,9 @@ import { QRCode } from "react-qrcode";
 import { useEffect, useMemo, useState } from "react";
 import { Printer, RefreshCw } from "lucide-react";
 import { fetchTables } from "../services/tableDataFetch";
-import api, { getAuthToken } from "../services/api";
+import api from "../services/api";
 import { notify } from "../utils/notify";
-import { decodeJwt } from "../shared/api/jwt";
+import { useAuth } from "../contexts/AuthContext";
 import { Header } from "../Components/AdminComponents";
 import { Chit, Wordmark } from "../Components/rail";
 import { Button } from "@/components/ui/button";
@@ -40,7 +40,7 @@ const TentCard = ({ table, slug, size = 200 }: { table: QrTable; slug: string; s
 const QRCodeGenerator = () => {
   const [tables, setTables] = useState<QrTable[]>([]);
   const [selectedId, setSelectedId] = useState("");
-  const [slug, setSlug] = useState(() => localStorage.getItem("restaurantSlug") || "");
+  const slug = useAuth().restaurantSlug || "";
   const [configError, setConfigError] = useState("");
   const [printAll, setPrintAll] = useState(false);
 
@@ -49,28 +49,6 @@ const QRCodeGenerator = () => {
       setConfigError("VITE_PLATE_VISTA_URL is not set");
       return;
     }
-
-    const token = getAuthToken();
-    if (token) {
-      const payload = decodeJwt(token);
-      const fromToken = payload.slug || payload.restaurantSlug;
-      if (typeof fromToken === "string" && fromToken) {
-        setSlug(fromToken);
-        localStorage.setItem("restaurantSlug", fromToken);
-      }
-    }
-
-    api
-      .get("/auth/user")
-      .then(({ data }) => {
-        const nextSlug =
-          data?.restaurant?.slug || data?.user?.restaurant?.slug || data?.slug || data?.user?.slug;
-        if (typeof nextSlug === "string" && nextSlug) {
-          setSlug(nextSlug);
-          localStorage.setItem("restaurantSlug", nextSlug);
-        }
-      })
-      .catch(() => undefined);
 
     fetchTables()
       .then((response) => {

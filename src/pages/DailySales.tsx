@@ -2,7 +2,7 @@ import { useState } from "react";
 import Line from "./Charts/Line";
 import Header from "../Components/AdminComponents/Header";
 import RangeSelect from "../features/stats/RangeSelect";
-import { useSalesByDate } from "../features/stats/useStats";
+import { useSalesByDate } from "../features/stats/hooks/useStats";
 import { xFormatFor, type StatsRange } from "../features/stats/statsRange";
 
 const DailySales = () => {

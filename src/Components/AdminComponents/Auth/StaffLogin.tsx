@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { staffLoginSchema, type StaffLoginValues } from "@/lib/schemas";
-import { useSignIn } from "../../../shared/auth/useSignIn";
+import { useSignIn } from "../../../shared/auth/hooks/useSignIn";
 import {
   OWNER_LOGIN_PATH,
   normalizeSlug,
