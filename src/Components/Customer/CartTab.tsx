@@ -1,28 +1,19 @@
 import { useCart } from "../../contexts/CartContext";
+import { linesTotalCents } from "../../features/guest-ordering/cartLines";
 import { useMenu } from "../../features/guest-ordering/MenuProvider";
-import type { PlaceOrder, PlaceOrderPhase } from "../../features/guest-ordering/hooks/usePlaceOrder";
-import { lineTotalCents, sumCents } from "../../shared/money/formatCents";
-import { Chit } from "../rail";
+import type { PlaceOrder } from "../../features/guest-ordering/hooks/usePlaceOrder";
+import { PLACE_ORDER_LABEL } from "../../features/guest-ordering/placeOrderStatus";
+import { Chit, TotalLine } from "../rail";
 import CartLineRow from "./CartLineRow";
-import TotalLine from "./TotalLine";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-const BUTTON_LABEL: Record<PlaceOrderPhase, string> = {
-  idle: "Order now",
-  sending: "Placing…",
-  error: "Retry order",
-  success: "Order placed",
-};
 
 /** What the guest is about to order, and the button that sends it to the kitchen. */
 const CartTab = ({ placeOrder }: { placeOrder: PlaceOrder }) => {
   const { cart, clearCart } = useCart();
   const { itemsById } = useMenu();
   const { phase, message, blocking, canSend, canPlace, fieldErrors, unavailableIds, place } = placeOrder;
-  const estimated = sumCents(
-    cart.map((line) => lineTotalCents(itemsById[line.productId]?.priceCents ?? 0, line.quantity))
-  );
+  const estimated = linesTotalCents(cart, itemsById);
 
   return (
     <>
@@ -71,7 +62,7 @@ const CartTab = ({ placeOrder }: { placeOrder: PlaceOrder }) => {
       </div>
       <div className="grid grid-cols-[1fr_auto] gap-2 border-t border-ink/10 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
         <Button type="button" size="xl" onClick={place} disabled={!canPlace} title={canSend ? "" : "Connecting…"}>
-          {BUTTON_LABEL[phase]}
+          {PLACE_ORDER_LABEL.guest[phase]}
         </Button>
         <Button
           type="button"

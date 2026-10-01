@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import api from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
+import { apiMessage } from "../../utils/notify";
 import { restaurantRegisterSchema, type RestaurantRegisterValues } from "@/lib/schemas";
 import { markOnboarding } from "./onboarding";
 import { OWNER_LOGIN_PATH, rememberLoginKind } from "../../shared/auth/loginPaths";
@@ -60,8 +61,7 @@ const RestaurantRegister = () => {
       markOnboarding();
       navigate("/admin/overview");
     } catch (error) {
-      const message = (error as { response?: { data?: { message?: string } } }).response?.data?.message;
-      setServerError(message || "Registration failed. Please try again.");
+      setServerError(apiMessage(error, "Registration failed. Please try again."));
     }
   };
 

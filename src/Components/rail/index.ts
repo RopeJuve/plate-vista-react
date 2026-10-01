@@ -3,5 +3,6 @@ export { default as Lamp } from "./Lamp";
 export { default as QtyStepper } from "./QtyStepper";
 export { default as StepRow } from "./StepRow";
 export { default as TicketSteps } from "./TicketSteps";
+export { default as TotalLine } from "./TotalLine";
 export { default as Wordmark, PlateMark } from "./Wordmark";
 export { formatElapsed, minutesSince, useNow } from "./hooks/useNow";

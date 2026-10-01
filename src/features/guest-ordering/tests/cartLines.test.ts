@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { LIMITS } from "../../../shared/realtime/protocol";
-import { addLine, removeLine, restoreLines, setLineNotes, setLineQuantity } from "../cartLines";
+import {
+  addLine,
+  countItems,
+  linesTotalCents,
+  removeLine,
+  restoreLines,
+  setLineNotes,
+  setLineQuantity,
+} from "../cartLines";
 
 const soup = { productId: "soup", quantity: 2, notes: "" };
 const cola = { productId: "cola", quantity: 1, notes: "no ice" };
@@ -36,6 +44,16 @@ describe("cart lines", () => {
 
   it("removes only the named line", () => {
     expect(removeLine([soup, cola], "soup")).toEqual([cola]);
+  });
+
+  it("counts every dish, not every line", () => {
+    expect(countItems([soup, cola])).toBe(3);
+    expect(countItems([])).toBe(0);
+  });
+
+  it("prices the lines from the menu, counting a product no longer on it as free", () => {
+    expect(linesTotalCents([soup, cola], { soup: { priceCents: 450 }, cola: { priceCents: 300 } })).toBe(1200);
+    expect(linesTotalCents([soup, cola], { soup: { priceCents: 450 } })).toBe(900);
   });
 
   it("restores stored lines within the limits and drops what is unusable", () => {

@@ -37,3 +37,5 @@ export const useOrderAmendment = (saveAmendment: SaveAmendment) => {
     },
   };
 };
+
+export type OrderAmendment = ReturnType<typeof useOrderAmendment>;

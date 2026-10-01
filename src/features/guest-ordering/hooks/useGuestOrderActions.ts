@@ -1,6 +1,6 @@
 import { useRealtime } from "../../../shared/realtime/RealtimeProvider";
-import { errorMessage } from "../../../shared/realtime/errorMessages";
-import { ProtocolError, type Order, type OrderCreateItemInput } from "../../../shared/realtime/protocol";
+import { requestErrorMessage } from "../../../shared/realtime/errorMessages";
+import type { Order, OrderCreateItemInput } from "../../../shared/realtime/protocol";
 import { notify } from "../../../utils/notify";
 import { useGuestBill } from "../GuestBillProvider";
 
@@ -21,7 +21,7 @@ export const useGuestOrderActions = () => {
       }
       return true;
     } catch (error) {
-      notify(error instanceof ProtocolError ? errorMessage(error.code, error.details, error.message) : fallback);
+      notify(requestErrorMessage(error, fallback));
       return false;
     }
   };

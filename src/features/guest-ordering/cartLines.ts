@@ -1,3 +1,4 @@
+import { lineTotalCents, sumCents } from "../../shared/money/formatCents";
 import { LIMITS } from "../../shared/realtime/protocol";
 import type { CartLine } from "./types";
 
@@ -33,6 +34,16 @@ export const setLineNotes = (lines: CartLine[], productId: string, notes: string
 
 export const removeLine = (lines: CartLine[], productId: string): CartLine[] =>
   lines.filter((line) => line.productId !== productId);
+
+/** How many dishes and drinks the lines add up to. */
+export const countItems = (lines: Pick<CartLine, "quantity">[]): number =>
+  lines.reduce((count, line) => count + line.quantity, 0);
+
+/** What the lines cost at today's menu prices. A product missing from the menu counts as free. */
+export const linesTotalCents = (
+  lines: CartLine[],
+  menuById: Record<string, { priceCents?: number } | undefined>
+): number => sumCents(lines.map((line) => lineTotalCents(menuById[line.productId]?.priceCents ?? 0, line.quantity)));
 
 /** Lines read back from storage, which may be stale or hand-edited: keep what is usable, within the limits. */
 export const restoreLines = (stored: unknown): CartLine[] => {

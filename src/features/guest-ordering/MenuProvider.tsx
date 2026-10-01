@@ -8,6 +8,7 @@ import {
 } from "react";
 import api from "../../services/api";
 import { useRealtime } from "../../shared/realtime/RealtimeProvider";
+import { apiMessage } from "../../utils/notify";
 import { applyMenuUpdate, toMenuRecord, unwrapList, type MenuRecord } from "./menu";
 
 type MenuContextValue = {
@@ -41,7 +42,7 @@ export const MenuProvider = ({ slug, children }: { slug?: string; children?: Rea
         if ((err as { code?: string }).code === "ERR_CANCELED") {
           return;
         }
-        setError((err as { response?: { data?: { message?: string } } }).response?.data?.message || "Could not load the menu");
+        setError(apiMessage(err, "Could not load the menu"));
       } finally {
         if (!controller.signal.aborted) {
           setLoading(false);

@@ -1,16 +1,16 @@
+import { payableCents } from "../../features/guest-ordering/billState";
 import { useGuestBill } from "../../features/guest-ordering/GuestBillProvider";
 import { useGuestOrderActions } from "../../features/guest-ordering/hooks/useGuestOrderActions";
 import { useOrderAmendment } from "../../features/order-amendment/hooks/useOrderAmendment";
-import { sumCents } from "../../shared/money/formatCents";
+import { TotalLine } from "../rail";
 import BillOrderCard from "./BillOrderCard";
-import TotalLine from "./TotalLine";
 
 /** Everything the table has ordered so far, with what is still to pay. */
 const BillTab = () => {
   const { orders } = useGuestBill();
   const { canSend, updateOrder, cancelOrder } = useGuestOrderActions();
   const amendment = useOrderAmendment(updateOrder);
-  const payable = sumCents(orders.filter((order) => order.status !== "cancelled").map((order) => order.totalCents));
+  const payable = payableCents(orders);
 
   return (
     <>

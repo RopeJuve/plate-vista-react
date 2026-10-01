@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { ChefHat, Layers, RefreshCw, Wine } from "lucide-react";
 import BarOrders from "./BarOrders";
+import { BOARD_LANES } from "../../features/staff-board/boardLanes";
 import { useStaffBoard } from "../../features/staff-board/StaffBoardProvider";
-import type { OrderStatus, Station } from "../../shared/realtime/protocol";
+import type { Station } from "../../shared/realtime/protocol";
 import { cn } from "@/lib/utils";
 
 const STATIONS = [
@@ -11,13 +12,7 @@ const STATIONS = [
   { id: "bar", label: "Bar", icon: Wine },
 ] as const;
 
-const LANES: { title: string; statuses: OrderStatus[]; compact?: boolean }[] = [
-  { title: "New", statuses: ["pending"] },
-  { title: "On the line", statuses: ["accepted", "preparing"] },
-  { title: "At the pass", statuses: ["ready"] },
-  { title: "Served", statuses: ["served"], compact: true },
-];
-
+/** The order rail: one lane per stage, filtered to a station. */
 const OrdersList = () => {
   const { snapshotFailed, reload } = useStaffBoard();
   // Start on every station: items default to "kitchen", so a bar login filtered
@@ -73,14 +68,8 @@ const OrdersList = () => {
       )}
 
       <div className="mx-auto grid min-h-0 w-full max-w-[1920px] flex-1 snap-x snap-mandatory auto-cols-[minmax(17.5rem,88vw)] grid-flow-col gap-3 overflow-x-auto px-3 pb-4 pt-4 sm:auto-cols-[minmax(19rem,1fr)] sm:px-5 xl:grid-flow-row xl:grid-cols-[repeat(3,minmax(0,1fr))_minmax(0,0.8fr)] xl:overflow-visible">
-        {LANES.map((lane) => (
-          <BarOrders
-            key={lane.title}
-            title={lane.title}
-            statuses={lane.statuses}
-            station={station}
-            compact={lane.compact}
-          />
+        {BOARD_LANES.map((lane) => (
+          <BarOrders key={lane.title} lane={lane} station={station} />
         ))}
       </div>
     </section>
