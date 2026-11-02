@@ -47,6 +47,15 @@ if (!process.env.ANTHROPIC_API_KEY && !process.env.CLAUDE_CODE_OAUTH_TOKEN && !e
 const argv = process.argv.slice(2);
 const flag = (name: string) => argv.find((a) => a.startsWith(`--${name}=`))?.split("=")[1];
 const DRY_RUN = process.env.AFK_DRY_RUN === "1" || argv.includes("--dry-run");
+
+// Sandcastle only forwards vars listed in .sandcastle/.env — which doesn't exist in CI
+// (it's git-ignored). So pass the Claude credentials to the agent explicitly.
+const AGENT_ENV: Record<string, string> = {};
+for (const k of ["CLAUDE_CODE_OAUTH_TOKEN", "ANTHROPIC_API_KEY"]) {
+  const v = process.env[k]?.trim();
+  if (v) AGENT_ENV[k] = v;
+}
+const agent = (model: string) => claudeCode(model, { effort: cfg.effort, env: AGENT_ENV });
 const ISSUE_ARG = flag("issue") ?? process.env.AFK_ISSUE;
 const ONLY_ISSUE = ISSUE_ARG ? Number(ISSUE_ARG) : null;
 if (flag("max")) process.env.AFK_MAX_ISSUES = flag("max");
@@ -147,7 +156,7 @@ async function plan(issues: Issue[]): Promise<Plan> {
   }
   const res = await run({
     name: "planner",
-    agent: claudeCode(cfg.models.planner, { effort: cfg.effort }),
+    agent: agent(cfg.models.planner),
     sandbox: docker({ imageName: cfg.imageName }),
     promptFile: ".sandcastle/prompts/plan.md",
     promptArgs: {
@@ -206,7 +215,7 @@ async function work(issue: Issue): Promise<Outcome> {
     // 1. implement
     const impl = await sbx.run({
       name: `impl#${n}`,
-      agent: claudeCode(cfg.models.implementer, { effort: cfg.effort }),
+      agent: agent(cfg.models.implementer),
       promptFile: ".sandcastle/prompts/implement.md",
       promptArgs: { ISSUE_NUMBER: String(n), ISSUE_TITLE: issue.title, ISSUE_BODY: issue.body || "(no description)", VERIFY_COMMANDS: verifyList },
       maxIterations: cfg.implementIterations,
@@ -225,7 +234,7 @@ async function work(issue: Issue): Promise<Outcome> {
       log(`#${n} verify failed → fix attempt`);
       await sbx.run({
         name: `fix#${n}`,
-        agent: claudeCode(cfg.models.implementer, { effort: cfg.effort }),
+        agent: agent(cfg.models.implementer),
         promptFile: ".sandcastle/prompts/fix.md",
         promptArgs: { ISSUE_NUMBER: String(n), FAILURES: v.report, VERIFY_COMMANDS: verifyList },
         maxIterations: 4,
@@ -240,7 +249,7 @@ async function work(issue: Issue): Promise<Outcome> {
     try {
       const rev = await sbx.run({
         name: `review#${n}`,
-        agent: claudeCode(cfg.models.reviewer, { effort: cfg.effort }),
+        agent: agent(cfg.models.reviewer),
         promptFile: ".sandcastle/prompts/review.md",
         promptArgs: { ISSUE_NUMBER: String(n), ISSUE_TITLE: issue.title, ISSUE_BODY: issue.body || "(no description)", VERIFY_COMMANDS: verifyList },
         logging: logFile("review"),
@@ -261,7 +270,7 @@ async function work(issue: Issue): Promise<Outcome> {
 
     // 5. push + PR (host side — agent never gets a GitHub token)
     cmd("git", ["push", "--force-with-lease", "-u", "origin", branch]);
-    const existing = gh(["pr", "list", "--head", branch, "--json", "url", "--jq", ".[0].url"]);
+    const existing = gh(["pr", "list", "--head", branch, "--json", "url", "--jq", ".[0].url // empty"]);
     const url =
       existing ||
       gh([
