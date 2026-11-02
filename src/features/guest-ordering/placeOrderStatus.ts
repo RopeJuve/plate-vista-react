@@ -5,6 +5,12 @@ import type { CartLine } from "./types";
 
 export type PlaceOrderPhase = "idle" | "sending" | "success" | "error";
 
+/** The send button's label. Staff keep tapping in orders, so theirs never says "placed". */
+export const PLACE_ORDER_LABEL: Record<"guest" | "staff", Record<PlaceOrderPhase, string>> = {
+  guest: { idle: "Order now", sending: "Placing…", error: "Retry order", success: "Order placed" },
+  staff: { idle: "Place order", sending: "Placing…", error: "Retry order", success: "Place order" },
+};
+
 export type PlaceOrderStatus = {
   /** The order can go out now: there are lines, none is blocked, and the connection is up. */
   canPlace: boolean;

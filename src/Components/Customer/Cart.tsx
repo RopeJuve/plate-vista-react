@@ -4,18 +4,19 @@ import { useCart } from "../../contexts/CartContext";
 import CartModal from "./CartModal";
 import { useMenu } from "../../features/guest-ordering/MenuProvider";
 import { useGuestBill } from "../../features/guest-ordering/GuestBillProvider";
-import { formatCents, lineTotalCents, sumCents } from "../../shared/money/formatCents";
+import { payableOrders } from "../../features/guest-ordering/billState";
+import { countItems, linesTotalCents } from "../../features/guest-ordering/cartLines";
+import { formatCents } from "../../shared/money/formatCents";
 
+/** The bar along the bottom of the menu that opens the guest's order and bill. */
 const Cart = () => {
   const { cart } = useCart();
   const { itemsById } = useMenu();
   const { orders } = useGuestBill();
   const [showCart, setShowCart] = useState(false);
-  const count = cart.reduce((total, item) => total + item.quantity, 0);
-  const totalCents = sumCents(
-    cart.map((line) => lineTotalCents(itemsById[line.productId]?.priceCents ?? 0, line.quantity))
-  );
-  const hasBill = orders.some((order) => order.status !== "cancelled");
+  const count = countItems(cart);
+  const totalCents = linesTotalCents(cart, itemsById);
+  const hasBill = payableOrders(orders).length > 0;
 
   return (
     <>

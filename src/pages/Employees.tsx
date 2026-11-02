@@ -1,34 +1,20 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import type { ColumnDef } from "@tanstack/react-table";
 import { UserPlus } from "lucide-react";
 import { Header } from "../Components/AdminComponents";
-import { fetchEmployees } from "../services/employeeDataFetch";
-import { notify } from "../utils/notify";
+import { toEmployeeRow } from "../features/employees/employees";
+import { useEmployees } from "../features/employees/hooks/useEmployees";
+import { initialOf } from "../shared/auth/staffName";
 import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
-import type { Employee, EmployeeRow } from "@/types";
+import type { EmployeeRow } from "@/types";
 
+/** Everyone on staff, with the way to add someone new. */
 const Employees = () => {
-  const [employees, setEmployees] = useState<EmployeeRow[]>([]);
+  const { employees } = useEmployees();
+  const rows = useMemo(() => employees.map(toEmployeeRow), [employees]);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    fetchEmployees()
-      .then((response) => {
-        const transformedEmployees = (Array.isArray(response.data) ? response.data : []).map(
-          (employee: Employee) => ({
-          employeeId: employee._id,
-          employee: employee.employee,
-          email: employee.email,
-          position: employee.position,
-        }));
-        setEmployees(transformedEmployees);
-      })
-      .catch((error) => {
-        notify(error.response?.data?.message || "Could not load employees");
-      });
-  }, []);
 
   const columns = useMemo<ColumnDef<EmployeeRow>[]>(
     () => [
@@ -38,7 +24,7 @@ const Employees = () => {
         cell: ({ row }) => (
           <span className="flex items-center gap-3">
             <span className="grid h-8 w-8 place-items-center rounded-full bg-ink text-xs font-black uppercase text-paper" aria-hidden="true">
-              {(row.original.employee || "?").charAt(0)}
+              {initialOf(row.original.employee)}
             </span>
             <span className="font-semibold">{row.original.employee}</span>
           </span>
@@ -77,7 +63,7 @@ const Employees = () => {
       />
       <DataTable
         columns={columns}
-        data={employees}
+        data={rows}
         searchPlaceholder="Search employees"
       />
     </div>

@@ -1,3 +1,4 @@
+import { sumCents } from "../../shared/money/formatCents";
 import type { Order, ServerEvent } from "../../shared/realtime/protocol";
 import { withStatusChange } from "../../shared/realtime/tickets";
 
@@ -67,6 +68,13 @@ export const applyBillEvent = (state: BillState, event: ServerEvent, sessionId: 
 
 export const billOrders = (state: BillState): BillOrder[] =>
   Object.values(state.ordersById).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+
+/** Orders the guest still pays for: everything not cancelled outright. */
+export const payableOrders = <T extends Pick<Order, "status">>(orders: T[]): T[] =>
+  orders.filter((order) => order.status !== "cancelled");
+
+export const payableCents = (orders: Pick<Order, "status" | "totalCents">[]): number =>
+  sumCents(payableOrders(orders).map((order) => order.totalCents));
 
 const storageKey = (sessionId: string) => `bill:${sessionId}`;
 

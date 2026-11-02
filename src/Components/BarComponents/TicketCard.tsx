@@ -1,26 +1,20 @@
 import { memo, useState } from "react";
 import { ChefHat, Wine } from "lucide-react";
 import { formatCents, sumCents } from "../../shared/money/formatCents";
-import { NEXT_STAFF_ACTION, type OrderStatus, type Ticket } from "../../shared/realtime/protocol";
+import { NEXT_STAFF_ACTION, type Ticket } from "../../shared/realtime/protocol";
 import { TICKET_LABEL, ticketLines } from "../../shared/realtime/tickets";
 import type { TrackedOrder } from "../../features/staff-board/boardState";
 import { useOrderActions } from "../../features/staff-board/hooks/useOrderActions";
+import { isOverdue, OVERDUE_AFTER_MINUTES } from "../../features/staff-board/ticketTiming";
+import { countItems } from "../../features/guest-ordering/cartLines";
 import { Chit, StepRow, formatElapsed, minutesSince, useNow } from "../rail";
 import CancelTicketDialog from "./CancelTicketDialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-/** Minutes a ticket may sit in a status before it wears the hazard hatch. */
-const OVERDUE_AFTER: Partial<Record<OrderStatus, number>> = {
-  pending: 5,
-  accepted: 15,
-  preparing: 15,
-  ready: 5,
-};
-
 const Timer = ({ since, overdueAfter }: { since: string; overdueAfter?: number }) => {
   const now = useNow();
-  const overdue = overdueAfter !== undefined && minutesSince(since, now) >= overdueAfter;
+  const overdue = isOverdue(minutesSince(since, now), overdueAfter);
   return (
     <span
       className={cn(
@@ -36,7 +30,7 @@ const Timer = ({ since, overdueAfter }: { since: string; overdueAfter?: number }
 
 const OverdueHatch = ({ since, after }: { since: string; after?: number }) => {
   const now = useNow();
-  if (after === undefined || minutesSince(since, now) < after) {
+  if (!isOverdue(minutesSince(since, now), after)) {
     return null;
   }
   return <div className="hazard mx-4 mt-3 h-1.5 rounded-full" role="img" aria-label="Overdue" />;
@@ -67,7 +61,8 @@ const TicketCard = memo(({
   const lines = ticketLines(order, station);
   const nextAction = NEXT_STAFF_ACTION[ticket.status];
   const canCancel = ticket.status === "pending" || ticket.status === "accepted";
-  const itemCount = lines.reduce((total, item) => total + item.quantity, 0);
+  const itemCount = countItems(lines);
+  const overdueAfter = OVERDUE_AFTER_MINUTES[ticket.status];
   const totalCents = sumCents(lines.map((item) => item.lineTotalCents));
   const shortId = order._id.slice(-4).toUpperCase();
   const atBar = station === "bar";
@@ -104,7 +99,7 @@ const TicketCard = memo(({
             </span>
           </h3>
           <div className="flex flex-col items-end gap-1.5 pb-0.5">
-            <Timer since={order.createdAt} overdueAfter={OVERDUE_AFTER[ticket.status]} />
+            <Timer since={order.createdAt} overdueAfter={overdueAfter} />
             <span className="flex items-center gap-1 font-mono text-[0.7rem] uppercase tracking-[0.08em] text-ink-soft">
               <StationIcon className="h-3.5 w-3.5" aria-hidden="true" />
               {stationLabel} · #{shortId} · {itemCount} items
@@ -112,7 +107,7 @@ const TicketCard = memo(({
           </div>
         </div>
 
-        <OverdueHatch since={order.createdAt} after={OVERDUE_AFTER[ticket.status]} />
+        <OverdueHatch since={order.createdAt} after={overdueAfter} />
         <StepRow status={ticket.status} className="px-4 pt-3" />
 
         <div className="perf mx-4 mt-3" />

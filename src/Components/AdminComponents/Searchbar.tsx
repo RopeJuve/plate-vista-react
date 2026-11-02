@@ -1,40 +1,25 @@
-import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Search, X } from "lucide-react";
-import { fetchEmployees } from "../../services/employeeDataFetch";
 import { useStateContext } from "../../contexts/ContextProvider";
-import { Employee } from "../../types";
+import { matchesEmployee } from "../../features/employees/employees";
+import { useEmployees } from "../../features/employees/hooks/useEmployees";
+import { initialOf } from "../../shared/auth/staffName";
 
+/** The admin's quick lookup for a staff member by name, email or position. */
 const Searchbar = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredEmployees, setFilteredEmployees] = useState<Employee[]>([]);
+  const { employees } = useEmployees();
   const { setIsClicked, initialState } = useStateContext();
   const inputRef = useRef<HTMLInputElement>(null);
+  const filteredEmployees = searchTerm ? employees.filter((employee) => matchesEmployee(employee, searchTerm)) : [];
 
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
 
-  const handleSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const requirement = event.target.value;
-    setSearchTerm(requirement);
-
-    fetchEmployees().then((response) => {
-      const employees = (Array.isArray(response.data) ? response.data : []) as Employee[];
-
-      const filteredResults = employees.filter((employee) =>
-        (employee.employee || "").toLowerCase().includes(requirement.toLowerCase()) ||
-        (employee.email || "").toLowerCase().includes(requirement.toLowerCase()) ||
-        (employee.position || "").toLowerCase().includes(requirement.toLowerCase())
-      );
-
-      setFilteredEmployees(filteredResults);
-    });
-  };
-
   const handleCancel = () => {
     setIsClicked(initialState);
     setSearchTerm("");
-    setFilteredEmployees([]);
   };
 
   return (
@@ -67,7 +52,7 @@ const Searchbar = () => {
           placeholder="Name, email or position"
           aria-label="Search by name, email, or position"
           value={searchTerm}
-          onChange={handleSearchChange}
+          onChange={(event) => setSearchTerm(event.target.value)}
         />
       </div>
 
@@ -77,7 +62,7 @@ const Searchbar = () => {
             {filteredEmployees.map((employee) => (
               <li key={employee._id} className="flex items-center gap-3 py-2.5">
                 <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-ink text-xs font-black uppercase text-paper" aria-hidden="true">
-                  {(employee.employee || "?").charAt(0)}
+                  {initialOf(employee.employee)}
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-semibold">{employee.employee}</span>

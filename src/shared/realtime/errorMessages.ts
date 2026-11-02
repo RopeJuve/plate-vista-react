@@ -1,5 +1,5 @@
 import type { ErrorCode, ErrorDetails, ValidationDetails, InvalidTransitionDetails } from "./protocol";
-import { ORDER_STATUS_LABEL } from "./protocol";
+import { ORDER_STATUS_LABEL, ProtocolError } from "./protocol";
 
 const hasFields = (details: ErrorDetails): details is ValidationDetails =>
   Boolean(details && typeof details === "object" && "fields" in details);
@@ -48,3 +48,7 @@ export const errorMessage = (code: ErrorCode, details?: ErrorDetails, fallback?:
       return fallback || "Something went wrong. Please try again.";
   }
 };
+
+/** Text for anything a realtime request threw: the protocol's own message, or `fallback` for a dropped socket and the like. */
+export const requestErrorMessage = (error: unknown, fallback: string): string =>
+  error instanceof ProtocolError ? errorMessage(error.code, error.details, error.message) : fallback;

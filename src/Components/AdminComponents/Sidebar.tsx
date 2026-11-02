@@ -2,17 +2,23 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import { LogOut, X } from "lucide-react";
 import { useStateContext } from "../../contexts/ContextProvider";
 import { useAuth } from "../../contexts/AuthContext";
-import { useRealtime } from "../../shared/realtime/RealtimeProvider";
+import { useSignOut } from "../../shared/auth/hooks/useSignOut";
+import { initialOf, staffName } from "../../shared/auth/staffName";
 import { links } from "../../data/data";
 import { Wordmark } from "../rail";
 import { cn } from "@/lib/utils";
 
 const Sidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
   const { setActiveMenu } = useStateContext();
-  const { user, logout } = useAuth();
-  const { disconnect } = useRealtime();
+  const { user } = useAuth();
+  const signOut = useSignOut();
   const navigate = useNavigate();
-  const name = user?.employee || user?.email || "Owner";
+  const name = staffName(user, "Owner");
+
+  const handleSignOut = () => {
+    signOut();
+    navigate("/");
+  };
 
   return (
     <nav aria-label="Admin" className="flex h-full flex-col text-paper">
@@ -67,7 +73,7 @@ const Sidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
 
       <div className="flex items-center gap-3 border-t border-white/[0.07] px-4 py-3">
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-paper text-sm font-black uppercase text-ink" aria-hidden="true">
-          {name.charAt(0)}
+          {initialOf(name)}
         </span>
         <span className="min-w-0 flex-1 leading-tight">
           <span className="block truncate text-sm font-semibold">{name}</span>
@@ -77,11 +83,7 @@ const Sidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
         </span>
         <button
           type="button"
-          onClick={() => {
-            disconnect();
-            logout();
-            navigate("/");
-          }}
+          onClick={handleSignOut}
           className="grid h-10 w-10 place-items-center rounded-md text-steel-300 hover:bg-white/10 hover:text-paper"
           aria-label="Log out"
           title="Log out"

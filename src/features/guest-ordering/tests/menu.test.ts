@@ -1,5 +1,35 @@
 import { describe, expect, it } from "vitest";
-import { toCategoryList, toMenuRecord, unwrapList } from "../menu";
+import { toCategoryList, toMenuRecord, unwrapList, visibleMenuItems, type MenuRecord } from "../menu";
+
+const dish = (title: string, category: string, overrides: Partial<MenuRecord> = {}): MenuRecord => ({
+  _id: title,
+  title,
+  description: "",
+  priceCents: 450,
+  image: "",
+  category,
+  inStock: true,
+  station: "kitchen",
+  popular: false,
+  archived: false,
+  ...overrides,
+});
+
+describe("visibleMenuItems", () => {
+  const soup = dish("Tomato soup", "starters", { description: "with basil" });
+  const salad = dish("Salad", "starters", { archived: true });
+  const wine = dish("Red wine", "drinks");
+
+  it("shows the picked category, never archived dishes", () => {
+    expect(visibleMenuItems([soup, salad, wine], "", "starters")).toEqual([soup]);
+    expect(visibleMenuItems([soup, salad, wine], "", "")).toEqual([soup, wine]);
+  });
+
+  it("searches every category by title or description, ignoring case and spaces", () => {
+    expect(visibleMenuItems([soup, salad, wine], "  BASIL ", "drinks")).toEqual([soup]);
+    expect(visibleMenuItems([soup, salad, wine], "salad", "")).toEqual([]);
+  });
+});
 
 describe("unwrapList", () => {
   it("returns arrays as-is", () => {

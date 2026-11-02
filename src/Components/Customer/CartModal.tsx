@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { useCart } from "../../contexts/CartContext";
+import { payableOrders } from "../../features/guest-ordering/billState";
+import { countItems } from "../../features/guest-ordering/cartLines";
 import { useMenu } from "../../features/guest-ordering/MenuProvider";
 import { useGuestBill } from "../../features/guest-ordering/GuestBillProvider";
 import { usePlaceOrder } from "../../features/guest-ordering/hooks/usePlaceOrder";
@@ -27,8 +29,8 @@ const CartModal = ({ closeModal }: { closeModal: (open: boolean) => void }) => {
   });
   const [selectedTab, setSelectedTab] = useState<"cart" | "bill">("cart");
   const sheetRef = useRef<HTMLDivElement>(null);
-  const cartCount = cart.reduce((total, line) => total + line.quantity, 0);
-  const billCount = orders.filter((order) => order.status !== "cancelled").length;
+  const cartCount = countItems(cart);
+  const billCount = payableOrders(orders).length;
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {

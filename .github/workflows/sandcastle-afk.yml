@@ -1,0 +1,76 @@
+name: Sandcastle AFK
+
+on:
+  schedule:
+    - cron: "0 20 * * *" # 20:00 UTC = 21:00 Berlin (winter) / 22:00 (summer)
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Plan only — no branches, PRs or label changes"
+        type: boolean
+        default: false
+      issue:
+        description: "Run a single issue number (skips the planner)"
+        type: string
+        required: false
+      max_issues:
+        description: "Max issues this run (overrides config.json)"
+        type: string
+        required: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: sandcastle-afk
+  cancel-in-progress: false
+
+jobs:
+  afk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Git identity
+        run: |
+          git config --global user.name  "sandcastle-bot"
+          git config --global user.email "sandcastle-bot@users.noreply.github.com"
+
+      - name: Install host dependencies
+        run: |
+          if   [ -f pnpm-lock.yaml ];    then npx --yes pnpm install --frozen-lockfile
+          elif [ -f yarn.lock ];         then npx --yes yarn install --frozen-lockfile
+          elif [ -f package-lock.json ]; then npm ci
+          else npm install; fi
+
+      - name: Build sandbox image
+        run: npx @ai-hero/sandcastle docker build-image --image-name "$(jq -r .imageName .sandcastle/config.json)"
+
+      - name: Run AFK agents
+        run: npx tsx .sandcastle/afk.mts
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Optional PAT: PRs opened with the default GITHUB_TOKEN do NOT trigger your other CI workflows.
+          GH_TOKEN: ${{ secrets.SANDCASTLE_GH_TOKEN || github.token }}
+          AFK_DRY_RUN: ${{ inputs.dry_run && '1' || '' }}
+          AFK_ISSUE: ${{ inputs.issue }}
+          AFK_MAX_ISSUES: ${{ inputs.max_issues }}
+
+      - name: Upload agent logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sandcastle-logs-${{ github.run_id }}
+          path: .sandcastle/logs/
+          retention-days: 14
+          if-no-files-found: ignore

@@ -2,13 +2,14 @@ import { memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Users } from "lucide-react";
 import type { TableSummary } from "../../features/staff-board/boardState";
+import { isOverdue, TABLE_LATE_AFTER_MINUTES } from "../../features/staff-board/ticketTiming";
 import { formatCents } from "../../shared/money/formatCents";
 import { formatElapsed, minutesSince, useNow } from "../rail";
 import { cn } from "@/lib/utils";
 
 const OldestTimer = ({ since }: { since: string }) => {
   const now = useNow();
-  const late = minutesSince(since, now) >= 15;
+  const late = isOverdue(minutesSince(since, now), TABLE_LATE_AFTER_MINUTES);
   return (
     <span className={cn("font-mono text-sm font-bold tabular", late ? "text-alert-ink" : "text-ink")}>
       {formatElapsed(since, now)}

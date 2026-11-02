@@ -1,0 +1,21 @@
+{
+  "imageName": "sandcastle:agent",
+  "labels": {
+    "ready": "ready-for-agent",
+    "inProgress": "agent-in-progress",
+    "prOpen": "agent-pr-open",
+    "needsHuman": "needs-human"
+  },
+  "models": {
+    "planner": "sonnet",
+    "implementer": "opus",
+    "reviewer": "sonnet"
+  },
+  "effort": "medium",
+  "maxIssuesPerRun": 1,
+  "maxParallel": 1,
+  "implementIterations": 6,
+  "installCommand": null,
+  "verifyCommands": ["npm run lint", "npm run build"],
+  "copyToWorktree": []
+}

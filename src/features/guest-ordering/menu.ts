@@ -157,3 +157,20 @@ export const applyMenuUpdate = (items: MenuRecord[], update: MenuUpdatedData): M
   };
   return next;
 };
+
+/**
+ * Dishes the guest sees: never archived ones. A search looks across the whole
+ * menu by title and description; otherwise only the picked category shows.
+ */
+export const visibleMenuItems = (items: MenuRecord[], search: string, category: string): MenuRecord[] => {
+  const query = search.trim().toLowerCase();
+  return items.filter((item) => {
+    if (item.archived) {
+      return false;
+    }
+    if (query) {
+      return item.title.toLowerCase().includes(query) || item.description.toLowerCase().includes(query);
+    }
+    return !category || item.category === category;
+  });
+};

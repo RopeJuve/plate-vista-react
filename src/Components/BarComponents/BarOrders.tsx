@@ -1,22 +1,15 @@
 import { useId } from "react";
+import type { BoardLane } from "../../features/staff-board/boardLanes";
 import { listTickets } from "../../features/staff-board/boardState";
 import { useOrderActions } from "../../features/staff-board/hooks/useOrderActions";
 import { useStaffBoard } from "../../features/staff-board/StaffBoardProvider";
-import type { OrderStatus, Station } from "../../shared/realtime/protocol";
+import type { Station } from "../../shared/realtime/protocol";
+import { cn } from "@/lib/utils";
 import TicketCard from "./TicketCard";
 
 /** One lane of the rail: a steel bar with the tickets at this status hanging from it. */
-const BarOrders = ({
-  title,
-  statuses,
-  station,
-  compact = false,
-}: {
-  title: string;
-  statuses: OrderStatus[];
-  station: Station | "all";
-  compact?: boolean;
-}) => {
+const BarOrders = ({ lane, station }: { lane: BoardLane; station: Station | "all" }) => {
+  const { title, statuses, urgent = false, compact = false } = lane;
   const { state } = useStaffBoard();
   const { canSend } = useOrderActions();
   const tickets = listTickets(state, statuses, station);
@@ -33,11 +26,10 @@ const BarOrders = ({
           {title}
         </h2>
         <span
-          className={
-            tickets.length && title === "New"
-              ? "min-w-[1.75rem] rounded-full bg-signal px-2 text-center font-mono text-sm font-bold text-ink tabular"
-              : "min-w-[1.75rem] rounded-full bg-white/10 px-2 text-center font-mono text-sm font-bold text-paper tabular"
-          }
+          className={cn(
+            "min-w-[1.75rem] rounded-full px-2 text-center font-mono text-sm font-bold tabular",
+            urgent && tickets.length ? "bg-signal text-ink" : "bg-white/10 text-paper"
+          )}
         >
           {tickets.length}
         </span>

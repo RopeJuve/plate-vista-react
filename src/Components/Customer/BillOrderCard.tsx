@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Pencil } from "lucide-react";
 import type { BillOrder } from "../../features/guest-ordering/billState";
-import type { useOrderAmendment } from "../../features/order-amendment/hooks/useOrderAmendment";
+import type { OrderAmendment } from "../../features/order-amendment/hooks/useOrderAmendment";
 import { formatCents } from "../../shared/money/formatCents";
 import { LIMITS } from "../../shared/realtime/protocol";
 import { TICKET_LABEL, droppedStations, ticketsOf } from "../../shared/realtime/tickets";
@@ -18,7 +18,7 @@ const BillOrderCard = ({
   onCancel,
 }: {
   order: BillOrder;
-  amendment: ReturnType<typeof useOrderAmendment>;
+  amendment: OrderAmendment;
   canSend: boolean;
   /** Resolves true once the order is cancelled. */
   onCancel: (orderId: string, reason: string) => Promise<boolean>;

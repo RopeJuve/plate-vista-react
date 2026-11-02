@@ -1,24 +1,14 @@
 import { LogOut } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
-import { useRealtime } from "../../shared/realtime/RealtimeProvider";
-import type { User } from "../../types";
-
-const nameOf = (user: User | null) => {
-  if (!user) {
-    return "Staff";
-  }
-  if (typeof user === "string") {
-    return user;
-  }
-  return user.employee || user.email || "Staff";
-};
+import { useSignOut } from "../../shared/auth/hooks/useSignOut";
+import { initialOf, staffName } from "../../shared/auth/staffName";
 
 /** Who is signed in on this screen, and the way out. */
 const StaffChip = () => {
-  const { user, logout } = useAuth();
-  const { disconnect } = useRealtime();
-  const name = nameOf(user);
-  const position = typeof user === "object" && user?.position ? user.position : "";
+  const { user } = useAuth();
+  const signOut = useSignOut();
+  const name = staffName(user, "Staff");
+  const position = user?.position || "";
 
   return (
     <div className="flex items-center gap-1">
@@ -27,7 +17,7 @@ const StaffChip = () => {
           className="grid h-8 w-8 place-items-center rounded-full bg-paper text-sm font-black uppercase text-ink"
           aria-hidden="true"
         >
-          {name.charAt(0)}
+          {initialOf(name)}
         </span>
         <span className="hidden leading-tight sm:block">
           <span className="block max-w-[10rem] truncate text-sm font-semibold text-paper">{name}</span>
@@ -40,10 +30,7 @@ const StaffChip = () => {
       </div>
       <button
         type="button"
-        onClick={() => {
-          disconnect();
-          logout();
-        }}
+        onClick={signOut}
         className="grid h-10 w-10 place-items-center rounded-md text-steel-300 transition-colors hover:bg-white/10 hover:text-paper"
         aria-label="Log out"
         title="Log out"

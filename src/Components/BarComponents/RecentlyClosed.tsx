@@ -5,6 +5,7 @@ import type { ClosedSession, SessionBill } from "../../shared/realtime/protocol"
 import { ORDER_STATUS_LABEL } from "../../shared/realtime/protocol";
 import { billedLines } from "../../shared/realtime/tickets";
 import { clockTime } from "../../services/time";
+import { TotalLine } from "../rail";
 import {
   Dialog,
   DialogContent,
@@ -75,11 +76,7 @@ const BillDialog = ({ entry, onClose }: { entry: ClosedSession | null; onClose: 
                 </ul>
               </section>
             ))}
-            <div className="flex items-baseline gap-2 border-t border-ink/10 pt-3 font-mono">
-              <span className="text-sm font-bold uppercase tracking-[0.1em]">Total</span>
-              <span className="leader" aria-hidden="true" />
-              <span className="text-lg font-bold tabular">{formatCents(bill.totalCents)}</span>
-            </div>
+            <TotalLine label="Total" cents={bill.totalCents} strong className="border-t border-ink/10 pt-3" />
           </div>
         )}
       </DialogContent>

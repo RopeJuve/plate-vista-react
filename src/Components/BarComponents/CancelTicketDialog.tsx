@@ -24,7 +24,8 @@ const CancelTicketDialog = ({
   tableNumber: number;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onConfirm: (reason: string) => Promise<void>;
+  /** The dialog closes once this settles, whatever the outcome; the caller reports errors. */
+  onConfirm: (reason: string) => Promise<unknown>;
 }) => {
   const [reason, setReason] = useState("");
 
