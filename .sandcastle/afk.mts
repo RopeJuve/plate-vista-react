@@ -1,7 +1,7 @@
 /**
  * Sandcastle AFK orchestrator — portable, drop into any Node/TS repo.
  *
- * Flow:  fetch issues (label: ready-for-agent)
+ * Flow:  fetch issues (label: ready-for-agent), drop those with an open "Blocked by: #n"
  *        → PLAN    (picks a safe, parallelizable subset)
  *        → IMPLEMENT (one Docker sandbox + branch per issue, TDD loop)
  *        → VERIFY  (typecheck / lint / test — real exit codes, not vibes)
@@ -140,6 +140,33 @@ function fetchIssues(): Issue[] {
   return JSON.parse(
     gh(["issue", "list", "--state", "open", "--label", cfg.labels.ready, "--json", "number,title,body,labels", "--limit", "50"]),
   );
+}
+
+// ───────────────────────── blockers ─────────────────────────
+
+// Issues declare dependencies with a line like "Blocked by: #12, #14" (or
+// "Blocked by: none"). An issue is startable only when every blocker is closed.
+// Cross-repo references such as "owner/repo#21" are informational and ignored.
+function parseBlockers(body: string): number[] {
+  const line = body.match(/Blocked by:\s*([^\n·]*)/i);
+  if (!line) return [];
+  return [...line[1].matchAll(/(?<![\w/])#(\d+)/g)].map((m) => Number(m[1]));
+}
+
+const issueStates = new Map<number, string>();
+function isOpen(n: number): boolean {
+  if (!issueStates.has(n)) {
+    try {
+      issueStates.set(n, gh(["issue", "view", String(n), "--json", "state", "--jq", ".state"]));
+    } catch {
+      issueStates.set(n, "UNKNOWN"); // can't tell: treat as still blocking
+    }
+  }
+  return issueStates.get(n) !== "CLOSED";
+}
+
+function openBlockers(issue: Issue): number[] {
+  return parseBlockers(issue.body ?? "").filter(isOpen);
 }
 
 // ───────────────────────── phase: plan ─────────────────────────
@@ -306,9 +333,24 @@ async function pool<T, R>(items: T[], limit: number, fn: (t: T) => Promise<R>): 
 log(`base=${BASE} install="${INSTALL}" verify=${JSON.stringify(VERIFY)} dryRun=${DRY_RUN}`);
 if (VERIFY.length === 0) log("warn: no typecheck/lint/test scripts found — agents have no backpressure. Set verifyCommands in config.json.");
 
-const issues = fetchIssues();
+const fetched = fetchIssues();
+const issues = fetched.filter((issue) => {
+  const waiting = openBlockers(issue);
+  if (waiting.length === 0) return true;
+  const list = waiting.map((n) => "#" + n).join(", ");
+  if (ONLY_ISSUE) {
+    log(`warn: #${issue.number} is blocked by open ${list}; running it anyway because it was named with --issue.`);
+    return true;
+  }
+  log(`#${issue.number} waits for ${list}`);
+  return false;
+});
 if (issues.length === 0) {
-  log(`No open issues labeled "${cfg.labels.ready}". Nothing to do.`);
+  log(
+    fetched.length > 0
+      ? `All ${fetched.length} "${cfg.labels.ready}" issue(s) are waiting for open blockers. Nothing to do.`
+      : `No open issues labeled "${cfg.labels.ready}". Nothing to do.`,
+  );
   process.exit(0);
 }
 log(`Found ${issues.length} issue(s): ${issues.map((i) => "#" + i.number).join(", ")}`);
