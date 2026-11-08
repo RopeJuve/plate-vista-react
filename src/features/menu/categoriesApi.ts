@@ -13,10 +13,10 @@ export type Category = {
 
 export const fetchCategoryList = async () => (await api.get<Category[]>("/categories")).data;
 
-export const createCategory = async (body: { name: string; station: Station }) =>
+export const createCategory = async (body: Pick<Category, "name" | "station" | "vatRate">) =>
   (await api.post<Category>("/categories", body, { skipErrorToast: true })).data;
 
-export const updateCategory = async (id: string, body: Partial<Pick<Category, "name" | "station">>) =>
+export const updateCategory = async (id: string, body: Partial<Pick<Category, "name" | "station" | "vatRate">>) =>
   (await api.put<Category>(`/categories/${id}`, body, { skipErrorToast: true })).data;
 
 // Responds with the whole list in its new order.
