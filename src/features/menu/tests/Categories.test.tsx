@@ -15,7 +15,7 @@ beforeAll(() => {
 });
 
 /** Records the JSON body of every request to one endpoint, answering like the default handler would. */
-const recordBodies = (method: "post" | "put", path: string, answer: (body: Record<string, unknown>) => unknown) => {
+const recordBodies = (method: "post" | "put", path: string, answer: (body: Record<string, unknown>) => Record<string, unknown>) => {
   const bodies: Record<string, unknown>[] = [];
   server.use(
     http[method](path, async ({ request }) => {

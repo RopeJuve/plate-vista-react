@@ -6,6 +6,7 @@ import AdminMenuItemCard from "../features/menu/AdminMenuItemCard";
 import CategoryFilter from "../features/menu/CategoryFilter";
 import MenuItemDialog from "../features/menu/MenuItemDialog";
 import { useMenuItems } from "../features/menu/hooks/useMenuItems";
+import { vatRateOf } from "../features/menu/categoryVat";
 import { EMPTY_MENU_ITEM, categoriesInUse, itemsInCategory, toFormValues } from "../features/menu/menuItemForm";
 import { Button } from "@/components/ui/button";
 import type { MenuItemValues } from "@/lib/schemas";
@@ -63,7 +64,13 @@ const Menu = () => {
 
       <div className="grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-4">
         {itemsInCategory(menuItems, selectedCategory).map((item) => (
-          <AdminMenuItemCard key={item._id} item={item} onEdit={setEditing} onDelete={handleDelete} />
+          <AdminMenuItemCard
+            key={item._id}
+            item={item}
+            vatRate={vatRateOf(categories, item.categoryId)}
+            onEdit={setEditing}
+            onDelete={handleDelete}
+          />
         ))}
         <button
           type="button"
