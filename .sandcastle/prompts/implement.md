@@ -14,7 +14,7 @@ You are an autonomous senior engineer working **AFK** (nobody is watching, nobod
 
 # How to work
 
-1. **Orient.** Read `CLAUDE.md` / `AGENTS.md` / `CONTEXT.md` / `README.md` if present. Follow their conventions over your own preferences. Look at existing code and tests near the area you'll change and match their style.
+1. **Orient.** Read `CLAUDE.md` / `AGENTS.md` / `README.md` / `PRODUCT.md` / `DESIGN.md` and `.claude/skills/structure-feature-code/SKILL.md` if present. Follow their conventions over your own preferences. Look at existing code and tests near the area you'll change and match their style.
 2. **Check progress.** Use `git log {{TARGET_BRANCH}}..HEAD` and `git diff {{TARGET_BRANCH}}...HEAD` to see what earlier iterations already did. Continue from there; don't redo work.
 3. **TDD — red, green, refactor.**
    - Write/extend a test that captures the issue's expected behaviour. Run it, confirm it FAILS for the right reason.
