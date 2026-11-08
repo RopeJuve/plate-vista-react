@@ -2,6 +2,7 @@ import {
   BookOpen,
   Tags,
   Coins,
+  CreditCard,
   Flame,
   LayoutDashboard,
   LayoutGrid,
@@ -36,6 +37,7 @@ export const links = [
       { name: "tables", label: "Tables", icon: LayoutGrid },
       { name: "employees", label: "Employees", icon: Users },
       { name: "qrcodes", label: "QR Codes", icon: QrCode },
+      { name: "kasse", label: "Till & payments", icon: CreditCard },
     ],
   },
 ];

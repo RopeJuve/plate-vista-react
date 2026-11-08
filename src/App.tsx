@@ -20,6 +20,7 @@ const Categories = lazy(() => import("./pages/Categories"));
 const Orders = lazy(() => import("./pages/Orders"));
 const Tables = lazy(() => import("./pages/Tables"));
 const Employees = lazy(() => import("./pages/Employees"));
+const Kasse = lazy(() => import("./pages/Kasse"));
 const Register = lazy(() => import("./Components/AdminComponents/Auth/Register"));
 const QRCodeGenerator = lazy(() => import("./pages/QRCodeGenerator"));
 const DailySales = lazy(() => import("./pages/DailySales"));
@@ -68,6 +69,7 @@ function App() {
                     <Route path="orders" element={<Orders />} />
                     <Route path="tables" element={<Tables />} />
                     <Route path="employees" element={<Employees />} />
+                    <Route path="kasse" element={<Kasse />} />
                     <Route path="register" element={<Register />} />
                     <Route path="qrcodes" element={<QRCodeGenerator />} />
                     <Route path="dailysales" element={<DailySales />} />
