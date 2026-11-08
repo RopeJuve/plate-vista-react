@@ -146,7 +146,7 @@ export class RealtimeClient {
 
   // -- internals -------------------------------------------------------
 
-  private setStatus(status: RealtimeStatus) {
+  protected setStatus(status: RealtimeStatus) {
     if (this.status === status) {
       return;
     }
@@ -226,7 +226,7 @@ export class RealtimeClient {
     };
   }
 
-  private handleMessage(raw: string) {
+  protected handleMessage(raw: string) {
     let message: InboundMessage;
     try {
       message = JSON.parse(raw);

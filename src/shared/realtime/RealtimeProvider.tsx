@@ -12,7 +12,7 @@ import { plateVistaConfig } from "../../Config/plateVista.config";
 import { useAuth } from "../../contexts/AuthContext";
 import { fetchWsTicket } from "../../shared/api/wsTicket";
 import { refreshSession } from "../../shared/api/tokens";
-import { RealtimeClient } from "./client";
+import { RealtimeClient, type RealtimeClientOptions } from "./client";
 import {
   ProtocolError,
   type ClientMessageType,
@@ -43,7 +43,16 @@ const RealtimeContext = createContext<RealtimeContextValue | undefined>(undefine
 
 const isGuestPath = (pathname: string) => /^\/r\/[^/]+\/t\/[^/]+/.test(pathname);
 
-export const RealtimeProvider = ({ children }: { children?: ReactNode }) => {
+const createRealtimeClient = (options: RealtimeClientOptions) => new RealtimeClient(options);
+
+export const RealtimeProvider = ({
+  children,
+  createClient = createRealtimeClient,
+}: {
+  children?: ReactNode;
+  /** Test seam: `src/test/mockRealtime.ts` passes a client without a socket. */
+  createClient?: (options: RealtimeClientOptions) => RealtimeClient;
+}) => {
   const location = useLocation();
   const { authToken, logout } = useAuth();
   const { session, setSession, clearSession } = useGuestAuth();
@@ -67,7 +76,7 @@ export const RealtimeProvider = ({ children }: { children?: ReactNode }) => {
 
   const clientRef = useRef<RealtimeClient | null>(null);
   if (!clientRef.current) {
-    clientRef.current = new RealtimeClient({
+    clientRef.current = createClient({
       wsBaseUrl: plateVistaConfig.VITE_WS_API_URL || "",
       getTicket: async () => {
         const token = tokenRef.current;
