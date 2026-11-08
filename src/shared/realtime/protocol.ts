@@ -6,6 +6,8 @@
  * fields (e.g. `title | name`) — if the server doesn't send it, we don't type it.
  */
 
+import type { Payment, PaymentMethod, VatRate } from "../api/payments";
+
 export const PROTOCOL_VERSION = "2";
 
 // ---------------------------------------------------------------------------
@@ -74,6 +76,7 @@ export interface OrderItem {
   lineTotalCents: number;
   notes: string;
   station: Station;
+  vatRate: VatRate;
 }
 
 /** One station's part of an order, with its own status. */
@@ -128,6 +131,8 @@ export interface SessionBill {
   session: Pick<Session, "_id" | "tableId" | "status" | "openedAt" | "closedAt">;
   orders: Order[];
   totalCents: number;
+  /** The payment that settled this bill, or null while it is unpaid. */
+  payment: Payment | null;
 }
 
 export interface BoardTable {
@@ -342,13 +347,40 @@ export interface MenuUpdatedEvent {
   data: MenuUpdatedData;
 }
 
+/** Staff and session rooms: the bill was paid. */
+export interface BillPaidEvent {
+  event: "bill.paid";
+  data: {
+    sessionId: string;
+    paymentId: string;
+    receiptToken: string;
+    method: PaymentMethod;
+    totalCents: number;
+  };
+}
+
+/** Staff and session rooms: the TSE signed the payment, so the receipt is final. */
+export interface PaymentSignedEvent {
+  event: "payment.signed";
+  data: { paymentId: string; receiptToken: string };
+}
+
+/** Staff room only: signing the payment failed; it shows up in `GET /tse/failed`. */
+export interface PaymentSignFailedEvent {
+  event: "payment.signFailed";
+  data: { paymentId: string };
+}
+
 export type ServerEvent =
   | SessionOpenedEvent
   | OrderCreatedEvent
   | OrderUpdatedEvent
   | OrderStatusChangedEvent
   | SessionClosedEvent
-  | MenuUpdatedEvent;
+  | MenuUpdatedEvent
+  | BillPaidEvent
+  | PaymentSignedEvent
+  | PaymentSignFailedEvent;
 
 export type ServerEventName = ServerEvent["event"];
 

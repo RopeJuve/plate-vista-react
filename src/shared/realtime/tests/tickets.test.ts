@@ -10,6 +10,7 @@ const line = (title: string, station: OrderItem["station"]): OrderItem => ({
   lineTotalCents: 100,
   notes: "",
   station,
+  vatRate: "NORMAL",
 });
 
 const order = (kitchen: Ticket["status"], bar: Ticket["status"]) => ({

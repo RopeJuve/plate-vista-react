@@ -4,8 +4,8 @@ import { categoriesInUse, itemsInCategory, toFormValues, toMenuItemList } from "
 
 const soup: MenuItem = { _id: "m1", title: "Soup", price: "4.5", categoryId: "c1" };
 const wine: MenuItem = { _id: "m2", title: "Wine", price: 7, categoryId: "c2", inStock: false, popular: true };
-const starters = { _id: "c1", name: "Starters", station: "kitchen" as const, position: 0 };
-const desserts = { _id: "c3", name: "Desserts", station: "kitchen" as const, position: 2 };
+const starters = { _id: "c1", name: "Starters", station: "kitchen" as const, position: 0, vatRate: "NORMAL" as const };
+const desserts = { _id: "c3", name: "Desserts", station: "kitchen" as const, position: 2, vatRate: "NORMAL" as const };
 
 describe("menu item form", () => {
   it("starts the edit form from the item, reading missing flags as in stock and not popular", () => {
