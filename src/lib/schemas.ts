@@ -63,3 +63,21 @@ export const categorySchema = z.object({
 });
 
 export type CategoryValues = z.infer<typeof categorySchema>;
+
+// Country is fixed to Germany, so the form only asks for street, ZIP and city.
+// A German receipt needs a tax number or a VAT ID; either one is enough.
+export const legalDetailsSchema = z
+  .object({
+    legalName: z.string().trim().min(1, "Legal name is required"),
+    street: z.string().trim().min(1, "Street is required"),
+    zip: z.string().trim().regex(/^\d{5}$/, "ZIP must be 5 digits"),
+    city: z.string().trim().min(1, "City is required"),
+    taxNumber: z.string().trim(),
+    vatId: z.string().trim(),
+  })
+  .refine((values) => values.taxNumber !== "" || values.vatId !== "", {
+    message: "Enter a tax number or a VAT ID",
+    path: ["taxNumber"],
+  });
+
+export type LegalDetailsValues = z.infer<typeof legalDetailsSchema>;
