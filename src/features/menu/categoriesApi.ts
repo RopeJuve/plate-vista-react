@@ -1,4 +1,5 @@
 import api from "../../services/api";
+import type { VatRate } from "../../shared/api/payments";
 
 export type Station = "kitchen" | "bar";
 
@@ -7,6 +8,7 @@ export type Category = {
   name: string;
   station: Station;
   position: number;
+  vatRate: VatRate;
 };
 
 export const fetchCategoryList = async () => (await api.get<Category[]>("/categories")).data;

@@ -7,6 +7,8 @@ interface ImportMetaEnv {
   readonly VITE_WS_API_URL?: string;
   readonly VITE_DEVELOPMENT_URL?: string;
   readonly VITE_DEVELOPMENT_WS_URL?: string;
+  /** `"true"` starts the msw worker in `npm run dev` (see `src/mocks/`). Ignored in builds. */
+  readonly VITE_USE_MOCKS?: string;
 }
 
 interface ImportMeta {

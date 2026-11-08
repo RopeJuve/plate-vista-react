@@ -16,6 +16,6 @@
   "maxParallel": 1,
   "implementIterations": 6,
   "installCommand": null,
-  "verifyCommands": ["npm run lint", "npm run build"],
+  "verifyCommands": ["npm test", "npm run typecheck", "npm run lint", "npm run build"],
   "copyToWorktree": []
 }

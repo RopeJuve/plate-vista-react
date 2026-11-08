@@ -90,7 +90,12 @@ export const setLineQuantity = (lines: CartLine[], productId: string, quantity: 
   changeLine(lines, productId, (line) => ({ ...line, quantity: clampQuantity(quantity) }));
 ```
 
-Vitest runs only `src/**/*.test.ts` in a `node` environment: there is no DOM and no component tests. Anything worth testing has to live in a pure module. When a hook grows decision logic, move it out the way `usePlaceOrder` delegates to `placeOrderStatus`.
+Vitest runs `src/**/*.test.ts` in `node` and `src/**/*.test.tsx` in `jsdom` with Testing Library (`src/test/setup.ts`). Rules still belong in a pure module with a `.test.ts`; when a hook grows decision logic, move it out the way `usePlaceOrder` delegates to `placeOrderStatus`. Use a `.test.tsx` for what only a rendered component shows.
+
+Test helpers:
+- REST: msw answers every payments-contract endpoint from `src/mocks/handlers/` + `src/mocks/fixtures/`. Change one answer for one test with `mockPayResponse(409, { code: "BILL_PAID" })` and friends from `src/mocks/overrides.ts`.
+- Realtime: `createMockRealtime()` from `src/test/mockRealtime.ts`, render inside `src/test/RealtimeTestProviders.tsx`, then `realtime.emit("bill.paid", {...})`.
+- `VITE_USE_MOCKS=true npm run dev` runs the app against the same msw handlers.
 
 ### Step 3 — Hook patterns
 
@@ -161,7 +166,7 @@ One file per visual concern:
 
 - `@/components/ui/*` and `@/lib/*` use the alias.
 - Everything else (features, shared, contexts, sibling components) uses **relative** imports.
-- Pure modules and tests use relative imports only. Vitest does not know the `@/components` alias.
+- Pure modules and tests use relative imports only.
 - Import rail primitives from the barrel: `import { Chit, QtyStepper } from "../rail";`
 - `import type` for type-only imports.
 

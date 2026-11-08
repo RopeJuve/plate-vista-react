@@ -33,6 +33,7 @@ const line = (title: string, station: OrderItem["station"], lineTotalCents: numb
   lineTotalCents,
   notes: "",
   station,
+  vatRate: "NORMAL",
 });
 
 const ticket = (station: Ticket["station"], status: Ticket["status"], cancelReason = ""): Ticket => ({

@@ -10,6 +10,7 @@ const line = (productId: string, quantity: number, notes = ""): OrderItem => ({
   unitPriceCents: 450,
   lineTotalCents: 450 * quantity,
   station: "kitchen",
+  vatRate: "NORMAL",
 });
 
 const order = { _id: "o1", items: [line("soup", 2, "no onions"), line("cola", 1)] };
