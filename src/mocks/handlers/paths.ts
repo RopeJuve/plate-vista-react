@@ -4,6 +4,7 @@
  */
 export const apiPaths = {
   categories: "*/categories",
+  category: "*/categories/:id",
   legal: "*/restaurant/legal",
   tse: "*/tse",
   tseSetup: "*/tse/setup",

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { VatRate } from "../../../shared/api/payments";
 import type { CategoryValues } from "../../../lib/schemas";
 import { apiMessage, notify } from "../../../utils/notify";
 import {
@@ -10,14 +11,15 @@ import {
   type Category,
   type Station,
 } from "../categoriesApi";
+import { categoryFieldError, type CategoryFieldError } from "../categoryVat";
 
 const replaceCategory = (categories: Category[], updated: Category) =>
   categories.map((category) => (category._id === updated._id ? updated : category));
 
 /**
  * The menu's categories in guest order, and every change to them. Changes
- * report their own errors and resolve false when nothing changed. Adding
- * resolves to the error instead, because the form shows it under the field.
+ * report their own errors and resolve false when nothing changed. Adding and
+ * changing the VAT rate resolve to the error instead, because the form shows it under the field.
  */
 export const useCategoryList = () => {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -38,14 +40,28 @@ export const useCategoryList = () => {
     }
   };
 
-  /** Resolves to an error message, or null once the category is added. */
-  const addCategory = async (values: CategoryValues): Promise<string | null> => {
+  const fieldError = (error: unknown, fallback: string): CategoryFieldError =>
+    categoryFieldError(error) ?? { field: "name", message: apiMessage(error, fallback) };
+
+  /** Resolves to the field error, or null once the category is added. */
+  const addCategory = async (values: CategoryValues): Promise<CategoryFieldError | null> => {
     try {
       const created = await createCategory(values);
       setCategories((current) => [...current, created]);
       return null;
     } catch (error) {
-      return apiMessage(error, "Could not add the category");
+      return fieldError(error, "Could not add the category");
+    }
+  };
+
+  /** Resolves to a message for under the rate, or null once it is saved. */
+  const changeVatRate = async (id: string, vatRate: VatRate): Promise<string | null> => {
+    try {
+      const updated = await updateCategory(id, { vatRate });
+      setCategories((current) => replaceCategory(current, updated));
+      return null;
+    } catch (error) {
+      return categoryFieldError(error)?.message ?? apiMessage(error, "Could not change the VAT rate");
     }
   };
 
@@ -70,5 +86,5 @@ export const useCategoryList = () => {
       setCategories((current) => current.filter((category) => category._id !== id));
     }, "Could not delete the category");
 
-  return { categories, addCategory, renameCategory, changeStation, move, removeCategory };
+  return { categories, addCategory, renameCategory, changeStation, changeVatRate, move, removeCategory };
 };

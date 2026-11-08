@@ -59,6 +59,7 @@ export type MenuItemValues = z.infer<typeof menuItemSchema>;
 export const categorySchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(40, "Name must be at most 40 characters"),
   station: z.enum(["kitchen", "bar"]),
+  vatRate: z.enum(["REDUCED_1", "NORMAL"]),
 });
 
 export type CategoryValues = z.infer<typeof categorySchema>;

@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { ArrowDown, ArrowUp, Check, Pencil, Trash2, X } from "lucide-react";
+import type { VatRate } from "../../shared/api/payments";
 import type { Category, Station } from "./categoriesApi";
 import StationSelect from "./StationSelect";
+import VatBadge from "./VatBadge";
+import VatRateSelect from "./VatRateSelect";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-/** One menu section in the admin's list: reorder, rename, change station, delete. */
+/** One menu section in the admin's list: reorder, rename, change station and VAT rate, delete. */
 const CategoryRow = ({
   category,
   first,
@@ -13,6 +16,7 @@ const CategoryRow = ({
   onMove,
   onRename,
   onStationChange,
+  onVatRateChange,
   onDelete,
 }: {
   category: Category;
@@ -22,10 +26,17 @@ const CategoryRow = ({
   /** Resolves true once the new name is saved. */
   onRename: (name: string) => Promise<boolean>;
   onStationChange: (station: Station) => void;
+  /** Resolves to an error message, or null once the new rate is saved. */
+  onVatRateChange: (vatRate: VatRate) => Promise<string | null>;
   onDelete: () => void;
 }) => {
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState(category.name);
+  const [vatError, setVatError] = useState<string | null>(null);
+
+  const handleVatRateChange = async (vatRate: VatRate) => {
+    setVatError(await onVatRateChange(vatRate));
+  };
 
   const handleSaveName = async () => {
     if (await onRename(name)) {
@@ -75,9 +86,17 @@ const CategoryRow = ({
           </Button>
         </div>
       ) : (
-        <span className="min-w-0 flex-1 truncate font-semibold">{category.name}</span>
+        <span className="flex min-w-0 flex-1 items-center gap-2">
+          <span className="truncate font-semibold">{category.name}</span>
+          <VatBadge rate={category.vatRate} />
+        </span>
       )}
       <StationSelect label={`Station for ${category.name}`} value={category.station} onChange={onStationChange} />
+      <VatRateSelect
+        label={`VAT rate for ${category.name}`}
+        value={category.vatRate}
+        onChange={(vatRate) => void handleVatRateChange(vatRate)}
+      />
       {!renaming && (
         <Button type="button" variant="ghost" size="icon" aria-label={`Rename ${category.name}`} onClick={() => setRenaming(true)}>
           <Pencil aria-hidden="true" />
@@ -93,6 +112,11 @@ const CategoryRow = ({
       >
         <Trash2 aria-hidden="true" />
       </Button>
+      {vatError && (
+        <p role="alert" className="w-full text-right text-sm font-medium text-destructive">
+          {vatError}
+        </p>
+      )}
     </li>
   );
 };

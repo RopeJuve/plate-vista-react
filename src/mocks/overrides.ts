@@ -32,3 +32,9 @@ export const mockLegalResponse = (status: number, body?: unknown) => mockRespons
 
 export const mockReceiptResponse = (status: number, body?: unknown) =>
   mockResponse("get", "receipt", status, body);
+
+export const mockCreateCategoryResponse = (status: number, body?: unknown) =>
+  mockResponse("post", "categories", status, body);
+
+export const mockUpdateCategoryResponse = (status: number, body?: unknown) =>
+  mockResponse("put", "category", status, body);
