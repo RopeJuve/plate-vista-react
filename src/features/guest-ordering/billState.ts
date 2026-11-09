@@ -4,15 +4,29 @@ import { withStatusChange } from "../../shared/realtime/tickets";
 
 export type BillOrder = Order & { cancelReason?: string };
 
+/** The bill was settled. The receipt is unknown when only a refused order told us so. */
+export type PaidBill = { receiptToken: string | null };
+
 export type BillState = {
   ordersById: Record<string, BillOrder>;
   closed: boolean;
+  /** Set once the bill is paid: nothing more can be ordered on it. */
+  paid: PaidBill | null;
 };
 
 export const emptyBill = (): BillState => ({
   ordersById: {},
   closed: false,
+  paid: null,
 });
+
+/** The payment on the server's bill, if it has one. A bill without one never un-pays a known payment. */
+export const withServerPayment = (state: BillState, payment: { receiptToken: string } | null): BillState =>
+  payment ? { ...state, paid: { receiptToken: payment.receiptToken } } : state;
+
+/** An order was refused because the bill is paid. Keeps the receipt if it is already known. */
+export const markBillPaid = (state: BillState): BillState =>
+  state.paid ? state : { ...state, paid: { receiptToken: null } };
 
 const isNewer = (storedRev: number | undefined, incomingRev: number) =>
   storedRev === undefined || incomingRev > storedRev;
@@ -61,6 +75,11 @@ export const applyBillEvent = (state: BillState, event: ServerEvent, sessionId: 
         return state;
       }
       return { ...state, closed: true };
+    case "bill.paid":
+      if (event.data.sessionId !== sessionId) {
+        return state;
+      }
+      return { ...state, paid: { receiptToken: event.data.receiptToken } };
     default:
       return state;
   }
@@ -88,7 +107,8 @@ export const loadBill = (sessionId: string): BillState => {
     if (!parsed?.ordersById) {
       return emptyBill();
     }
-    return { ordersById: parsed.ordersById, closed: Boolean(parsed.closed) };
+    const paid = parsed.paid && typeof parsed.paid === "object" ? { receiptToken: parsed.paid.receiptToken ?? null } : null;
+    return { ordersById: parsed.ordersById, closed: Boolean(parsed.closed), paid };
   } catch {
     return emptyBill();
   }

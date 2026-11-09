@@ -243,6 +243,7 @@ export type ErrorCode =
   | "FORBIDDEN"
   | "INVALID_TRANSITION"
   | "SESSION_CLOSED"
+  | "BILL_PAID"
   | "RATE_LIMITED"
   | "INTERNAL"
   | "TIMEOUT";

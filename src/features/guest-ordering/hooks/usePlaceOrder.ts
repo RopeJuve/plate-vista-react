@@ -109,9 +109,9 @@ export const usePlaceOrder = ({ storageKey, lines, menuById, tableId, onPlaced, 
         if (protocolError.code === "OUT_OF_STOCK") {
           setOutOfStockIds(productIdsFrom(protocolError.details));
         }
-        if (protocolError.code === "SESSION_CLOSED") {
-          // The table was closed while this was in flight. Never resend it:
-          // it would land on the next party's check.
+        if (protocolError.code === "SESSION_CLOSED" || protocolError.code === "BILL_PAID") {
+          // The table was closed or paid while this was in flight. Never
+          // resend it: it would land on the next party's check.
           clearPending(storageKey);
         }
         if (RETRYABLE.has(protocolError.code) && !autoRetryRef.current) {
