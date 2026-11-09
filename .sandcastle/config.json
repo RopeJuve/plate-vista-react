@@ -15,7 +15,7 @@
   "maxIssuesPerRun": 1,
   "maxParallel": 1,
   "implementIterations": 6,
-  "installCommand": null,
+  "installCommand": "npm ci && npx playwright install chromium",
   "verifyCommands": ["npm test", "npm run typecheck", "npm run lint", "npm run build"],
   "copyToWorktree": []
 }
