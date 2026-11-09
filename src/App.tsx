@@ -31,6 +31,7 @@ const BestEmployees = lazy(() => import("./pages/BestEmployees"));
 const BarPage = lazy(() => import("./pages/BarPage"));
 const BarPageTableView = lazy(() => import("./pages/BarPageTableView"));
 const Customer = lazy(() => import("./pages/Customer"));
+const ReceiptPage = lazy(() => import("./features/receipt/ReceiptPage"));
 
 const BarLayout = () => {
   const location = useLocation();
@@ -86,6 +87,7 @@ function App() {
                   </Route>
                 </Route>
                 <Route path="/r/:slug/t/:qrCode" element={<Customer />} />
+                <Route path="/receipt/:receiptToken" element={<ReceiptPage />} />
               </Routes>
             </Suspense>
           </RealtimeProvider>
