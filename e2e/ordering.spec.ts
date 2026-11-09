@@ -57,6 +57,11 @@ test("guest order is accepted and the table close ends on thank you", async ({ p
 
   await page.getByText("Dine In", { exact: true }).click();
   await page.getByRole("button", { name: "Open table 4" }).click();
+  // An unpaid bill cannot be closed, so the bar records the payment first.
+  await expect(page.getByRole("button", { name: "Close table" })).toBeDisabled();
+  await page.getByRole("button", { name: "Paid in cash" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Confirm payment" }).click();
+  await expect(page.getByRole("dialog")).toBeHidden();
   await page.getByRole("button", { name: "Close table" }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Close table" }).click();
 

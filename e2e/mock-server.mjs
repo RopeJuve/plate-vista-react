@@ -467,7 +467,47 @@ const server = http.createServer(async (req, res) => {
         (order) => order.sessionId === sessionId && order.status !== "cancelled"
       ),
       totalCents: sessionTotal(sessionId),
+      payment: session.payment ?? null,
     });
+    return;
+  }
+
+  // Payments contract (plate-vista-api#20). The TSE is taken as active.
+  if (req.method === "POST" && /^\/sessions\/[^/]+\/payments$/.test(route)) {
+    const sessionId = route.split("/")[2];
+    const session = sessions.get(sessionId);
+    if (!session) {
+      sendJson(res, 404, { message: "Session not found" });
+      return;
+    }
+    if (session.payment) {
+      if (session.payment.clientPaymentId === body.clientPaymentId) {
+        sendJson(res, 200, session.payment);
+      } else {
+        sendJson(res, 409, { code: "BILL_PAID" });
+      }
+      return;
+    }
+    const totalCents = sessionTotal(sessionId);
+    if (totalCents === 0) {
+      sendJson(res, 422, { code: "BILL_EMPTY" });
+      return;
+    }
+    if (body.expectedTotalCents !== totalCents) {
+      sendJson(res, 409, { code: "BILL_CHANGED", totalCents });
+      return;
+    }
+    session.payment = {
+      id: randomUUID(),
+      sessionId,
+      method: body.method,
+      amountCents: totalCents,
+      paidAt: new Date().toISOString(),
+      receiptToken: randomUUID(),
+      signature: { status: "SIGNED" },
+      clientPaymentId: body.clientPaymentId,
+    };
+    sendJson(res, 201, session.payment);
     return;
   }
 
@@ -631,6 +671,11 @@ const server = http.createServer(async (req, res) => {
     const session = sessions.get(sessionId);
     if (!session) {
       sendJson(res, 404, { message: "Session not found" });
+      return;
+    }
+    // Like the real API: an unpaid bill closes only with an owner/admin's reason.
+    if (!session.payment && sessionTotal(sessionId) > 0 && !body.unpaidReason) {
+      sendJson(res, 409, { code: "BILL_UNPAID" });
       return;
     }
     session.status = "closed";
