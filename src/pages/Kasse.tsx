@@ -1,5 +1,6 @@
 import { Header } from "../Components/AdminComponents";
 import LegalDetailsForm from "../features/kasse/LegalDetailsForm";
+import TseSection from "../features/kasse/TseSection";
 import { useLegalDetails } from "../features/kasse/hooks/useLegalDetails";
 import { cn } from "@/lib/utils";
 
@@ -11,8 +12,9 @@ const Kasse = () => {
     <div>
       <Header title="Till & payments" description="Legal details for receipts and the TSE that signs every payment." />
       <section
+        id="legal-details"
         aria-labelledby="legal-details-title"
-        className="max-w-2xl rounded-xl bg-white p-5 ring-1 ring-ink/[0.07] md:p-6"
+        className="scroll-mt-4 max-w-2xl rounded-xl bg-white p-5 ring-1 ring-ink/[0.07] md:p-6"
       >
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h2 id="legal-details-title" className="text-lg font-bold text-ink">
@@ -35,6 +37,9 @@ const Kasse = () => {
           <LegalDetailsForm details={details} onSave={save} />
         )}
       </section>
+      <div className="mt-6">
+        <TseSection legalComplete={!loading && complete} />
+      </div>
     </div>
   );
 };
