@@ -1,11 +1,14 @@
 import { useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
 import { useOrder } from "../../contexts/OrderContext";
 import { useMenu } from "../../features/guest-ordering/MenuProvider";
 import { usePlaceOrder } from "../../features/guest-ordering/hooks/usePlaceOrder";
 import PayBillPanel from "../../features/payments/PayBillPanel";
 import { useOrderAmendment } from "../../features/order-amendment/hooks/useOrderAmendment";
 import { tableCheck } from "../../features/staff-board/boardState";
+import { canCloseUnpaid } from "../../features/staff-board/closeTable";
+import { useCloseTable } from "../../features/staff-board/hooks/useCloseTable";
 import { useOrderActions } from "../../features/staff-board/hooks/useOrderActions";
 import { useStaffBoard } from "../../features/staff-board/StaffBoardProvider";
 import { errorMessage } from "../../shared/realtime/errorMessages";
@@ -14,6 +17,7 @@ import CheckFooter from "./CheckFooter";
 import CheckHeader from "./CheckHeader";
 import CheckOrder from "./CheckOrder";
 import CloseTableDialog from "./CloseTableDialog";
+import CloseUnpaidDialog from "./CloseUnpaidDialog";
 import UnsentLines from "./UnsentLines";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +27,7 @@ const OrderDetails = () => {
   const { pad, clearPad } = useOrder();
   const { itemsById } = useMenu();
   const { state } = useStaffBoard();
+  const { user } = useAuth();
   const { canSend, closeSession, updateOrder } = useOrderActions();
   const placeOrder = usePlaceOrder({
     storageKey: `staff:${tableId}`,
@@ -36,16 +41,12 @@ const OrderDetails = () => {
     onFailed: (error) => notify(errorMessage(error.code, error.details, error.message)),
   });
   const amendment = useOrderAmendment(updateOrder);
-  const [confirmClose, setConfirmClose] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const { table, sessionId, joinCode, orders, totalCents } = useMemo(() => tableCheck(state, tableId), [state, tableId]);
-
-  const handleCloseTable = async () => {
-    if (sessionId && (await closeSession(sessionId))) {
-      setConfirmClose(false);
-    }
-  };
+  const closing = useCloseTable(sessionId, closeSession);
+  const handleDialogChange = (dialog: "confirm" | "unpaid") => (open: boolean) =>
+    closing.setDialog(open ? dialog : null);
 
   return (
     <section
@@ -83,7 +84,13 @@ const OrderDetails = () => {
       {sessionId && (
         <div className="border-t border-dashed border-ink/20 px-5 py-3">
           {/* Bar and kitchen staff cannot open the till settings, so a missing TSE goes to the owner. */}
-          <PayBillPanel key={sessionId} sessionId={sessionId} refreshKey={totalCents} canActivateTse={false} />
+          <PayBillPanel
+            key={sessionId}
+            sessionId={sessionId}
+            refreshKey={`${totalCents}:${closing.billReloads}`}
+            canActivateTse={false}
+            onBillChange={closing.setBill}
+          />
         </div>
       )}
 
@@ -91,16 +98,27 @@ const OrderDetails = () => {
         totalCents={totalCents}
         canSend={canSend}
         canClose={Boolean(sessionId)}
+        closeBlock={closing.block}
+        canCloseUnpaid={canCloseUnpaid(user)}
+        closeNotice={closing.notice}
         placeOrder={placeOrder}
-        onCloseTable={() => setConfirmClose(true)}
+        onCloseTable={() => closing.setDialog("confirm")}
+        onCloseUnpaid={() => closing.setDialog("unpaid")}
       />
 
       <CloseTableDialog
         tableNumber={table?.tableNumber}
         totalCents={totalCents}
-        open={confirmClose}
-        onOpenChange={setConfirmClose}
-        onConfirm={handleCloseTable}
+        open={closing.dialog === "confirm"}
+        onOpenChange={handleDialogChange("confirm")}
+        onConfirm={() => closing.close()}
+      />
+      <CloseUnpaidDialog
+        tableNumber={table?.tableNumber}
+        totalCents={totalCents}
+        open={closing.dialog === "unpaid"}
+        onOpenChange={handleDialogChange("unpaid")}
+        onConfirm={closing.close}
       />
     </section>
   );

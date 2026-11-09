@@ -4,6 +4,7 @@ import { requestErrorMessage } from "../../../shared/realtime/errorMessages";
 import { ProtocolError, type OrderStatus, type Station } from "../../../shared/realtime/protocol";
 import { apiMessage, notify } from "../../../utils/notify";
 import api from "../../../services/api";
+import { closeResult, type CloseResult } from "../closeTable";
 import { useStaffBoard } from "../StaffBoardProvider";
 
 /** What staff can do to an order or a table. Every action reports its own errors and resolves false when nothing changed. */
@@ -55,15 +56,21 @@ export const useOrderActions = () => {
     [request]
   );
 
-  /** Closes the table's check. */
-  const closeSession = useCallback(async (sessionId: string) => {
+  /**
+   * Closes the table's check. An owner or admin passes `unpaidReason` to close a bill nobody paid.
+   * A BILL_UNPAID answer resolves `"unpaid"` without a toast: the check reloads its bill and says so.
+   */
+  const closeSession = useCallback(async (sessionId: string, unpaidReason?: string): Promise<CloseResult> => {
     try {
-      await api.post(`/sessions/${sessionId}/close`);
+      await api.post(`/sessions/${encodeURIComponent(sessionId)}/close`, unpaidReason ? { unpaidReason } : undefined);
       notify("Table closed", "success");
-      return true;
+      return "closed";
     } catch (error) {
-      notify(apiMessage(error, "Could not close the table"));
-      return false;
+      const result = closeResult(error);
+      if (result === "failed") {
+        notify(apiMessage(error, "Could not close the table"));
+      }
+      return result;
     }
   }, []);
 
