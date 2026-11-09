@@ -1,4 +1,5 @@
 import type { Table } from "../../types";
+import TableBill from "./TableBill";
 import { openOrderCount } from "./tableList";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -10,7 +11,7 @@ const formatDateTime = (dateString?: string) => {
   return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
 };
 
-/** Everything the server knows about one table, read-only. */
+/** Everything the server knows about one table, and its open bill to settle. */
 const TableDetailsDialog = ({
   table,
   open,
@@ -43,6 +44,7 @@ const TableDetailsDialog = ({
           ))}
         </dl>
       )}
+      {table && <TableBill tableId={table._id} />}
     </DialogContent>
   </Dialog>
 );

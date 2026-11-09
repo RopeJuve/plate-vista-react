@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { useOrder } from "../../contexts/OrderContext";
 import { useMenu } from "../../features/guest-ordering/MenuProvider";
 import { usePlaceOrder } from "../../features/guest-ordering/hooks/usePlaceOrder";
+import PayBillPanel from "../../features/payments/PayBillPanel";
 import { useOrderAmendment } from "../../features/order-amendment/hooks/useOrderAmendment";
 import { tableCheck } from "../../features/staff-board/boardState";
 import { useOrderActions } from "../../features/staff-board/hooks/useOrderActions";
@@ -16,7 +17,7 @@ import CloseTableDialog from "./CloseTableDialog";
 import UnsentLines from "./UnsentLines";
 import { cn } from "@/lib/utils";
 
-/** A table's check on the staff screen: what was sent, what is about to be, and closing the table. */
+/** A table's check on the staff screen: what was sent, what is about to be, settling the bill, and closing the table. */
 const OrderDetails = () => {
   const { tableId = "" } = useParams();
   const { pad, clearPad } = useOrder();
@@ -78,6 +79,13 @@ const OrderDetails = () => {
         <UnsentLines />
         {placeOrder.cartIssue && <p className="text-sm font-semibold text-alert-ink">{placeOrder.cartIssue}</p>}
       </div>
+
+      {sessionId && (
+        <div className="border-t border-dashed border-ink/20 px-5 py-3">
+          {/* Bar and kitchen staff cannot open the till settings, so a missing TSE goes to the owner. */}
+          <PayBillPanel key={sessionId} sessionId={sessionId} refreshKey={totalCents} canActivateTse={false} />
+        </div>
+      )}
 
       <CheckFooter
         totalCents={totalCents}

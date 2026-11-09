@@ -1,11 +1,12 @@
-/** The part of `qrcode` (no bundled types) the app calls directly. */
+/** The part of `qrcode` (no bundled types) the app uses. */
 declare module "qrcode" {
-  interface QRCodeToStringOptions {
+  type QRCodeToStringOptions = {
     type?: "svg" | "utf8" | "terminal";
-    errorCorrectionLevel?: "L" | "M" | "Q" | "H";
     margin?: number;
     width?: number;
-  }
+    errorCorrectionLevel?: "L" | "M" | "Q" | "H";
+    color?: { dark?: string; light?: string };
+  };
 
   const QRCode: {
     toString(text: string, options?: QRCodeToStringOptions): Promise<string>;

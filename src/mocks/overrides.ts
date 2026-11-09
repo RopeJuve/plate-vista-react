@@ -38,3 +38,6 @@ export const mockCreateCategoryResponse = (status: number, body?: unknown) =>
 
 export const mockUpdateCategoryResponse = (status: number, body?: unknown) =>
   mockResponse("put", "category", status, body);
+
+export const mockStaffBoardResponse = (status: number, body?: unknown) =>
+  mockResponse("get", "staffBoard", status, body);
