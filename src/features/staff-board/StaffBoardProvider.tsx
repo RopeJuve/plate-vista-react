@@ -12,6 +12,7 @@ import api from "../../services/api";
 import { useRealtime } from "../../shared/realtime/RealtimeProvider";
 import type { ServerEvent, StaffBoard } from "../../shared/realtime/protocol";
 import { boardReducer, emptyBoard, type BoardState } from "./boardState";
+import { useSignFailedAlert } from "./hooks/useSignFailedAlert";
 
 type StaffBoardValue = {
   state: BoardState;
@@ -50,6 +51,7 @@ export const StaffBoardProvider = ({ children }: { children?: ReactNode }) => {
   const hydratingRef = useRef(false);
   const queueRef = useRef<ServerEvent[]>([]);
   const generationRef = useRef(0);
+  useSignFailedAlert();
 
   const dispatchEvent = useCallback((event: ServerEvent) => {
     setState((current) => boardReducer(current, { type: "event", event }));
@@ -81,6 +83,8 @@ export const StaffBoardProvider = ({ children }: { children?: ReactNode }) => {
       subscribe("order.updated", (data) => enqueue({ event: "order.updated", data })),
       subscribe("order.statusChanged", (data) => enqueue({ event: "order.statusChanged", data })),
       subscribe("session.closed", (data) => enqueue({ event: "session.closed", data })),
+      subscribe("bill.paid", (data) => enqueue({ event: "bill.paid", data })),
+      subscribe("payment.signed", (data) => enqueue({ event: "payment.signed", data })),
     ];
     return () => offs.forEach((off) => off());
   }, [enqueue, subscribe]);
@@ -95,7 +99,7 @@ export const StaffBoardProvider = ({ children }: { children?: ReactNode }) => {
         return;
       }
       const events = queueRef.current.splice(0);
-      setState(boardReducer(emptyBoard(), { type: "hydrate", board: asBoard(data), events }));
+      setState((current) => boardReducer(current, { type: "hydrate", board: asBoard(data), events }));
       setFailedAttempts(0);
     } catch {
       // Without a snapshot the reducer discards every live event, so the board

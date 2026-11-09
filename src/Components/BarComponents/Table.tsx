@@ -29,6 +29,7 @@ const Table = memo(
     capacity,
     joinCode,
     summary,
+    paid = false,
   }: {
     tableId: string;
     tableNumber: number;
@@ -37,6 +38,8 @@ const Table = memo(
     /** Code late guests need to join; waiters read it out. */
     joinCode?: string;
     summary?: TableSummary;
+    /** The bill is settled; the table is only waiting to be closed. */
+    paid?: boolean;
   }) => {
     const navigate = useNavigate();
     const seated = status === "occupied";
@@ -66,13 +69,13 @@ const Table = memo(
           <span
             className={cn(
               "rounded px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-[0.1em]",
-              seated && summary?.ready ? "bg-pass text-ink" : "",
-              seated && !summary?.ready ? "bg-ink text-paper" : "",
+              seated && (paid || summary?.ready) ? "bg-pass text-ink" : "",
+              seated && !paid && !summary?.ready ? "bg-ink text-paper" : "",
               reserved && "bg-amber text-ink",
               !seated && !reserved && "text-inherit"
             )}
           >
-            {seated ? (summary?.ready ? `${summary.ready} ready` : "Seated") : reserved ? "Reserved" : "Free"}
+            {seated ? (paid ? "Paid" : summary?.ready ? `${summary.ready} ready` : "Seated") : reserved ? "Reserved" : "Free"}
           </span>
           {seated && joinCode ? (
             <span className="font-mono text-xs font-bold tracking-[0.15em] text-ink-soft">
