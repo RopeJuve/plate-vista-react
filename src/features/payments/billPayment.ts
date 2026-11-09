@@ -52,6 +52,12 @@ export const payProblem = (error: unknown): PayProblem => {
   return { kind: "FAILED" };
 };
 
+/** The server never answered, or answered with something unexpected: confirming again replays the same payment. */
+export const canRetryPayment = (problem: PayProblem) => problem.kind === "NETWORK" || problem.kind === "FAILED";
+
+/** The answer means the bill on screen is out of date, so it is loaded again. */
+export const reloadsBill = (problem: PayProblem) => problem.kind === "BILL_CHANGED" || problem.kind === "BILL_PAID";
+
 /** The guest-facing receipt page for a payment. */
 export const receiptPath = (receiptToken: string) => `/receipt/${encodeURIComponent(receiptToken)}`;
 

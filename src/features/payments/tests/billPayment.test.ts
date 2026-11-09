@@ -2,7 +2,15 @@ import { AxiosError, AxiosHeaders } from "axios";
 import { describe, expect, it } from "vitest";
 import { paidBill } from "../../../mocks/fixtures/payments";
 import { unpaidBill } from "../../../mocks/fixtures/bill";
-import { canPayBill, methodLabel, payProblem, receiptPath, receiptUrl } from "../billPayment";
+import {
+  canPayBill,
+  canRetryPayment,
+  methodLabel,
+  payProblem,
+  receiptPath,
+  receiptUrl,
+  reloadsBill,
+} from "../billPayment";
 
 const answer = (status: number, data: unknown) =>
   new AxiosError("failed", "ERR_BAD_REQUEST", undefined, undefined, {
@@ -52,6 +60,22 @@ describe("payProblem", () => {
 
   it("treats any other answer as a failure", () => {
     expect(payProblem(answer(500, { code: "INTERNAL" }))).toEqual({ kind: "FAILED" });
+  });
+});
+
+describe("what a problem leads to", () => {
+  it("lets staff confirm again with the same id only when the outcome is unknown", () => {
+    expect(canRetryPayment({ kind: "NETWORK" })).toBe(true);
+    expect(canRetryPayment({ kind: "FAILED" })).toBe(true);
+    expect(canRetryPayment({ kind: "BILL_CHANGED", totalCents: 2800 })).toBe(false);
+    expect(canRetryPayment({ kind: "TSE_NOT_ACTIVE" })).toBe(false);
+  });
+
+  it("reloads the bill when it changed or was paid elsewhere", () => {
+    expect(reloadsBill({ kind: "BILL_CHANGED" })).toBe(true);
+    expect(reloadsBill({ kind: "BILL_PAID" })).toBe(true);
+    expect(reloadsBill({ kind: "BILL_EMPTY" })).toBe(false);
+    expect(reloadsBill({ kind: "NETWORK" })).toBe(false);
   });
 });
 
