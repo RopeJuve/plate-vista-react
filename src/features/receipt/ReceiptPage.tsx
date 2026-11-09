@@ -1,0 +1,41 @@
+import { useParams } from "react-router-dom";
+import { Chit, Wordmark } from "../../Components/rail";
+import { useReceipt } from "./hooks/useReceipt";
+import { signatureNotice } from "./receipt";
+import ReceiptView from "./ReceiptView";
+
+const Message = ({ title, text }: { title: string; text?: string }) => (
+  <div className="text-center">
+    <h1 className="text-2xl font-black tracking-[-0.03em]">{title}</h1>
+    {text && <p className="mt-2 text-sm text-ink-soft">{text}</p>}
+  </div>
+);
+
+/** The guest's receipt behind the link they were given after paying. Public, in German. */
+const ReceiptPage = () => {
+  const { receiptToken = "" } = useParams();
+  const state = useReceipt(receiptToken);
+
+  return (
+    <main lang="de" className="flex min-h-dvh flex-col items-center bg-paper px-4 py-8 text-ink sm:py-12">
+      <Wordmark className="mb-6 text-ink" />
+      <Chit lift="paper" className="w-full max-w-sm" innerClassName="bg-white px-5 pb-10 pt-6 sm:px-6">
+        {state.phase === "loading" && <p className="text-center text-sm text-ink-soft">Beleg wird geladen…</p>}
+        {state.phase === "missing" && (
+          <Message title="Beleg nicht gefunden" text="Bitte prüfen Sie den Link oder fragen Sie das Personal." />
+        )}
+        {state.phase === "failed" && (
+          <Message title="Beleg konnte nicht geladen werden." text="Wir versuchen es gleich noch einmal." />
+        )}
+        {state.phase === "ready" && (
+          <ReceiptView
+            receipt={state.receipt}
+            notice={signatureNotice(state.receipt.signature.status, state.waitedMs)}
+          />
+        )}
+      </Chit>
+    </main>
+  );
+};
+
+export default ReceiptPage;

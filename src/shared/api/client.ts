@@ -16,6 +16,7 @@ declare module "axios" {
 
 const PUBLIC_REQUESTS = [
   { method: "get", match: (url: string) => /\/r\/[^/]+\/menu-items/.test(url) },
+  { method: "get", match: (url: string) => /\/receipts\/[^/]+$/.test(url) },
   { method: "post", match: (url: string) => /\/users\/?$/.test(url) },
   { method: "post", match: (url: string) => /\/auth\/(employee\/)?login/.test(url) },
   { method: "post", match: (url: string) => /\/auth\/register/.test(url) },

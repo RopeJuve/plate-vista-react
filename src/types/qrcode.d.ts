@@ -3,6 +3,7 @@ declare module "qrcode" {
   type QRCodeToStringOptions = {
     type?: "svg" | "utf8" | "terminal";
     margin?: number;
+    width?: number;
     errorCorrectionLevel?: "L" | "M" | "Q" | "H";
     color?: { dark?: string; light?: string };
   };
