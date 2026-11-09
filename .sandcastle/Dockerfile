@@ -15,6 +15,13 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
   && apt-get update && apt-get install -y gh \
   && rm -rf /var/lib/apt/lists/*
 
+# Playwright's Chromium system libraries (needs root). The browser itself is
+# installed as the agent user below. Keep the version in step with
+# @playwright/test in package-lock.json.
+ARG PLAYWRIGHT_VERSION=1.63.0
+RUN npx --yes playwright@${PLAYWRIGHT_VERSION} install-deps chromium \
+  && rm -rf /var/lib/apt/lists/* /root/.npm
+
 # Build-args for UID/GID alignment: sandcastle docker build-image
 # defaults these to the host user's UID/GID so image-built files
 # and bind-mounted files share an owner without runtime chown.
@@ -30,6 +37,11 @@ RUN curl -fsSL https://claude.ai/install.sh | bash
 
 # Add Claude to PATH
 ENV PATH="/home/agent/.local/bin:$PATH"
+
+# Chromium for PR screenshots (.sandcastle/prompts/pr.md). Baked in so runs don't
+# download it; the install hook in config.json fetches a newer one only if the
+# lockfile moves ahead of PLAYWRIGHT_VERSION.
+RUN npx --yes playwright@${PLAYWRIGHT_VERSION} install chromium && rm -rf /home/agent/.npm
 
 WORKDIR /home/agent
 

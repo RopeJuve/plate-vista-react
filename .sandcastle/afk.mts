@@ -8,14 +8,17 @@
  *        → FIX     (one retry if verify fails)
  *        → REVIEW  (second model reviews + fixes)
  *        → VERIFY  again
- *        → push branch + open PR ("Closes #N")  — never auto-merges
+ *        → PR BODY (agent writes it with the `pr` skill; may save screenshots to .afk-evidence/)
+ *        → push branch + evidence images + open PR ("Closes #N")  — never auto-merges
  *
  * Run:   npx tsx .sandcastle/afk.mts            (full run)
  *        AFK_DRY_RUN=1 npx tsx .sandcastle/afk.mts   (plan only, no changes)
  *        AFK_ISSUE=42 npx tsx .sandcastle/afk.mts    (skip planner, one issue)
  */
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync, mkdirSync } from "node:fs";
+import { existsSync, readFileSync, mkdirSync, readdirSync, statSync, rmSync } from "node:fs";
+import { basename, join } from "node:path";
+import { tmpdir } from "node:os";
 import { createSandbox, run, claudeCode, Output } from "@ai-hero/sandcastle";
 import { docker } from "@ai-hero/sandcastle/sandboxes/docker";
 import { z } from "zod";
@@ -68,8 +71,8 @@ mkdirSync(LOG_DIR, { recursive: true });
 const GH_TOKEN = process.env.GH_TOKEN ?? process.env.GITHUB_TOKEN ?? tryCmd("gh", ["auth", "token"]);
 const hostEnv = { ...process.env, ...(GH_TOKEN ? { GH_TOKEN } : {}) };
 
-function cmd(bin: string, args: string[]): string {
-  return execFileSync(bin, args, { encoding: "utf8", env: hostEnv, stdio: ["ignore", "pipe", "pipe"] }).trim();
+function cmd(bin: string, args: string[], env: NodeJS.ProcessEnv = hostEnv): string {
+  return execFileSync(bin, args, { encoding: "utf8", env, stdio: ["ignore", "pipe", "pipe"] }).trim();
 }
 function tryCmd(bin: string, args: string[]): string | undefined {
   try {
@@ -201,6 +204,74 @@ async function plan(issues: Issue[]): Promise<Plan> {
   };
 }
 
+// ───────────────────────── PR evidence (screenshots) ─────────────────────────
+
+// The PR-body agent may save images to .afk-evidence/ (git-ignored) in its worktree and
+// reference them as `afk-evidence:<file>`. The host commits them to an orphan branch and
+// swaps each reference for a link pinned to that commit, so they render in the PR.
+const EVIDENCE_DIR = ".afk-evidence";
+const EVIDENCE_BRANCH = "afk-evidence";
+const EVIDENCE_EXT = /\.(png|jpe?g|gif|webp)$/i;
+const EVIDENCE_MAX_FILES = 8;
+const EVIDENCE_MAX_BYTES = 5 * 1024 * 1024;
+
+function evidenceFiles(worktree: string): string[] {
+  const dir = join(worktree, EVIDENCE_DIR);
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir)
+    .filter((f) => EVIDENCE_EXT.test(f))
+    .map((f) => join(dir, f))
+    .filter((f) => statSync(f).size <= EVIDENCE_MAX_BYTES)
+    .slice(0, EVIDENCE_MAX_FILES);
+}
+
+let evidenceQueue: Promise<unknown> = Promise.resolve();
+// Serialized: parallel workers would otherwise race on the evidence branch.
+function publishEvidence(n: number, files: string[]): Promise<Map<string, string>> {
+  const job = evidenceQueue.then(() => publishEvidenceNow(n, files));
+  evidenceQueue = job.catch(() => undefined);
+  return job;
+}
+
+function publishEvidenceNow(n: number, files: string[]): Map<string, string> {
+  const urls = new Map<string, string>();
+  if (files.length === 0) return urls;
+  const repo = gh(["repo", "view", "--json", "nameWithOwner", "--jq", ".nameWithOwner"]);
+  const remoteRef = `refs/remotes/origin/${EVIDENCE_BRANCH}`;
+  let parent: string | undefined;
+  try {
+    cmd("git", ["fetch", "--quiet", "origin", `+refs/heads/${EVIDENCE_BRANCH}:${remoteRef}`]);
+    parent = cmd("git", ["rev-parse", remoteRef]);
+  } catch {
+    parent = undefined; // first upload: the branch doesn't exist yet
+  }
+  // Build the commit with a throwaway index, so the host checkout is never touched.
+  const index = join(tmpdir(), `afk-evidence-${process.pid}-${n}.index`);
+  rmSync(index, { force: true });
+  const env = { ...hostEnv, GIT_INDEX_FILE: index };
+  try {
+    cmd("git", parent ? ["read-tree", parent] : ["read-tree", "--empty"], env);
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    for (const file of files) {
+      const path = `issue-${n}/${stamp}/${basename(file)}`;
+      const blob = cmd("git", ["hash-object", "-w", file]);
+      cmd("git", ["update-index", "--add", "--cacheinfo", `100644,${blob},${path}`], env);
+      urls.set(basename(file), path);
+    }
+    const tree = cmd("git", ["write-tree"], env);
+    const commit = cmd("git", ["commit-tree", tree, ...(parent ? ["-p", parent] : []), "-m", `evidence for #${n}`]);
+    cmd("git", ["push", "--quiet", "origin", `${commit}:refs/heads/${EVIDENCE_BRANCH}`]);
+    for (const [name, path] of urls) urls.set(name, `https://github.com/${repo}/blob/${commit}/${path}?raw=true`);
+    return urls;
+  } finally {
+    rmSync(index, { force: true });
+  }
+}
+
+function linkEvidence(body: string, urls: Map<string, string>): string {
+  return body.replace(/afk-evidence:([\w.-]+)/g, (_m, name: string) => urls.get(name) ?? `#screenshot-missing-${name}`);
+}
+
 // ───────────────────────── phase: implement → verify → review ─────────────────────────
 
 type Sbx = Awaited<ReturnType<typeof createSandbox>>;
@@ -293,18 +364,49 @@ async function work(issue: Issue): Promise<Outcome> {
     const ahead = Number(cmd("git", ["rev-list", "--count", `${BASE}..${branch}`]));
     if (ahead === 0) return { status: "needs-human", issue: n, reason: "Agent finished without committing any changes." };
 
-    if (DRY_RUN) return { status: "pr", issue: n, url: `(dry run — ${ahead} commits on ${branch})` };
+    // 5. PR body (agent uses the `pr` skill; it must not change the branch)
+    let prBody: string | undefined;
+    const headBefore = (await sbx.exec("git rev-parse HEAD")).stdout.trim();
+    try {
+      const pr = await sbx.run({
+        name: `pr#${n}`,
+        agent: agent(cfg.models.reviewer),
+        promptFile: ".sandcastle/prompts/pr.md",
+        promptArgs: { ISSUE_NUMBER: String(n), ISSUE_TITLE: issue.title, ISSUE_BODY: issue.body || "(no description)", VERIFY_REPORT: v.report },
+        logging: logFile("pr"),
+      });
+      prBody = pr.stdout.match(/<pr_body>([\s\S]*?)<\/pr_body>/)?.[1]?.trim() || undefined;
+    } catch (e) {
+      log(`#${n} pr-body step errored (using default body):`, (e as Error).message);
+    }
+    if ((await sbx.exec("git rev-parse HEAD")).stdout.trim() !== headBefore || (await sbx.exec("git status --porcelain")).stdout.trim()) {
+      log(`#${n} warn: pr-body step changed the branch — reverting to ${headBefore}`);
+      await sbx.exec(`git reset --hard ${headBefore}`);
+    }
 
-    // 5. push + PR (host side — agent never gets a GitHub token)
+    if (DRY_RUN) return { status: "pr", issue: n, url: `(dry run — ${ahead} commits on ${branch}, pr body ${prBody ? "written" : "missing"})` };
+
+    // 6. push + evidence + PR (host side — agent never gets a GitHub token)
     cmd("git", ["push", "--force-with-lease", "-u", "origin", branch]);
+    if (prBody?.includes("afk-evidence:")) {
+      try {
+        prBody = linkEvidence(prBody, await publishEvidence(n, evidenceFiles(sbx.worktreePath)));
+      } catch (e) {
+        log(`#${n} warn: evidence upload failed:`, (e as Error).message);
+        prBody = linkEvidence(prBody, new Map());
+      }
+    }
+    const body = [
+      `Closes #${n}`,
+      prBody ?? "🤖 Implemented AFK by Sandcastle.",
+      `## Verification\n${v.report}`,
+      `## Review\n${reviewSummary}`,
+      ...(prBody ? ["---\n🤖 Implemented AFK by Sandcastle."] : []),
+    ].join("\n\n").slice(0, 60_000);
     const existing = gh(["pr", "list", "--head", branch, "--json", "url", "--jq", ".[0].url // empty"]);
     const url =
       existing ||
-      gh([
-        "pr", "create", "--base", BASE, "--head", branch,
-        "--title", `${issue.title} (#${n})`,
-        "--body", `Closes #${n}\n\n🤖 Implemented AFK by Sandcastle.\n\n## Verification\n${v.report}\n\n## Review\n${reviewSummary}`,
-      ]);
+      gh(["pr", "create", "--base", BASE, "--head", branch, "--title", `${issue.title} (#${n})`, "--body", body]);
     return { status: "pr", issue: n, url };
   } catch (e) {
     return { status: "error", issue: n, reason: (e as Error).message };
