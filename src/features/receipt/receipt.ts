@@ -58,3 +58,7 @@ export const formatReceiptDateTime = (iso: string | undefined) => {
   const date = new Date(iso);
   return Number.isNaN(date.getTime()) ? "" : dateTimeFormat.format(date);
 };
+
+/** `GET /receipts/:token` answered 404: the link is wrong or the receipt does not exist. */
+export const isReceiptMissing = (error: unknown) =>
+  (error as { response?: { status?: number } } | null)?.response?.status === 404;

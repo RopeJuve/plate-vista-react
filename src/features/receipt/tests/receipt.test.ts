@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   FAST_POLL_FOR_MS,
   formatReceiptDateTime,
+  isReceiptMissing,
   paymentMethodLabel,
   receiptPollDelay,
   signatureNotice,
@@ -62,5 +63,14 @@ describe("labels", () => {
   it("shows nothing for a missing or broken time", () => {
     expect(formatReceiptDateTime(undefined)).toBe("");
     expect(formatReceiptDateTime("nope")).toBe("");
+  });
+});
+
+describe("isReceiptMissing", () => {
+  it("is true only for a 404 answer", () => {
+    expect(isReceiptMissing({ response: { status: 404 } })).toBe(true);
+    expect(isReceiptMissing({ response: { status: 500 } })).toBe(false);
+    expect(isReceiptMissing(new Error("offline"))).toBe(false);
+    expect(isReceiptMissing(null)).toBe(false);
   });
 });
