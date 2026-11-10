@@ -39,6 +39,8 @@ export const errorMessage = (code: ErrorCode, details?: ErrorDetails, fallback?:
     }
     case "SESSION_CLOSED":
       return "This table was closed. Please ask your waiter.";
+    case "BILL_PAID":
+      return "This bill is already paid, so nothing more can be ordered.";
     case "RATE_LIMITED":
       return "Too many requests — please wait a moment and try again.";
     case "TIMEOUT":

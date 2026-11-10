@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useStateContext } from "../../contexts/ContextProvider";
 import { useGuestAuth } from "../../features/guest-ordering/GuestAuthContext";
+import { useGuestBill } from "../../features/guest-ordering/GuestBillProvider";
 import { JoinCodeBanner } from "../../features/guest-ordering/JoinCode";
 import { useMenu } from "../../features/guest-ordering/MenuProvider";
 import { visibleMenuItems } from "../../features/guest-ordering/menu";
@@ -8,6 +9,7 @@ import Cart from "./Cart";
 import CategoriesCustomer from "./CategoriesCustomer";
 import MenuItemsList from "./MenuItemsList";
 import NavBarCustomer from "./NavBarCustomer";
+import PaidBillBanner from "./PaidBillBanner";
 import SkeletonList from "./SkeletonList";
 
 /** The menu a seated guest orders from: search, categories, dishes, and their cart. */
@@ -15,6 +17,7 @@ const GuestMenu = () => {
   const { session } = useGuestAuth();
   const { items, categories, loading, error, reload } = useMenu();
   const { search } = useStateContext();
+  const { paid } = useGuestBill();
   const [selectedCategory, setSelectedCategory] = useState("");
   // The guest who opened the table sees the code up front; anyone can bring it back.
   const [showCode, setShowCode] = useState(() => Boolean(session?.opened));
@@ -34,7 +37,8 @@ const GuestMenu = () => {
           joinCode={showCode ? undefined : session?.joinCode}
           onShowCode={() => setShowCode(true)}
         />
-        {showCode && session?.joinCode && (
+        {paid && <PaidBillBanner paid={paid} />}
+        {showCode && session?.joinCode && !paid && (
           <JoinCodeBanner code={session.joinCode} onDismiss={() => setShowCode(false)} />
         )}
         <CategoriesCustomer

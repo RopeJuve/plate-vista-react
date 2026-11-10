@@ -6,7 +6,7 @@ import { useMenu } from "../../features/guest-ordering/MenuProvider";
 import { usePlaceOrder } from "../../features/guest-ordering/hooks/usePlaceOrder";
 import PayBillPanel from "../../features/payments/PayBillPanel";
 import { useOrderAmendment } from "../../features/order-amendment/hooks/useOrderAmendment";
-import { tableCheck } from "../../features/staff-board/boardState";
+import { sessionPayment, tableCheck } from "../../features/staff-board/boardState";
 import { canCloseUnpaid } from "../../features/staff-board/closeTable";
 import { useCloseTable } from "../../features/staff-board/hooks/useCloseTable";
 import { useOrderActions } from "../../features/staff-board/hooks/useOrderActions";
@@ -44,6 +44,9 @@ const OrderDetails = () => {
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const { table, sessionId, joinCode, orders, totalCents } = useMemo(() => tableCheck(state, tableId), [state, tableId]);
+  const payment = sessionPayment(state, sessionId);
+  // A payment or signature heard live reloads the bill, so the panel shows it as paid or signed.
+  const paymentKey = payment ? `${payment.paymentId}:${payment.signed}` : "";
   const closing = useCloseTable(sessionId, closeSession);
   const handleDialogChange = (dialog: "confirm" | "unpaid") => (open: boolean) =>
     closing.setDialog(open ? dialog : null);
@@ -87,7 +90,7 @@ const OrderDetails = () => {
           <PayBillPanel
             key={sessionId}
             sessionId={sessionId}
-            refreshKey={`${totalCents}:${closing.billReloads}`}
+            refreshKey={`${totalCents}:${closing.billReloads}:${paymentKey}`}
             canActivateTse={false}
             onBillChange={closing.setBill}
           />

@@ -5,6 +5,7 @@ import {
   boardReducer,
   emptyBoard,
   listTickets,
+  sessionPayment,
   summariseTables,
   tableCheck,
 } from "../boardState";
@@ -254,5 +255,47 @@ describe("what the floor and the check read from the board", () => {
   it("gives a free table an empty check", () => {
     const check = tableCheck(applySnapshot(seated()), "table-unknown");
     expect(check).toEqual({ table: undefined, sessionId: undefined, joinCode: undefined, orders: [], totalCents: 0 });
+  });
+});
+
+describe("payments on the board", () => {
+  const paid = {
+    event: "bill.paid" as const,
+    data: { sessionId: "session-1", paymentId: "payment-1", receiptToken: "receipt-1", method: "CASH" as const, totalCents: 500 },
+  };
+  const signed = { event: "payment.signed" as const, data: { paymentId: "payment-1", receiptToken: "receipt-1" } };
+  const loaded = () => boardReducer(emptyBoard(), { type: "hydrate", board: board(1), events: [] });
+
+  it("knows a session is paid once bill.paid arrives, with its signature still pending", () => {
+    const state = applyServerEvent(loaded(), paid);
+    expect(sessionPayment(state, "session-1")).toEqual({ paymentId: "payment-1", signed: false });
+    expect(sessionPayment(loaded(), "session-1")).toBeUndefined();
+  });
+
+  it("marks the payment signed when payment.signed arrives, and ignores other payments", () => {
+    const state = applyServerEvent(applyServerEvent(loaded(), paid), signed);
+    expect(sessionPayment(state, "session-1")).toEqual({ paymentId: "payment-1", signed: true });
+    const other = applyServerEvent(applyServerEvent(loaded(), paid), {
+      ...signed,
+      data: { paymentId: "payment-2", receiptToken: "receipt-2" },
+    });
+    expect(sessionPayment(other, "session-1")).toEqual({ paymentId: "payment-1", signed: false });
+  });
+
+  it("forgets the payment when the table closes", () => {
+    const state = applyServerEvent(applyServerEvent(loaded(), paid), {
+      event: "session.closed",
+      data: { sessionId: "session-1", tableId: "table-1" },
+    });
+    expect(sessionPayment(state, "session-1")).toBeUndefined();
+  });
+
+  it("keeps a known payment for a still-open table when the board loads again", () => {
+    const known = applyServerEvent(loaded(), paid);
+    const reloaded = boardReducer(known, { type: "hydrate", board: board(1), events: [] });
+    expect(sessionPayment(reloaded, "session-1")).toEqual({ paymentId: "payment-1", signed: false });
+
+    const closedMeanwhile = boardReducer(known, { type: "hydrate", board: { ...board(1), sessions: [] }, events: [] });
+    expect(sessionPayment(closedMeanwhile, "session-1")).toBeUndefined();
   });
 });

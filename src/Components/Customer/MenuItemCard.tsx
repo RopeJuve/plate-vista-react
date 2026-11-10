@@ -1,5 +1,6 @@
 import { Minus, Plus } from "lucide-react";
 import { useCart } from "../../contexts/CartContext";
+import { useGuestBill } from "../../features/guest-ordering/GuestBillProvider";
 import type { MenuRecord } from "../../features/guest-ordering/menu";
 import { formatCents } from "../../shared/money/formatCents";
 import { cn } from "@/lib/utils";
@@ -7,6 +8,7 @@ import MenuItemImage from "../../features/menu/MenuItemImage";
 
 const MenuItemCard = ({ item }: { item: MenuRecord }) => {
   const { cart, addLine, setQuantity, removeLine } = useCart();
+  const { paid } = useGuestBill();
   const unavailable = !item.inStock || item.archived;
   const quantity = cart.find((line) => line.productId === item._id)?.quantity ?? 0;
 
@@ -45,8 +47,9 @@ const MenuItemCard = ({ item }: { item: MenuRecord }) => {
               </span>
               <button
                 type="button"
-                className="grid h-8 w-8 place-items-center rounded-full bg-signal text-ink hover:bg-signal-deep"
+                className="grid h-8 w-8 place-items-center rounded-full bg-signal text-ink hover:bg-signal-deep disabled:opacity-40"
                 onClick={() => addLine(item._id)}
+                disabled={Boolean(paid)}
                 aria-label={`Add ${item.title} to cart`}
               >
                 <Plus className="h-4 w-4" strokeWidth={2.5} />
@@ -55,8 +58,9 @@ const MenuItemCard = ({ item }: { item: MenuRecord }) => {
           ) : (
             <button
               type="button"
-              className="inline-flex h-10 items-center gap-1.5 rounded-full bg-white pl-3 pr-4 text-sm font-bold text-ink ring-1 ring-inset ring-ink/15 transition-colors hover:bg-ink hover:text-paper hover:ring-ink"
+              className="inline-flex h-10 items-center gap-1.5 rounded-full bg-white pl-3 pr-4 text-sm font-bold text-ink ring-1 ring-inset ring-ink/15 transition-colors hover:bg-ink hover:text-paper hover:ring-ink disabled:pointer-events-none disabled:opacity-40"
               onClick={() => addLine(item._id)}
+              disabled={Boolean(paid)}
               aria-label={`Add ${item.title} to cart`}
             >
               <Plus className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />

@@ -1,5 +1,6 @@
 import type { PaymentErrorBody } from "../../shared/api/payments";
 import type { SessionBill } from "../../shared/realtime/protocol";
+import { isOwnerOrAdmin } from "../../shared/auth/roles";
 import type { User } from "../../types";
 
 export const RECORD_PAYMENT_FIRST = "Record the payment first";
@@ -23,8 +24,7 @@ export const closeBlock = (bill: KnownBill): string | null => {
 };
 
 /** Only an owner or admin may close a table whose bill was never paid. */
-export const canCloseUnpaid = (user: User | null) =>
-  [user?.role, user?.position].some((role) => role === "owner" || role === "admin");
+export const canCloseUnpaid = (user: User | null) => isOwnerOrAdmin(user);
 
 /** How `POST /sessions/:id/close` went. `unpaid` means the bill on screen is out of date. */
 export type CloseResult = "closed" | "unpaid" | "failed";

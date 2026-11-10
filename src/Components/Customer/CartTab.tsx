@@ -1,8 +1,10 @@
 import { useCart } from "../../contexts/CartContext";
+import { useGuestBill } from "../../features/guest-ordering/GuestBillProvider";
 import { linesTotalCents } from "../../features/guest-ordering/cartLines";
 import { useMenu } from "../../features/guest-ordering/MenuProvider";
 import type { PlaceOrder } from "../../features/guest-ordering/hooks/usePlaceOrder";
 import { PLACE_ORDER_LABEL } from "../../features/guest-ordering/placeOrderStatus";
+import { errorMessage } from "../../shared/realtime/errorMessages";
 import { Chit, TotalLine } from "../rail";
 import CartLineRow from "./CartLineRow";
 import { Button } from "@/components/ui/button";
@@ -12,7 +14,10 @@ import { cn } from "@/lib/utils";
 const CartTab = ({ placeOrder }: { placeOrder: PlaceOrder }) => {
   const { cart, clearCart } = useCart();
   const { itemsById } = useMenu();
-  const { phase, message, blocking, canSend, canPlace, fieldErrors, unavailableIds, place } = placeOrder;
+  const { paid } = useGuestBill();
+  const { phase, blocking, canSend, canPlace, fieldErrors, unavailableIds, place } = placeOrder;
+  // A paid bill takes no more orders, whatever else the cart has to say.
+  const message = paid ? errorMessage("BILL_PAID") : placeOrder.message;
   const estimated = linesTotalCents(cart, itemsById);
 
   return (
@@ -22,7 +27,7 @@ const CartTab = ({ placeOrder }: { placeOrder: PlaceOrder }) => {
           <p
             className={cn(
               "mb-3 rounded-md px-3 py-2 text-center text-sm font-semibold",
-              phase === "success" ? "bg-pass/10 text-pass-ink" : phase === "error" || blocking ? "bg-alert/10 text-alert-ink" : "bg-ink/[0.05] text-ink-soft"
+              phase === "success" ? "bg-pass/10 text-pass-ink" : phase === "error" || blocking || paid ? "bg-alert/10 text-alert-ink" : "bg-ink/[0.05] text-ink-soft"
             )}
             role="status"
           >
@@ -61,7 +66,7 @@ const CartTab = ({ placeOrder }: { placeOrder: PlaceOrder }) => {
         )}
       </div>
       <div className="grid grid-cols-[1fr_auto] gap-2 border-t border-ink/10 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
-        <Button type="button" size="xl" onClick={place} disabled={!canPlace} title={canSend ? "" : "Connecting…"}>
+        <Button type="button" size="xl" onClick={place} disabled={!canPlace || Boolean(paid)} title={canSend ? "" : "Connecting…"}>
           {PLACE_ORDER_LABEL.guest[phase]}
         </Button>
         <Button

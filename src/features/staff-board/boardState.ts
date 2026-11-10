@@ -14,6 +14,9 @@ import { ticketsOf, withStatusChange } from "../../shared/realtime/tickets";
 
 export type TrackedOrder = Order & { cancelReason?: string };
 
+/** A bill paid while the board was watching, and whether the TSE has signed it yet. */
+export type SessionPayment = { paymentId: string; signed: boolean };
+
 export type BoardState = {
   ordersById: Record<string, TrackedOrder>;
   orderIdsBySession: Record<string, string[]>;
@@ -22,6 +25,8 @@ export type BoardState = {
   tablesById: Record<string, BoardTable>;
   /** Tables closed in the last 12 hours, newest first. */
   recentlyClosed: ClosedSession[];
+  /** Open sessions whose bill was paid, by session id. */
+  paymentsBySession: Record<string, SessionPayment>;
   ready: boolean;
 };
 
@@ -34,6 +39,7 @@ export const emptyBoard = (): BoardState => ({
   sessionIdByTable: {},
   tablesById: {},
   recentlyClosed: [],
+  paymentsBySession: {},
   ready: false,
 });
 
@@ -126,6 +132,26 @@ export const applyServerEvent = (state: BoardState, event: ServerEvent): BoardSt
         },
       };
     }
+    case "bill.paid": {
+      const { sessionId, paymentId } = event.data;
+      return {
+        ...state,
+        paymentsBySession: { ...state.paymentsBySession, [sessionId]: { paymentId, signed: false } },
+      };
+    }
+    case "payment.signed": {
+      const entry = Object.entries(state.paymentsBySession).find(
+        ([, payment]) => payment.paymentId === event.data.paymentId
+      );
+      if (!entry) {
+        return state;
+      }
+      const [sessionId, payment] = entry;
+      return {
+        ...state,
+        paymentsBySession: { ...state.paymentsBySession, [sessionId]: { ...payment, signed: true } },
+      };
+    }
     case "session.closed": {
       const { sessionId, tableId } = event.data;
       const ids = state.orderIdsBySession[sessionId] ?? [];
@@ -160,6 +186,8 @@ export const applyServerEvent = (state: BoardState, event: ServerEvent): BoardSt
       delete sessionsById[sessionId];
       const sessionIdByTable = { ...state.sessionIdByTable };
       delete sessionIdByTable[tableId];
+      const paymentsBySession = { ...state.paymentsBySession };
+      delete paymentsBySession[sessionId];
       const table = state.tablesById[tableId];
       return {
         ...state,
@@ -168,6 +196,7 @@ export const applyServerEvent = (state: BoardState, event: ServerEvent): BoardSt
         sessionsById,
         sessionIdByTable,
         recentlyClosed,
+        paymentsBySession,
         tablesById: table
           ? { ...state.tablesById, [tableId]: { ...table, status: "vacant" } }
           : state.tablesById,
@@ -182,15 +211,31 @@ export type BoardAction =
   | { type: "hydrate"; board: StaffBoard; events: ServerEvent[] }
   | { type: "event"; event: ServerEvent };
 
+/**
+ * The snapshot does not say which bills are paid, so payments the board already
+ * heard about stay on, for tables that are still open.
+ */
+const withKnownPayments = (next: BoardState, known: BoardState): BoardState => {
+  const open = new Set(Object.values(next.sessionIdByTable));
+  const paymentsBySession = Object.fromEntries(
+    Object.entries(known.paymentsBySession).filter(([sessionId]) => open.has(sessionId))
+  );
+  return { ...next, paymentsBySession };
+};
+
 export const boardReducer = (state: BoardState, action: BoardAction): BoardState => {
   if (action.type === "hydrate") {
-    return action.events.reduce(applyServerEvent, applySnapshot(action.board));
+    return action.events.reduce(applyServerEvent, withKnownPayments(applySnapshot(action.board), state));
   }
   if (!state.ready) {
     return state;
   }
   return applyServerEvent(state, action.event);
 };
+
+/** The payment the board heard for a session, if its bill was paid. */
+export const sessionPayment = (state: BoardState, sessionId: string | undefined): SessionPayment | undefined =>
+  sessionId ? state.paymentsBySession[sessionId] : undefined;
 
 export type ListedTicket = {
   order: TrackedOrder;

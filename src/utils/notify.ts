@@ -12,6 +12,8 @@ type ToastVariant = "error" | "success" | "info";
 type ToastPayload = {
   message: string;
   variant?: ToastVariant;
+  /** Makes the message a link to this page. */
+  href?: string;
 };
 
 type ToastHandler = (payload: ToastPayload) => void;
@@ -37,19 +39,19 @@ export const apiMessage = (error: unknown, fallback: string) => {
   return fallback;
 };
 
-export const notify = (message: string, variant: ToastVariant = "error") => {
+export const notify = (message: string, variant: ToastVariant = "error", options: { href?: string } = {}) => {
   if (!message) {
     return;
   }
 
+  const payload: ToastPayload = options.href ? { message, variant, href: options.href } : { message, variant };
+
   if (toastHandler) {
-    toastHandler({ message, variant });
+    toastHandler(payload);
     return;
   }
 
-  window.dispatchEvent(
-    new CustomEvent("app:toast", { detail: { message, variant } })
-  );
+  window.dispatchEvent(new CustomEvent("app:toast", { detail: payload }));
 };
 
 export const setSessionMessage = (message: string) => {
