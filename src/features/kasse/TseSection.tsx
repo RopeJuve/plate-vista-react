@@ -1,12 +1,13 @@
 import { useTse } from "./hooks/useTse";
 import TseActivation from "./TseActivation";
 import TseActiveDetails from "./TseActiveDetails";
+import FailedSignatures from "./FailedSignatures";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 /** The TSE that signs every order and payment; without it the restaurant cannot take payments. */
 const TseSection = ({ legalComplete }: { legalComplete: boolean }) => {
-  const { tse, loading, loadFailed, reload, activating, problem, activate } = useTse();
+  const { tse, loading, loadFailed, reload, activating, problem, activate, markSigned } = useTse();
   const active = Boolean(tse?.active);
 
   const body = () => {
@@ -26,7 +27,12 @@ const TseSection = ({ legalComplete }: { legalComplete: boolean }) => {
       );
     }
     if (active) {
-      return <TseActiveDetails tse={tse} />;
+      return (
+        <div className="space-y-6">
+          <TseActiveDetails tse={tse} />
+          <FailedSignatures count={tse.failedSignatures} onSigned={markSigned} />
+        </div>
+      );
     }
     return (
       <TseActivation legalComplete={legalComplete} activating={activating} problem={problem} onActivate={activate} />
