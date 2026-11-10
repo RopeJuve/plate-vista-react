@@ -5,6 +5,8 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useSignOut } from "../../shared/auth/hooks/useSignOut";
 import { initialOf, staffName } from "../../shared/auth/staffName";
 import { links } from "../../data/data";
+import { useFailedSignatureCount } from "../../features/kasse/hooks/useFailedSignatureCount";
+import { failedSignatureBadge } from "../../features/kasse/failedSignatures";
 import { Wordmark } from "../rail";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +16,7 @@ const Sidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
   const signOut = useSignOut();
   const navigate = useNavigate();
   const name = staffName(user, "Owner");
+  const { count: failedSignatures } = useFailedSignatureCount();
 
   const handleSignOut = () => {
     signOut();
@@ -61,6 +64,12 @@ const Sidebar = ({ onNavigate }: { onNavigate?: () => void }) => {
                       <>
                         <link.icon className={cn("h-[18px] w-[18px]", isActive && "text-signal-ink")} aria-hidden="true" />
                         <span>{link.label}</span>
+                        {link.name === "kasse" && failedSignatures > 0 && (
+                          <span className="ml-auto rounded-full bg-alert px-2 py-0.5 font-mono text-xs font-bold tabular-nums text-ink">
+                            <span aria-hidden="true">{failedSignatures}</span>
+                            <span className="sr-only">, {failedSignatureBadge(failedSignatures).label}</span>
+                          </span>
+                        )}
                       </>
                     )}
                   </NavLink>

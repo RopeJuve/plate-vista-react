@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { TseStatus } from "../../../shared/api/payments";
+import { announceFailedSignatures } from "../failedSignatureCount";
 import { tseSetupProblem, type TseSetupProblem } from "../tseActivation";
 import { fetchTse, setupTse } from "../tseApi";
 
@@ -67,7 +68,21 @@ export const useTse = () => {
     }
   };
 
-  return { tse, loading, loadFailed, reload: load, activating, problem, activate };
+  const failedSignatures = tse?.active ? tse.failedSignatures : null;
+  useEffect(() => {
+    if (failedSignatures !== null) {
+      announceFailedSignatures(failedSignatures);
+    }
+  }, [failedSignatures]);
+
+  /** A retry signed one payment or order: one failure fewer. */
+  const markSigned = useCallback(() => {
+    setTse((current) =>
+      current ? { ...current, failedSignatures: Math.max(0, current.failedSignatures - 1) } : current
+    );
+  }, []);
+
+  return { tse, loading, loadFailed, reload: load, activating, problem, activate, markSigned };
 };
 
 export type TseState = ReturnType<typeof useTse>;
