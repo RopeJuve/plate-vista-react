@@ -1,4 +1,4 @@
-import { readCents } from "../../shared/money/formatCents";
+import { eurosToCents } from "../../shared/money/formatCents";
 import type { Order, OrderRow } from "../../types";
 import { unwrapList } from "../guest-ordering/menu";
 
@@ -28,6 +28,15 @@ const lineItems = (order: Order): OrderRow["menuItems"] => {
   );
 };
 
+/** An order's total in cents; older order payloads only carry a euro `totalPrice`. */
+const orderTotalCents = (order: Order): number => {
+  const { totalCents } = order as { totalCents?: number };
+  if (typeof totalCents === "number" && Number.isFinite(totalCents)) {
+    return Math.round(totalCents);
+  }
+  return typeof order.totalPrice === "number" ? eurosToCents(order.totalPrice) : 0;
+};
+
 /**
  * Orders as rows of the admin's order table. A protocol order carries only
  * `tableId`, so the table number is resolved against `tableNumbersById`;
@@ -40,7 +49,7 @@ export const toOrderRows = (orders: Order[] = [], tableNumbersById: Record<strin
       user: typeof order.user === "string" ? order.user : order.user?.username || "Guest User",
       menuItems,
       quantity: menuItems.reduce((total, item) => total + (item.quantity || 0), 0),
-      totalPrice: readCents((order as { totalCents?: number }).totalCents, order.totalPrice),
+      totalPrice: orderTotalCents(order),
       orderStatus: (order as { status?: string }).status || order.orderStatus,
       location:
         order.tableNumber ??

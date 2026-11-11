@@ -1,4 +1,5 @@
-import type { MenuItemValues } from "../../lib/schemas";
+import type { MenuItemPayload, MenuItemValues } from "../../lib/schemas";
+import { centsToEuros, eurosToCents } from "../../shared/money/formatCents";
 import type { MenuItem } from "../../types";
 import { readItemId, unwrapList } from "../guest-ordering/menu";
 import type { Category } from "./categoriesApi";
@@ -6,7 +7,7 @@ import type { Category } from "./categoriesApi";
 /** A blank menu item form. Price starts empty, not 0, so the admin has to type one. */
 export const EMPTY_MENU_ITEM: MenuItemValues = {
   title: "",
-  price: undefined as unknown as number,
+  priceEuros: undefined as unknown as number,
   categoryId: "",
   description: "",
   image: null,
@@ -17,12 +18,18 @@ export const EMPTY_MENU_ITEM: MenuItemValues = {
 /** A menu item as the edit form starts it. Missing flags read as "in stock" and "not popular". */
 export const toFormValues = (item: MenuItem): MenuItemValues => ({
   title: item.title || "",
-  price: Number(item.price) || (undefined as unknown as number),
+  priceEuros: item.priceCents ? centsToEuros(item.priceCents) : (undefined as unknown as number),
   categoryId: item.categoryId || "",
   description: item.description || "",
   image: item.image || null,
   popular: Boolean(item.popular),
   inStock: item.inStock !== false,
+});
+
+/** The form values as the API takes them: the euro price becomes `priceCents`. */
+export const toMenuItemPayload = ({ priceEuros, ...values }: MenuItemValues): MenuItemPayload => ({
+  ...values,
+  priceCents: eurosToCents(priceEuros),
 });
 
 /** `GET /menu-items` as admin menu items, dropping anything without an id. */

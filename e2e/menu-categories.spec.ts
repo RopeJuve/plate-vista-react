@@ -49,6 +49,7 @@ test("an owner adds a bar category and an item without an image", async ({ page 
 
   const card = page.getByRole("article").filter({ hasText: "Tequila Shot" });
   await expect(card).toContainText("Shots");
+  await expect(card).toContainText(/4,00\s€/);
   await expect(card.locator("img")).toHaveCount(0);
 
   // A category with items cannot be deleted.

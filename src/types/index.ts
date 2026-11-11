@@ -19,8 +19,7 @@ export type MenuItem = {
   _id: string;
   title: string;
   description?: string;
-  price: number | string;
-  priceCents?: number;
+  priceCents: number;
   image?: string | null;
   categoryId?: string;
   category?: string;

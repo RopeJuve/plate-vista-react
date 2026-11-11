@@ -20,7 +20,6 @@ const menuItem = {
   _id: "dish-soup",
   title: "Tomato soup",
   description: "",
-  price: 6.5,
   priceCents: 650,
   image: "",
   category: "Starters",

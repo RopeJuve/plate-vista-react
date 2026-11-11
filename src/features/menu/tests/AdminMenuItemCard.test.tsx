@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { MenuItem } from "../../../types";
 import AdminMenuItemCard from "../AdminMenuItemCard";
 
-const item: MenuItem = { _id: "item-1", title: "Lemonade", price: 4, categoryId: "cat-drinks", category: "Drinks" };
+const item: MenuItem = { _id: "item-1", title: "Lemonade", priceCents: 450, categoryId: "cat-drinks", category: "Drinks" };
 const noop = () => undefined;
 
 describe("AdminMenuItemCard", () => {
@@ -20,5 +20,10 @@ describe("AdminMenuItemCard", () => {
   it("shows no rate while the category is unknown", () => {
     render(<AdminMenuItemCard item={item} onEdit={noop} onDelete={noop} />);
     expect(screen.queryByText(/%$/)).not.toBeInTheDocument();
+  });
+
+  it("shows the price from priceCents", () => {
+    render(<AdminMenuItemCard item={item} onEdit={noop} onDelete={noop} />);
+    expect(screen.getByText(/4,50\s€/)).toBeInTheDocument();
   });
 });

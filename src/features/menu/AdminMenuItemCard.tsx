@@ -1,6 +1,6 @@
 import { Pencil, Trash2 } from "lucide-react";
 import type { VatRate } from "../../shared/api/payments";
-import { formatCents, readCents } from "../../shared/money/formatCents";
+import { formatCents } from "../../shared/money/formatCents";
 import type { MenuItem } from "../../types";
 import MenuItemImage from "./MenuItemImage";
 import VatBadge from "./VatBadge";
@@ -40,7 +40,7 @@ const AdminMenuItemCard = ({
       <div className="flex flex-1 flex-col p-4">
         <div className="flex items-start justify-between gap-3">
           <h3 className="font-bold leading-snug">{item.title}</h3>
-          <span className="font-mono font-bold tabular">{formatCents(readCents(item.priceCents, item.price))}</span>
+          <span className="font-mono font-bold tabular">{formatCents(item.priceCents)}</span>
         </div>
         <div className="mt-0.5 flex items-center gap-2">
           <p className="text-xs font-semibold uppercase tracking-[0.08em] text-ink-soft">{item.category}</p>

@@ -68,4 +68,12 @@ describe("toMenuRecord", () => {
     expect(fromId?._id).toBe("item-1");
     expect(fromId?.title).toBe("Lager");
   });
+
+  it("reads the price from priceCents alone", () => {
+    expect(toMenuRecord({ _id: "item-2", title: "Wine", priceCents: 1250 })?.priceCents).toBe(1250);
+  });
+
+  it("ignores a legacy euro price", () => {
+    expect(toMenuRecord({ _id: "item-3", title: "Old", price: 4.5 })?.priceCents).toBe(0);
+  });
 });

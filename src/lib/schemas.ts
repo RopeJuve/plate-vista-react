@@ -42,7 +42,7 @@ export type RestaurantRegisterValues = z.infer<typeof restaurantRegisterSchema>;
 // placeholder.
 export const menuItemSchema = z.object({
   title: z.string().trim().min(3, "Title must be at least 3 characters"),
-  price: z.number({ error: "Price is required" }).positive("Price must be greater than 0"),
+  priceEuros: z.number({ error: "Price is required" }).positive("Price must be greater than 0"),
   categoryId: z.string().min(1, "Category is required"),
   description: z.string().trim().max(500, "Description is too long"),
   popular: z.boolean(),
@@ -55,6 +55,9 @@ export const menuItemSchema = z.object({
 });
 
 export type MenuItemValues = z.infer<typeof menuItemSchema>;
+
+/** What the API takes for a menu item: the form values with the price in integer cents. */
+export type MenuItemPayload = Omit<MenuItemValues, "priceEuros"> & { priceCents: number };
 
 export const categorySchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(40, "Name must be at most 40 characters"),
