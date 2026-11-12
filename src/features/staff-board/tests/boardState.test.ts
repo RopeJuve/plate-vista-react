@@ -299,3 +299,75 @@ describe("payments on the board", () => {
     expect(sessionPayment(closedMeanwhile, "session-1")).toBeUndefined();
   });
 });
+
+describe("payments in the board snapshot", () => {
+  const payment = (status: "PENDING" | "SIGNED" | "FAILED") => ({
+    id: "payment-1",
+    sessionId: "session-1",
+    method: "CASH" as const,
+    amountCents: 500,
+    paidAt: "2026-01-01T01:00:00.000Z",
+    receiptToken: "receipt-1",
+    signature: { status },
+  });
+  const withPayment = (value: ReturnType<typeof payment> | null): StaffBoard => {
+    const base = board(1);
+    return { ...base, sessions: [{ ...base.sessions[0], payment: value }] };
+  };
+  const hydrate = (snapshot: StaffBoard, state = emptyBoard()) =>
+    boardReducer(state, { type: "hydrate", board: snapshot, events: [] });
+  const paid = {
+    event: "bill.paid" as const,
+    data: { sessionId: "session-1", paymentId: "payment-0", receiptToken: "receipt-0", method: "CASH" as const, totalCents: 500 },
+  };
+
+  it("knows a paid session whose signature is pending without any event", () => {
+    expect(sessionPayment(hydrate(withPayment(payment("PENDING"))), "session-1")).toEqual({
+      paymentId: "payment-1",
+      signed: false,
+    });
+    expect(sessionPayment(hydrate(withPayment(payment("FAILED"))), "session-1")).toEqual({
+      paymentId: "payment-1",
+      signed: false,
+    });
+  });
+
+  it("knows a paid and signed session", () => {
+    expect(sessionPayment(hydrate(withPayment(payment("SIGNED"))), "session-1")).toEqual({
+      paymentId: "payment-1",
+      signed: true,
+    });
+  });
+
+  it("lets the snapshot win over what the board heard", () => {
+    const known = applyServerEvent(hydrate(board(1)), paid);
+    expect(sessionPayment(hydrate(withPayment(null), known), "session-1")).toBeUndefined();
+    expect(sessionPayment(hydrate(withPayment(payment("SIGNED")), known), "session-1")).toEqual({
+      paymentId: "payment-1",
+      signed: true,
+    });
+  });
+
+  it("applies buffered events on top of the snapshot's payment", () => {
+    const state = boardReducer(emptyBoard(), {
+      type: "hydrate",
+      board: withPayment(payment("PENDING")),
+      events: [{ event: "payment.signed", data: { paymentId: "payment-1", receiptToken: "receipt-1" } }],
+    });
+    expect(sessionPayment(state, "session-1")).toEqual({ paymentId: "payment-1", signed: true });
+  });
+
+  it("signs and forgets a snapshot payment through live events", () => {
+    const loaded = hydrate(withPayment(payment("PENDING")));
+    const signed = boardReducer(loaded, {
+      type: "event",
+      event: { event: "payment.signed", data: { paymentId: "payment-1", receiptToken: "receipt-1" } },
+    });
+    expect(sessionPayment(signed, "session-1")).toEqual({ paymentId: "payment-1", signed: true });
+    const closed = boardReducer(signed, {
+      type: "event",
+      event: { event: "session.closed", data: { sessionId: "session-1", tableId: "table-1" } },
+    });
+    expect(sessionPayment(closed, "session-1")).toBeUndefined();
+  });
+});

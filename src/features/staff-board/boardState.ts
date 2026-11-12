@@ -14,7 +14,7 @@ import { ticketsOf, withStatusChange } from "../../shared/realtime/tickets";
 
 export type TrackedOrder = Order & { cancelReason?: string };
 
-/** A bill paid while the board was watching, and whether the TSE has signed it yet. */
+/** A paid bill, from the board snapshot or heard live, and whether the TSE has signed it yet. */
 export type SessionPayment = { paymentId: string; signed: boolean };
 
 export type BoardState = {
@@ -212,20 +212,31 @@ export type BoardAction =
   | { type: "event"; event: ServerEvent };
 
 /**
- * The snapshot does not say which bills are paid, so payments the board already
- * heard about stay on, for tables that are still open.
+ * Payments after a reload: a session the snapshot reports a `payment` for (or
+ * `null`, unpaid) takes that; an API without the field leaves the payments the
+ * board already heard about on, for tables that are still open.
  */
-const withKnownPayments = (next: BoardState, known: BoardState): BoardState => {
+const withPayments = (next: BoardState, known: BoardState, board: StaffBoard): BoardState => {
   const open = new Set(Object.values(next.sessionIdByTable));
   const paymentsBySession = Object.fromEntries(
     Object.entries(known.paymentsBySession).filter(([sessionId]) => open.has(sessionId))
   );
+  board.sessions.forEach(({ _id, payment }) => {
+    if (payment === undefined) {
+      return;
+    }
+    if (payment === null) {
+      delete paymentsBySession[_id];
+      return;
+    }
+    paymentsBySession[_id] = { paymentId: payment.id, signed: payment.signature.status === "SIGNED" };
+  });
   return { ...next, paymentsBySession };
 };
 
 export const boardReducer = (state: BoardState, action: BoardAction): BoardState => {
   if (action.type === "hydrate") {
-    return action.events.reduce(applyServerEvent, withKnownPayments(applySnapshot(action.board), state));
+    return action.events.reduce(applyServerEvent, withPayments(applySnapshot(action.board), state, action.board));
   }
   if (!state.ready) {
     return state;

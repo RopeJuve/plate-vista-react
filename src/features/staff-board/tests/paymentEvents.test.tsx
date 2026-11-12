@@ -11,8 +11,8 @@ import { OrderProvider } from "../../../contexts/OrderContext";
 import { useAuth } from "../../../contexts/AuthContext";
 import { SESSION_ID } from "../../../mocks/fixtures/bill";
 import { paidBill, payment } from "../../../mocks/fixtures/payments";
-import { TABLE_ID } from "../../../mocks/fixtures/staffBoard";
-import { mockBillResponse } from "../../../mocks/overrides";
+import { paidStaffBoard, TABLE_ID } from "../../../mocks/fixtures/staffBoard";
+import { mockBillResponse, mockStaffBoardResponse } from "../../../mocks/overrides";
 import { server } from "../../../mocks/server";
 import { clearTokens, saveTokens } from "../../../shared/api/tokens";
 import type { EventData } from "../../../shared/realtime/protocol";
@@ -113,6 +113,28 @@ describe("staff screens when a bill is paid", () => {
     const { realtime } = renderStaff();
     expect(await screen.findByText("Signature pending")).toBeInTheDocument();
     realtime.emit("bill.paid", billPaid);
+
+    mockBillResponse(200, { ...paidBill, payment: { ...payment, signature: { status: "SIGNED" } } });
+    realtime.emit("payment.signed", { paymentId: payment.id, receiptToken: payment.receiptToken });
+
+    await waitFor(() => expect(screen.queryByText("Signature pending")).not.toBeInTheDocument());
+    expect(screen.getByText(/Paid · Card ·/)).toBeInTheDocument();
+  });
+});
+
+describe("staff screens loaded after a bill was paid", () => {
+  it("shows the table as paid on the floor without any event", async () => {
+    mockStaffBoardResponse(200, paidStaffBoard);
+    renderStaff("bar", "/bar");
+    const table = await screen.findByRole("button", { name: "Open table 4" });
+    expect(await within(table).findByText("Paid")).toBeInTheDocument();
+  });
+
+  it("clears the signature pending note when the snapshot's payment is signed", async () => {
+    mockStaffBoardResponse(200, paidStaffBoard);
+    mockBillResponse(200, paidBill);
+    const { realtime } = renderStaff();
+    expect(await screen.findByText("Signature pending")).toBeInTheDocument();
 
     mockBillResponse(200, { ...paidBill, payment: { ...payment, signature: { status: "SIGNED" } } });
     realtime.emit("payment.signed", { paymentId: payment.id, receiptToken: payment.receiptToken });

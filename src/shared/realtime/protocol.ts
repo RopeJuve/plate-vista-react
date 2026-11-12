@@ -143,9 +143,18 @@ export interface BoardTable {
   qrCode: string;
 }
 
+/** An open session in `GET /staff/board` (protocol 2.4). */
+export interface BoardSession extends Session {
+  /**
+   * The payment that settled this session's bill, or null while it is unpaid.
+   * Missing when the API predates 2.4.
+   */
+  payment?: Payment | null;
+}
+
 /** GET /api/v1/staff/board */
 export interface StaffBoard {
-  sessions: Session[];
+  sessions: BoardSession[];
   orders: Order[];
   tables: BoardTable[];
   /** Newest first, at most 50. Their orders are not in `orders`; load the bill. */

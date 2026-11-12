@@ -1,5 +1,6 @@
 import type { StaffBoard } from "../../shared/realtime/protocol";
 import { SESSION_ID, unpaidBill } from "./bill";
+import { payment } from "./payments";
 
 export const TABLE_ID = unpaidBill.session.tableId;
 
@@ -14,6 +15,7 @@ export const staffBoard: StaffBoard = {
       openedAt: unpaidBill.session.openedAt,
       closedAt: null,
       joinCode: "4821",
+      payment: null,
     },
   ],
   orders: unpaidBill.orders,
@@ -22,4 +24,10 @@ export const staffBoard: StaffBoard = {
     { _id: "table-5", tableNumber: 5, capacity: 2, status: "vacant", qrCode: "qr-table-5" },
   ],
   recentlyClosed: [],
+};
+
+/** The same board after table 4's bill was paid; the TSE has not signed it yet. */
+export const paidStaffBoard: StaffBoard = {
+  ...staffBoard,
+  sessions: staffBoard.sessions.map((session) => ({ ...session, payment })),
 };
