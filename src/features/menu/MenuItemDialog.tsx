@@ -63,7 +63,7 @@ const MenuItemDialog = ({ open, onOpenChange, title, submitLabel, initial, categ
             />
             <FormField
               control={form.control}
-              name="price"
+              name="priceEuros"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Price (€)</FormLabel>

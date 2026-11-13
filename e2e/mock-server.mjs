@@ -34,7 +34,6 @@ const menu = [
     title: "Lager",
     description: "Cold lager",
     priceCents: 450,
-    price: 4.5,
     image: "",
     categoryId: "cat-beer",
     category: "beer",
@@ -576,8 +575,7 @@ const server = http.createServer(async (req, res) => {
       _id: `item-${randomUUID()}`,
       title: String(body.title),
       description: body.description || "",
-      priceCents: Math.round(Number(body.price) * 100),
-      price: Number(body.price),
+      priceCents: Math.round(Number(body.priceCents)),
       image: body.image || null,
       categoryId: body.categoryId,
       inStock: body.inStock !== false,
@@ -596,7 +594,7 @@ const server = http.createServer(async (req, res) => {
       sendJson(res, 404, { message: "Not found" });
       return;
     }
-    Object.assign(item, body, body.price ? { priceCents: Math.round(Number(body.price) * 100) } : {});
+    Object.assign(item, body);
     sendJson(res, 200, withCategory(item));
     return;
   }

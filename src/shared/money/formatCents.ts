@@ -41,6 +41,9 @@ export const lineTotalCents = (unitPriceCents: number, quantity: number): number
 export const centsToEurosForChart = (cents: number): number =>
   (Number.isFinite(cents) ? cents : 0) / 100;
 
+/** Cents as a euro amount for a form input the user edits; save it back through `eurosToCents`. */
+export const centsToEuros = (cents: number): number => (Number.isFinite(cents) ? cents : 0) / 100;
+
 /**
  * Converts a euro amount to integer cents.
  * This is the only place a price may be scaled by 100.
@@ -68,15 +71,4 @@ export const eurosToCents = (amount: number | string): number => {
   const fraction = Number((fractionRaw.replace(/\D/g, "") + "00").slice(0, 2));
   const cents = whole * 100 + (Number.isFinite(fraction) ? fraction : 0);
   return negative ? -cents : cents;
-};
-
-/** Reads a price that may already be cents, or a legacy euro amount. */
-export const readCents = (cents: unknown, legacyEuros?: unknown): number => {
-  if (typeof cents === "number" && Number.isFinite(cents)) {
-    return Math.round(cents);
-  }
-  if (typeof legacyEuros === "number" || typeof legacyEuros === "string") {
-    return eurosToCents(legacyEuros);
-  }
-  return 0;
 };

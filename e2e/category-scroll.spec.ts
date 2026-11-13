@@ -19,7 +19,7 @@ test("the admin menu's category bar scrolls sideways when the categories do not 
 
   for (const name of ["Starters", "Soups", "Salads", "Pizza", "Pasta", "Burgers", "Main Courses", "Desserts"]) {
     const category = await (await request.post(`${API}/categories`, { data: { name, station: "kitchen" } })).json();
-    await request.post(`${API}/menu-items`, { data: { title: `${name} special`, price: 5, categoryId: category._id } });
+    await request.post(`${API}/menu-items`, { data: { title: `${name} special`, priceCents: 500, categoryId: category._id } });
   }
 
   await page.goto("/admin/menu");

@@ -18,7 +18,7 @@ test("the bar accepts the drinks while the food is still pending", async ({ page
   await expect(page).toHaveURL(/\/admin/);
 
   const oven = await (await request.post(`${API}/categories`, { data: { name: "Oven", station: "kitchen" } })).json();
-  await request.post(`${API}/menu-items`, { data: { title: "Margherita", price: 9, categoryId: oven._id } });
+  await request.post(`${API}/menu-items`, { data: { title: "Margherita", priceCents: 900, categoryId: oven._id } });
 
   await page.goto("/admin/tables");
   await page.getByLabel("Table number").fill("7");

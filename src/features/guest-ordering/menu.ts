@@ -1,5 +1,4 @@
 import type { MenuUpdatedData, Station } from "../../shared/realtime/protocol";
-import { eurosToCents } from "../../shared/money/formatCents";
 
 export type MenuRecord = {
   _id: string;
@@ -106,12 +105,7 @@ export const toMenuRecord = (raw: unknown): MenuRecord | null => {
   if (!record || !id) {
     return null;
   }
-  const priceCents =
-    typeof record.priceCents === "number"
-      ? Math.round(record.priceCents)
-      : eurosToCents(
-          typeof record.price === "number" || typeof record.price === "string" ? record.price : 0
-        );
+  const priceCents = typeof record.priceCents === "number" ? Math.round(record.priceCents) : 0;
   return {
     _id: id,
     title: typeof record.title === "string" ? record.title : "",

@@ -157,7 +157,6 @@ export interface MenuItem {
   _id: string;
   title: string;
   description: string;
-  price: number;
   priceCents: number;
   image: string;
   category: string;
