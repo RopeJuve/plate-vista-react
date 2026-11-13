@@ -153,7 +153,10 @@ const readBody = (req) =>
   });
 
 const board = () => ({
-  sessions: [...sessions.values()].filter((session) => session.status === "open"),
+  // Protocol 2.4: each open session says whether its bill is paid.
+  sessions: [...sessions.values()]
+    .filter((session) => session.status === "open")
+    .map(({ payment, ...session }) => ({ ...session, payment: payment ?? null })),
   orders: [...orders.values()].filter((order) => sessions.get(order.sessionId)?.status !== "closed"),
   recentlyClosed: [...sessions.values()]
     .filter((session) => session.status === "closed")

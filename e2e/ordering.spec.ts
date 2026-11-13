@@ -62,6 +62,12 @@ test("guest order is accepted and the table close ends on thank you", async ({ p
   await page.getByRole("button", { name: "Paid in cash" }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Confirm payment" }).click();
   await expect(page.getByRole("dialog")).toBeHidden();
+  // After a reload the board snapshot still says the table is paid.
+  await page.reload();
+  await page.getByRole("link", { name: "Floor" }).click();
+  const table = page.getByRole("button", { name: "Open table 4" });
+  await expect(table.getByText("Paid")).toBeVisible();
+  await table.click();
   await page.getByRole("button", { name: "Close table" }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Close table" }).click();
 
