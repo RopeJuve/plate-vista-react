@@ -16,7 +16,7 @@ const ReceiptActions = ({ className }: { className?: string }) => {
 
   return (
     <div role="group" aria-label="Beleg teilen" className={cn("print:hidden space-y-3", className)}>
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="grid gap-2">
         <Button type="button" variant="ink" onClick={() => window.print()}>
           <Printer aria-hidden="true" />
           Drucken / als PDF speichern
