@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { hoursIssues } from "../features/restaurant-profile/openingHours";
+import { WEEKDAYS } from "../features/restaurant-profile/types";
 
 export const ownerLoginSchema = z.object({
   email: z.string().trim().email("Enter a valid email"),
@@ -84,3 +86,38 @@ export const legalDetailsSchema = z
   });
 
 export type LegalDetailsValues = z.infer<typeof legalDetailsSchema>;
+
+const openingRange = z.object({ open: z.string(), close: z.string() });
+
+/** The Restaurant Profile form: the address is only checked when it replaces the legal one. */
+export const profileSchema = z
+  .object({
+    logoUrl: z.string().nullable(),
+    useLegalAddress: z.boolean(),
+    street: z.string(),
+    zip: z.string(),
+    city: z.string(),
+    openingHours: z.object({
+      mon: z.array(openingRange),
+      tue: z.array(openingRange),
+      wed: z.array(openingRange),
+      thu: z.array(openingRange),
+      fri: z.array(openingRange),
+      sat: z.array(openingRange),
+      sun: z.array(openingRange),
+    }),
+  })
+  .superRefine((values, ctx) => {
+    if (!values.useLegalAddress) {
+      if (!values.street.trim()) ctx.addIssue({ code: "custom", path: ["street"], message: "Street is required" });
+      if (!/^\d{5}$/.test(values.zip.trim())) ctx.addIssue({ code: "custom", path: ["zip"], message: "ZIP must be 5 digits" });
+      if (!values.city.trim()) ctx.addIssue({ code: "custom", path: ["city"], message: "City is required" });
+    }
+    const issues = hoursIssues(values.openingHours);
+    WEEKDAYS.forEach((day) => {
+      const message = issues[day];
+      if (message) ctx.addIssue({ code: "custom", path: ["openingHours", day], message });
+    });
+  });
+
+export type ProfileValues = z.infer<typeof profileSchema>;

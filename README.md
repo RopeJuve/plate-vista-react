@@ -13,6 +13,9 @@ Copy `.env.example` to `.env` and set:
 | `VITE_PLATE_VISTA_URL` | Public frontend origin used in table QR codes |
 | `VITE_DEVELOPMENT_URL` | Local API origin |
 | `VITE_DEVELOPMENT_WS_URL` | Local WebSocket URL |
+| `VITE_GOOGLE_MAPS_EMBED_KEY` | Optional. Google Maps Embed API key (restrict it to your domain) for the map guests can load in the footer; without it they get an "Open in Google Maps" link only |
+| `VITE_IMPRINT_URL` | Optional. Plate Vista's legal notice (Impressum), linked in the guest footer |
+| `VITE_PRIVACY_URL` | Optional. Plate Vista's privacy policy, linked in the guest footer |
 
 The production build fails if the production API, WebSocket, or frontend URL is missing. Use `wss://` for the socket URL on HTTPS hosts. The API `CORS_ORIGIN` must include this frontend origin.
 

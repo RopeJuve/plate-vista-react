@@ -567,6 +567,18 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // A restaurant without a profile of its own: guests see its legal address.
+  if (req.method === "GET" && /^\/r\/[^/]+\/profile$/.test(route)) {
+    sendJson(res, 200, {
+      name: "Mock Restaurant",
+      logoUrl: null,
+      address: { street: "Hauptstraße 1", zip: "10115", city: "Berlin" },
+      openingHours: { mon: [], tue: [], wed: [], thu: [], fri: [], sat: [], sun: [] },
+      timezone: "Europe/Berlin",
+    });
+    return;
+  }
+
   // Uploads need Cloudinary, which the mock does not have.
   if (req.method === "POST" && route === "/menu-items/upload-signature") {
     sendJson(res, 503, { code: "INTERNAL", message: "Image uploads are not configured" });

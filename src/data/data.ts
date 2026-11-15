@@ -10,6 +10,7 @@ import {
   QrCode,
   ReceiptText,
   ShoppingCart,
+  Store,
   TrendingUp,
   User,
   Users,
@@ -38,6 +39,7 @@ export const links = [
       { name: "employees", label: "Employees", icon: Users },
       { name: "qrcodes", label: "QR Codes", icon: QrCode },
       { name: "kasse", label: "Till & payments", icon: CreditCard },
+      { name: "profile", label: "Restaurant profile", icon: Store },
     ],
   },
 ];
