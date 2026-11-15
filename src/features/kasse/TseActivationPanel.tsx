@@ -1,7 +1,7 @@
 import type { TseSetupProblem } from "./tseActivation";
 import { Button } from "@/components/ui/button";
 
-type TseActivationProps = {
+type TseActivationPanelProps = {
   legalComplete: boolean;
   activating: boolean;
   problem: TseSetupProblem | null;
@@ -15,7 +15,7 @@ const LegalDetailsLink = () => (
 );
 
 /** Switching the TSE on, or why it cannot be switched on yet. */
-const TseActivation = ({ legalComplete, activating, problem, onActivate }: TseActivationProps) => {
+const TseActivationPanel = ({ legalComplete, activating, problem, onActivate }: TseActivationPanelProps) => {
   const failed = problem === "FAILED";
 
   return (
@@ -50,4 +50,4 @@ const TseActivation = ({ legalComplete, activating, problem, onActivate }: TseAc
   );
 };
 
-export default TseActivation;
+export default TseActivationPanel;

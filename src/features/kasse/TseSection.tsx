@@ -1,7 +1,7 @@
 import { useTse } from "./hooks/useTse";
-import TseActivation from "./TseActivation";
+import TseActivationPanel from "./TseActivationPanel";
 import TseActiveDetails from "./TseActiveDetails";
-import FailedSignatures from "./FailedSignatures";
+import FailedSignaturesPanel from "./FailedSignaturesPanel";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -30,12 +30,12 @@ const TseSection = ({ legalComplete }: { legalComplete: boolean }) => {
       return (
         <div className="space-y-6">
           <TseActiveDetails tse={tse} />
-          <FailedSignatures count={tse.failedSignatures} onSigned={markSigned} />
+          <FailedSignaturesPanel count={tse.failedSignatures} onSigned={markSigned} />
         </div>
       );
     }
     return (
-      <TseActivation legalComplete={legalComplete} activating={activating} problem={problem} onActivate={activate} />
+      <TseActivationPanel legalComplete={legalComplete} activating={activating} problem={problem} onActivate={activate} />
     );
   };
 
