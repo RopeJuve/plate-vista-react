@@ -1,24 +1,30 @@
 import { Search, X } from "lucide-react";
 import { useStateContext } from "../../contexts/ContextProvider";
 import TableIcon from "./TableIcon";
-import { Wordmark } from "../rail";
+import RestaurantLogo from "../../features/restaurant-profile/RestaurantLogo";
+import type { PublicProfileState } from "../../features/restaurant-profile/hooks/usePublicProfile";
 
 const NavBarCustomer = ({
   tableNum,
   joinCode,
   onShowCode,
+  profile,
 }: {
   tableNum?: number;
   /** Shown as a small chip; tapping it brings the big code back. */
   joinCode?: string;
   onShowCode?: () => void;
+  /** The restaurant's logo or name; Plate Vista's wordmark when it cannot be loaded. */
+  profile?: PublicProfileState;
 }) => {
   const { search, setSearch } = useStateContext();
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 pt-3 sm:px-6">
       <div className="flex items-center justify-between gap-3">
-        <Wordmark className="text-ink" />
+        <div className="min-w-0">
+          <RestaurantLogo state={profile} />
+        </div>
         <div className="flex items-center gap-2">
           {joinCode && (
             <button

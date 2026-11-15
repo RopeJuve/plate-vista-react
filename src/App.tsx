@@ -16,6 +16,7 @@ const RestaurantRegister = lazy(() => import("./features/admin/RestaurantRegiste
 const AdminDashboard = lazy(() => import("./Components/AdminComponents/AdminDashboard"));
 const Overview = lazy(() => import("./pages/Overview"));
 const Menu = lazy(() => import("./pages/Menu"));
+const RestaurantProfile = lazy(() => import("./pages/RestaurantProfile"));
 const Categories = lazy(() => import("./pages/Categories"));
 const Orders = lazy(() => import("./pages/Orders"));
 const Tables = lazy(() => import("./pages/Tables"));
@@ -71,6 +72,7 @@ function App() {
                     <Route path="tables" element={<Tables />} />
                     <Route path="employees" element={<Employees />} />
                     <Route path="kasse" element={<Kasse />} />
+                    <Route path="profile" element={<RestaurantProfile />} />
                     <Route path="register" element={<Register />} />
                     <Route path="qrcodes" element={<QRCodeGenerator />} />
                     <Route path="dailysales" element={<DailySales />} />

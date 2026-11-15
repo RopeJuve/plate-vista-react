@@ -5,6 +5,8 @@ import { useGuestBill } from "../../features/guest-ordering/GuestBillProvider";
 import { JoinCodeBanner } from "../../features/guest-ordering/JoinCode";
 import { useMenu } from "../../features/guest-ordering/MenuProvider";
 import { visibleMenuItems } from "../../features/guest-ordering/menu";
+import GuestFooter from "../../features/restaurant-profile/GuestFooter";
+import type { PublicProfileState } from "../../features/restaurant-profile/hooks/usePublicProfile";
 import Cart from "./Cart";
 import CategoriesCustomer from "./CategoriesCustomer";
 import MenuItemsList from "./MenuItemsList";
@@ -13,7 +15,7 @@ import PaidBillBanner from "./PaidBillBanner";
 import SkeletonList from "./SkeletonList";
 
 /** The menu a seated guest orders from: search, categories, dishes, and their cart. */
-const GuestMenu = () => {
+const GuestMenu = ({ profile }: { profile?: PublicProfileState }) => {
   const { session } = useGuestAuth();
   const { items, categories, loading, error, reload } = useMenu();
   const { search } = useStateContext();
@@ -33,6 +35,7 @@ const GuestMenu = () => {
     <div className="min-h-dvh bg-paper pb-28 text-ink">
       <header className="sticky top-0 z-30 border-b border-ink/[0.07] bg-paper/95 backdrop-blur-sm">
         <NavBarCustomer
+          profile={profile}
           tableNum={session?.tableNumber}
           joinCode={showCode ? undefined : session?.joinCode}
           onShowCode={() => setShowCode(true)}
@@ -73,10 +76,8 @@ const GuestMenu = () => {
             />
           </>
         )}
-        <p className="mt-10 text-center font-mono text-[0.7rem] uppercase tracking-[0.2em] text-ink-soft">
-          Ordering by Plate Vista
-        </p>
       </main>
+      <GuestFooter state={profile} />
       <Cart />
     </div>
   );

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { useState } from "react";
@@ -89,6 +89,8 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  // Unmount first: a category row that mounts late must still find the stubs.
+  cleanup();
   vi.unstubAllGlobals();
   localStorage.clear();
 });

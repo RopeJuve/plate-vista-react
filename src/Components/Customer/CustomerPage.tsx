@@ -39,7 +39,7 @@ const Customer = () => {
     <MenuProvider slug={slug}>
       <CartProvider sessionId={session.sessionId}>
         <GuestBillProvider sessionId={session.sessionId}>
-          <GuestSessionShell sessionId={session.sessionId} qrCode={qrCode} />
+          <GuestSessionShell sessionId={session.sessionId} qrCode={qrCode} slug={slug} />
         </GuestBillProvider>
       </CartProvider>
     </MenuProvider>

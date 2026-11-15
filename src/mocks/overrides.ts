@@ -30,6 +30,9 @@ export const mockTseSetupResponse = (status: number, body?: unknown) =>
 
 export const mockLegalResponse = (status: number, body?: unknown) => mockResponse("get", "legal", status, body);
 
+export const mockPublicProfileResponse = (status: number, body?: unknown) =>
+  mockResponse("get", "publicProfile", status, body);
+
 export const mockReceiptResponse = (status: number, body?: unknown) =>
   mockResponse("get", "receipt", status, body);
 
