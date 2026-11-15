@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 /** Receipts and orders the TSE could not sign, so the owner can have them signed again. */
-const FailedSignatures = ({ count, onSigned }: { count: number; onSigned: () => void }) => {
+const FailedSignaturesPanel = ({ count, onSigned }: { count: number; onSigned: () => void }) => {
   const { rows, loading, loadFailed, reload, retrying, stillFailing, retryError, retry } =
     useFailedSignatures(onSigned);
   const badge = failedSignatureBadge(count);
@@ -56,4 +56,4 @@ const FailedSignatures = ({ count, onSigned }: { count: number; onSigned: () => 
   );
 };
 
-export default FailedSignatures;
+export default FailedSignaturesPanel;

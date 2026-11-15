@@ -34,3 +34,13 @@ npm run build
 ```
 
 CI runs `npm ci`, lint, build, and `npm audit --omit=dev --audit-level=high` on Ubuntu.
+
+## Deployment: Netlify
+
+The frontend is deployed only on Netlify. `netlify.toml` holds the whole setup:
+
+- **Build:** `npm run build`, publishing `dist/`.
+- **Routing:** every path is served `index.html` (status 200), so React Router handles deep links such as `/table/:n` from QR codes.
+- **Headers:** Content-Security-Policy, `X-Frame-Options: DENY`, `nosniff`, Referrer-Policy and Permissions-Policy on every response.
+
+Set `VITE_VERCEL_API_URL`, `VITE_WS_API_URL` and `VITE_PLATE_VISTA_URL` in the Netlify site's environment variables; the build fails without them. `VITE_VERCEL_API_URL` is the backend API origin (the API itself is hosted separately on Vercel), not a frontend deploy target.
