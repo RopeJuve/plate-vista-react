@@ -42,3 +42,15 @@ describe("a paid bill", () => {
     expect(known.paid).toEqual({ receiptToken: "receipt-1" });
   });
 });
+
+describe("online payment events (protocol 2.5)", () => {
+  const expiresAt = "2026-11-07T20:00:00.000Z";
+
+  it("leave the guest's bill as it is until a later ticket handles them", () => {
+    const state = emptyBill();
+    const frozen = { event: "bill.frozen" as const, data: { sessionId: "session-1", expiresAt } };
+    const unfrozen = { event: "bill.unfrozen" as const, data: { sessionId: "session-1" } };
+    expect(applyBillEvent(state, frozen, "session-1")).toBe(state);
+    expect(applyBillEvent(state, unfrozen, "session-1")).toBe(state);
+  });
+});

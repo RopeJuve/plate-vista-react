@@ -83,8 +83,67 @@ export interface CloseUnpaidBody {
   unpaidReason: string;
 }
 
+/**
+ * `GET/PATCH /restaurant/payout-account` (owner only). The restaurant's own Stripe
+ * account the online payments go to; its id and keys never reach the frontend.
+ */
+export interface PayoutAccount {
+  /** A Payout Account was created: onboarding started. */
+  connected: boolean;
+  /** Stripe allows charges, so online payments can run. */
+  chargesEnabled: boolean;
+  /** The owner finished Stripe's form. */
+  detailsSubmitted: boolean;
+  /** The owner's switch, on by default. */
+  onlinePaymentsEnabled: boolean;
+}
+
+/** `POST /restaurant/payout-account`: Stripe-hosted onboarding the browser is sent to. */
+export interface PayoutOnboardingLink {
+  url: string;
+}
+
+/** Body of `PATCH /restaurant/payout-account`. */
+export interface OnlinePaymentsSwitchBody {
+  onlinePaymentsEnabled: boolean;
+}
+
+/** Why a Late Payment was refunded instead of becoming a Payment. */
+export type OnlinePaymentRefundReason = "BILL_ALREADY_PAID" | "BILL_NOT_FROZEN" | "SESSION_CLOSED";
+
+/** A Late Payment, refunded in full automatically. */
+export interface OnlinePaymentRefund {
+  id: string;
+  sessionId: string;
+  tableNumber: number;
+  amountCents: number;
+  reason: OnlinePaymentRefundReason;
+  refundedAt: string;
+}
+
+/** `GET /restaurant/online-payment-refunds`, newest first; `nextBefore` pages further back. */
+export interface OnlinePaymentRefundList {
+  items: OnlinePaymentRefund[];
+  nextBefore: string | null;
+}
+
+/** `POST /sessions/:id/online-payment`: send the browser to `url`; `expiresAt` is at most 30 min away. */
+export interface OnlinePaymentStart {
+  url: string;
+  expiresAt: string;
+}
+
+/** Error codes of the online payment endpoints (and `BILL_FROZEN` for orders on a frozen bill). */
+export type OnlinePaymentErrorCode =
+  | "STRIPE_NOT_CONFIGURED"
+  | "ONLINE_PAYMENT_UNAVAILABLE"
+  | "PAYMENT_PROVIDER_ERROR"
+  | "BILL_FROZEN"
+  | "BILL_PAYING_ONLINE";
+
 /** Error codes the payment, close and TSE endpoints answer with. */
 export type PaymentErrorCode =
+  | OnlinePaymentErrorCode
   | "VALIDATION"
   | "BILL_PAID"
   | "BILL_CHANGED"

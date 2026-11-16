@@ -1,3 +1,4 @@
+import type { OnlinePaymentErrorCode } from "../api/payments";
 import type { ErrorCode, ErrorDetails, ValidationDetails, InvalidTransitionDetails } from "./protocol";
 import { ORDER_STATUS_LABEL, ProtocolError } from "./protocol";
 
@@ -10,9 +11,14 @@ const hasTransition = (details: ErrorDetails): details is InvalidTransitionDetai
 /**
  * FE-02 — One function maps every protocol error code (+ details) to
  * user-friendly text. Nothing else in the app should hand-write error copy
- * for a `ProtocolError`.
+ * for a `ProtocolError`. It also words the online payment codes the REST
+ * endpoints answer with.
  */
-export const errorMessage = (code: ErrorCode, details?: ErrorDetails, fallback?: string): string => {
+export const errorMessage = (
+  code: ErrorCode | OnlinePaymentErrorCode,
+  details?: ErrorDetails,
+  fallback?: string
+): string => {
   switch (code) {
     case "VALIDATION": {
       if (hasFields(details)) {
@@ -41,6 +47,16 @@ export const errorMessage = (code: ErrorCode, details?: ErrorDetails, fallback?:
       return "This table was closed. Please ask your waiter.";
     case "BILL_PAID":
       return "This bill is already paid, so nothing more can be ordered.";
+    case "BILL_FROZEN":
+      return "Someone at this table is paying online, so the bill can't change right now.";
+    case "BILL_PAYING_ONLINE":
+      return "This bill was just paid online. It will show as paid in a moment.";
+    case "ONLINE_PAYMENT_UNAVAILABLE":
+      return "Online payment isn't available for this bill right now. Please ask your waiter.";
+    case "PAYMENT_PROVIDER_ERROR":
+      return "The online payment couldn't be started. The bill is still open, so please try again.";
+    case "STRIPE_NOT_CONFIGURED":
+      return "Online payment isn't set up yet.";
     case "RATE_LIMITED":
       return "Too many requests — please wait a moment and try again.";
     case "TIMEOUT":

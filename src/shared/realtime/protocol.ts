@@ -1,12 +1,12 @@
 /**
- * FE-02 — Protocol v2.2 types.
+ * FE-02 — Protocol v2.5 types.
  *
  * Mirrors `docs/PROTOCOL.md` exactly. This is the single source of truth for
  * every shape that travels over the WebSocket. No optional "alternative"
  * fields (e.g. `title | name`) — if the server doesn't send it, we don't type it.
  */
 
-import type { Payment, PaymentMethod, VatRate } from "../api/payments";
+import type { OnlinePaymentRefund, Payment, PaymentMethod, VatRate } from "../api/payments";
 
 export const PROTOCOL_VERSION = "2";
 
@@ -133,6 +133,8 @@ export interface SessionBill {
   totalCents: number;
   /** The payment that settled this bill, or null while it is unpaid. */
   payment: Payment | null;
+  /** 2.5: whether the guest may pay this bill online now. */
+  canPayOnline: boolean;
 }
 
 export interface BoardTable {
@@ -252,6 +254,7 @@ export type ErrorCode =
   | "INVALID_TRANSITION"
   | "SESSION_CLOSED"
   | "BILL_PAID"
+  | "BILL_FROZEN"
   | "RATE_LIMITED"
   | "INTERNAL"
   | "TIMEOUT";
@@ -380,6 +383,24 @@ export interface PaymentSignFailedEvent {
   data: { paymentId: string };
 }
 
+/** Staff and session rooms (2.5): a guest started paying online; the session is `paying`. */
+export interface BillFrozenEvent {
+  event: "bill.frozen";
+  data: { sessionId: string; expiresAt: string };
+}
+
+/** Staff and session rooms (2.5): the online payment was abandoned, expired or unfrozen by staff. */
+export interface BillUnfrozenEvent {
+  event: "bill.unfrozen";
+  data: { sessionId: string };
+}
+
+/** Staff room only (2.5): a Late Payment was refunded. */
+export interface OnlinePaymentRefundedEvent {
+  event: "online_payment.refunded";
+  data: { refund: OnlinePaymentRefund };
+}
+
 export type ServerEvent =
   | SessionOpenedEvent
   | OrderCreatedEvent
@@ -389,7 +410,10 @@ export type ServerEvent =
   | MenuUpdatedEvent
   | BillPaidEvent
   | PaymentSignedEvent
-  | PaymentSignFailedEvent;
+  | PaymentSignFailedEvent
+  | BillFrozenEvent
+  | BillUnfrozenEvent
+  | OnlinePaymentRefundedEvent;
 
 export type ServerEventName = ServerEvent["event"];
 
