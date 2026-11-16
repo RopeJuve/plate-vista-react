@@ -2,7 +2,7 @@ import { http, HttpResponse } from "msw";
 import { apiPaths, type ApiPath } from "./handlers/paths";
 import { server } from "./server";
 
-type Method = "get" | "post" | "put";
+type Method = "get" | "post" | "put" | "patch";
 
 /**
  * Replaces one endpoint's answer for the rest of the current test
@@ -50,3 +50,22 @@ export const mockTseFailedResponse = (status: number, body?: unknown) =>
 
 export const mockTseRetryResponse = (status: number, body?: unknown) =>
   mockResponse("post", "tseRetry", status, body);
+
+/** Online payments: pair with `payoutAccounts` and `onlinePaymentErrors` from `fixtures/onlinePayments`. */
+export const mockPayoutAccountResponse = (status: number, body?: unknown) =>
+  mockResponse("get", "payoutAccount", status, body);
+
+export const mockPayoutOnboardingResponse = (status: number, body?: unknown) =>
+  mockResponse("post", "payoutAccount", status, body);
+
+export const mockOnlinePaymentsSwitchResponse = (status: number, body?: unknown) =>
+  mockResponse("patch", "payoutAccount", status, body);
+
+export const mockOnlinePaymentRefundsResponse = (status: number, body?: unknown) =>
+  mockResponse("get", "onlinePaymentRefunds", status, body);
+
+export const mockStartOnlinePaymentResponse = (status: number, body?: unknown) =>
+  mockResponse("post", "onlinePayment", status, body);
+
+export const mockCancelOnlinePaymentResponse = (status: number, body?: unknown) =>
+  mockResponse("post", "cancelOnlinePayment", status, body);

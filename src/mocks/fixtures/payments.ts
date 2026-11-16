@@ -12,7 +12,7 @@ export const payment: Payment = {
   signature: { status: "PENDING" },
 };
 
-export const paidBill: SessionBill = { ...unpaidBill, payment };
+export const paidBill: SessionBill = { ...unpaidBill, payment, canPayOnline: false };
 
 /** Every `POST /sessions/:id/payments` answer in the contract, by name. */
 export const payResponses = {

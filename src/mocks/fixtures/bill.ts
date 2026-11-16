@@ -25,7 +25,7 @@ const items: OrderItem[] = [
   },
 ];
 
-/** An open table with one order (food and a drink), not paid yet. */
+/** An open table with one order (food and a drink), not paid yet; the guest may pay it online. */
 export const unpaidBill: SessionBill = {
   sessionId: SESSION_ID,
   session: {
@@ -56,4 +56,12 @@ export const unpaidBill: SessionBill = {
   ],
   totalCents: 2050,
   payment: null,
+  canPayOnline: true,
+};
+
+/** The same bill while a guest is paying it online: the session is `paying`, orders are refused. */
+export const frozenBill: SessionBill = {
+  ...unpaidBill,
+  session: { ...unpaidBill.session, status: "paying" },
+  canPayOnline: false,
 };

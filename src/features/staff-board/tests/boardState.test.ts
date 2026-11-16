@@ -371,3 +371,22 @@ describe("payments in the board snapshot", () => {
     expect(sessionPayment(closed, "session-1")).toBeUndefined();
   });
 });
+
+describe("online payment events (protocol 2.5)", () => {
+  const refund = {
+    id: "refund-1",
+    sessionId: "session-1",
+    tableNumber: 1,
+    amountCents: 1800,
+    reason: "BILL_ALREADY_PAID" as const,
+    refundedAt: "2026-11-07T19:41:00.000Z",
+  };
+  const expiresAt = "2026-11-07T20:00:00.000Z";
+
+  it("leaves the board as it is until a later ticket handles them", () => {
+    const state = emptyBoard();
+    expect(applyServerEvent(state, { event: "bill.frozen", data: { sessionId: "session-1", expiresAt } })).toBe(state);
+    expect(applyServerEvent(state, { event: "bill.unfrozen", data: { sessionId: "session-1" } })).toBe(state);
+    expect(applyServerEvent(state, { event: "online_payment.refunded", data: { refund } })).toBe(state);
+  });
+});

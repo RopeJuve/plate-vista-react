@@ -1,5 +1,6 @@
 import { categoryHandlers } from "./categories";
 import { legalHandlers } from "./legal";
+import { onlinePaymentHandlers } from "./onlinePayments";
 import { profileHandlers } from "./profile";
 import { paymentHandlers } from "./payments";
 import { receiptHandlers } from "./receipts";
@@ -15,4 +16,5 @@ export const handlers = [
   ...paymentHandlers,
   ...receiptHandlers,
   ...staffBoardHandlers,
+  ...onlinePaymentHandlers,
 ];

@@ -17,6 +17,10 @@ export const apiPaths = {
   close: "*/sessions/:sessionId/close",
   receipt: "*/receipts/:token",
   staffBoard: "*/staff/board",
+  payoutAccount: "*/restaurant/payout-account",
+  onlinePaymentRefunds: "*/restaurant/online-payment-refunds",
+  onlinePayment: "*/sessions/:sessionId/online-payment",
+  cancelOnlinePayment: "*/sessions/:sessionId/online-payment/cancel",
 } as const;
 
 export type ApiPath = keyof typeof apiPaths;
