@@ -5,6 +5,7 @@ import { publicProfile } from "../../../mocks/fixtures/profile";
 import GuestFooter from "../GuestFooter";
 import RestaurantLogo from "../RestaurantLogo";
 import { emptyHours } from "../openingHours";
+import { MAP_CONSENT_KEY } from "../hooks/useMapConsent";
 import type { PublicProfileState } from "../hooks/usePublicProfile";
 import type { PublicProfile } from "../types";
 
@@ -14,6 +15,7 @@ const ready = (overrides: Partial<PublicProfile> = {}): PublicProfileState => ({
 });
 
 beforeEach(() => {
+  localStorage.clear();
   // Monday 2026-11-16, 12:00 in Berlin.
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date("2026-11-16T11:00:00Z"));
@@ -67,7 +69,23 @@ describe("GuestFooter", () => {
     );
   });
 
+  it("remembers the guest's choice, so the map loads by itself next time until they hide it", async () => {
+    vi.stubEnv("VITE_GOOGLE_MAPS_EMBED_KEY", "test-key");
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const first = render(<GuestFooter state={ready()} />);
+    await user.click(screen.getByRole("button", { name: "Show map" }));
+    first.unmount();
+
+    const { container } = render(<GuestFooter state={ready()} />);
+    expect(screen.getByTitle("Map showing Trattoria Sole")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Hide map" }));
+    expect(container.querySelector("iframe")).toBeNull();
+    expect(localStorage.getItem(MAP_CONSENT_KEY)).toBeNull();
+  });
+
   it("offers only the link when no map key is configured", () => {
+    vi.stubEnv("VITE_GOOGLE_MAPS_EMBED_KEY", ""); // A local .env must not leak in.
     render(<GuestFooter state={ready()} />);
     expect(screen.queryByRole("button", { name: "Show map" })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Open in Google Maps/ })).toBeInTheDocument();
