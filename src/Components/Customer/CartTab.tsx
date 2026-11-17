@@ -14,10 +14,11 @@ import { cn } from "@/lib/utils";
 const CartTab = ({ placeOrder }: { placeOrder: PlaceOrder }) => {
   const { cart, clearCart } = useCart();
   const { itemsById } = useMenu();
-  const { paid } = useGuestBill();
+  const { paid, frozen } = useGuestBill();
   const { phase, blocking, canSend, canPlace, fieldErrors, unavailableIds, place } = placeOrder;
-  // A paid bill takes no more orders, whatever else the cart has to say.
-  const message = paid ? errorMessage("BILL_PAID") : placeOrder.message;
+  // A paid or frozen bill takes no orders, whatever else the cart has to say.
+  const locked = Boolean(paid) || frozen;
+  const message = paid ? errorMessage("BILL_PAID") : frozen ? errorMessage("BILL_FROZEN") : placeOrder.message;
   const estimated = linesTotalCents(cart, itemsById);
 
   return (
@@ -27,7 +28,7 @@ const CartTab = ({ placeOrder }: { placeOrder: PlaceOrder }) => {
           <p
             className={cn(
               "mb-3 rounded-md px-3 py-2 text-center text-sm font-semibold",
-              phase === "success" ? "bg-pass/10 text-pass-ink" : phase === "error" || blocking || paid ? "bg-alert/10 text-alert-ink" : "bg-ink/[0.05] text-ink-soft"
+              phase === "success" ? "bg-pass/10 text-pass-ink" : phase === "error" || blocking || locked ? "bg-alert/10 text-alert-ink" : "bg-ink/[0.05] text-ink-soft"
             )}
             role="status"
           >
@@ -66,7 +67,7 @@ const CartTab = ({ placeOrder }: { placeOrder: PlaceOrder }) => {
         )}
       </div>
       <div className="grid grid-cols-[1fr_auto] gap-2 border-t border-ink/10 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
-        <Button type="button" size="xl" onClick={place} disabled={!canPlace || Boolean(paid)} title={canSend ? "" : "Connecting…"}>
+        <Button type="button" size="xl" onClick={place} disabled={!canPlace || locked} title={canSend ? "" : "Connecting…"}>
           {PLACE_ORDER_LABEL.guest[phase]}
         </Button>
         <Button

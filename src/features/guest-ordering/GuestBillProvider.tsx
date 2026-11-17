@@ -8,9 +8,8 @@ import {
   ReactNode,
 } from "react";
 import { useNavigate } from "react-router-dom";
-import type { Payment } from "../../shared/api/payments";
 import { useRealtime } from "../../shared/realtime/RealtimeProvider";
-import type { Order } from "../../shared/realtime/protocol";
+import type { Order, SessionBill } from "../../shared/realtime/protocol";
 import { notify } from "../../utils/notify";
 import { receiptPath } from "../payments/billPayment";
 import {
@@ -18,16 +17,17 @@ import {
   billOrders,
   clearBill,
   loadBill,
+  markBillFrozen,
   markBillPaid,
   saveBill,
   upsertBillOrder,
-  withServerPayment,
+  withServerBill,
   type BillOrder,
   type BillState,
   type PaidBill,
 } from "./billState";
 import { useGuestAuth } from "./GuestAuthContext";
-import { useServerPayment } from "./hooks/useServerPayment";
+import { useServerBill } from "./hooks/useServerBill";
 
 type GuestBillValue = {
   orders: BillOrder[];
@@ -37,6 +37,14 @@ type GuestBillValue = {
   rememberOrder: (order: Order) => void;
   /** An order command came back `BILL_PAID`: lock the bill and look up its receipt. */
   markPaid: () => void;
+  /** Someone at the table is paying online: no ordering or cancelling until it ends. */
+  frozen: boolean;
+  /** An order command came back `BILL_FROZEN`: lock the bill and read it again. */
+  markFrozen: () => void;
+  /** Set while the guest may pay the bill online, with the total they would pay. */
+  payOnline: BillState["payOnline"];
+  /** Read the bill from the server again, e.g. after online payment was refused. */
+  recheckBill: () => void;
 };
 
 const GuestBillContext = createContext<GuestBillValue | undefined>(undefined);
@@ -52,12 +60,14 @@ export const GuestBillProvider = ({
   const { session } = useGuestAuth();
   const navigate = useNavigate();
   const [state, setState] = useState<BillState>(() => loadBill(sessionId));
-  const [paymentChecks, setPaymentChecks] = useState(0);
+  const [billChecks, setBillChecks] = useState(0);
 
-  const handleServerPayment = useCallback((payment: Payment | null) => {
-    setState((current) => withServerPayment(current, payment));
+  const handleServerBill = useCallback((bill: SessionBill) => {
+    setState((current) => withServerBill(current, bill));
   }, []);
-  useServerPayment(sessionId, session?.token, paymentChecks, handleServerPayment);
+  useServerBill(sessionId, session?.token, billChecks, handleServerBill);
+
+  const recheckBill = useCallback(() => setBillChecks((count) => count + 1), []);
 
   useEffect(() => {
     setState(loadBill(sessionId));
@@ -94,14 +104,27 @@ export const GuestBillProvider = ({
       setState((current) => applyBillEvent(current, { event: "bill.paid", data }, sessionId));
       navigate(receiptPath(data.receiptToken));
     });
+    const offFrozen = subscribe("bill.frozen", (data) => {
+      setState((current) => applyBillEvent(current, { event: "bill.frozen", data }, sessionId));
+    });
+    const offUnfrozen = subscribe("bill.unfrozen", (data) => {
+      if (data.sessionId !== sessionId) {
+        return;
+      }
+      setState((current) => applyBillEvent(current, { event: "bill.unfrozen", data }, sessionId));
+      // Whether it can be paid online again is the server's call.
+      recheckBill();
+    });
     return () => {
       offCreated();
       offUpdated();
       offStatus();
       offClosed();
       offPaid();
+      offFrozen();
+      offUnfrozen();
     };
-  }, [navigate, sessionId, subscribe]);
+  }, [navigate, recheckBill, sessionId, subscribe]);
 
   const rememberOrder = useCallback((order: Order) => {
     setState((current) => upsertBillOrder(current, order));
@@ -109,8 +132,13 @@ export const GuestBillProvider = ({
 
   const markPaid = useCallback(() => {
     setState(markBillPaid);
-    setPaymentChecks((count) => count + 1);
-  }, []);
+    recheckBill();
+  }, [recheckBill]);
+
+  const markFrozen = useCallback(() => {
+    setState(markBillFrozen);
+    recheckBill();
+  }, [recheckBill]);
 
   const orders = useMemo(() => billOrders(state), [state]);
   const closed = state.closed || sessionEnded;
@@ -122,8 +150,18 @@ export const GuestBillProvider = ({
   }, [closed, sessionId]);
 
   const value = useMemo(
-    () => ({ orders, closed, paid: state.paid, rememberOrder, markPaid }),
-    [orders, closed, state.paid, rememberOrder, markPaid]
+    () => ({
+      orders,
+      closed,
+      paid: state.paid,
+      rememberOrder,
+      markPaid,
+      frozen: state.frozen,
+      markFrozen,
+      payOnline: state.payOnline,
+      recheckBill,
+    }),
+    [orders, closed, state.paid, rememberOrder, markPaid, state.frozen, markFrozen, state.payOnline, recheckBill]
   );
 
   return <GuestBillContext.Provider value={value}>{children}</GuestBillContext.Provider>;

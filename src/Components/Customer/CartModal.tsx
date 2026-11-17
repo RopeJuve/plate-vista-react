@@ -15,7 +15,7 @@ const CartModal = ({ closeModal }: { closeModal: (open: boolean) => void }) => {
   const { session } = useGuestAuth();
   const { cart, clearCart } = useCart();
   const { itemsById } = useMenu();
-  const { orders, rememberOrder, markPaid } = useGuestBill();
+  const { orders, rememberOrder, markPaid, markFrozen } = useGuestBill();
   // The order being placed lives here, not in the cart tab, so a send or a
   // retry in flight survives a look at the bill.
   const placeOrder = usePlaceOrder({
@@ -29,6 +29,9 @@ const CartModal = ({ closeModal }: { closeModal: (open: boolean) => void }) => {
     onFailed: (error) => {
       if (error.code === "BILL_PAID") {
         markPaid();
+      }
+      if (error.code === "BILL_FROZEN") {
+        markFrozen();
       }
     },
   });

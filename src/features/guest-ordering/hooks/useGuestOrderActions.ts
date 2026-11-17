@@ -8,11 +8,11 @@ import { useGuestBill } from "../GuestBillProvider";
  * What a guest can do to an order already on their bill. The server answers
  * with the order as it now stands, which goes straight onto the bill. Both
  * actions report their own errors and resolve false when nothing changed.
- * A paid bill takes no changes; a `BILL_PAID` refusal locks it.
+ * A paid or frozen bill takes no changes; a `BILL_PAID` or `BILL_FROZEN` refusal locks it.
  */
 export const useGuestOrderActions = () => {
   const { request, status } = useRealtime();
-  const { rememberOrder, paid, markPaid } = useGuestBill();
+  const { rememberOrder, paid, markPaid, frozen, markFrozen } = useGuestBill();
 
   const settle = async (sent: Promise<{ order?: Order } | undefined>, fallback: string) => {
     try {
@@ -25,13 +25,16 @@ export const useGuestOrderActions = () => {
       if (error instanceof ProtocolError && error.code === "BILL_PAID") {
         markPaid();
       }
+      if (error instanceof ProtocolError && error.code === "BILL_FROZEN") {
+        markFrozen();
+      }
       notify(requestErrorMessage(error, fallback));
       return false;
     }
   };
 
   return {
-    canSend: status === "open" && !paid,
+    canSend: status === "open" && !paid && !frozen,
     updateOrder: (orderId: string, items: OrderCreateItemInput[]) =>
       settle(request<"order.update", { order?: Order }>("order.update", { orderId, items }), "Could not update the order"),
     cancelOrder: (orderId: string, reason: string) =>
