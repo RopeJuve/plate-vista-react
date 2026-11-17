@@ -1,5 +1,5 @@
 import { sumCents } from "../../shared/money/formatCents";
-import type { Order, ServerEvent } from "../../shared/realtime/protocol";
+import type { Order, ServerEvent, SessionBill } from "../../shared/realtime/protocol";
 import { withStatusChange } from "../../shared/realtime/tickets";
 
 export type BillOrder = Order & { cancelReason?: string };
@@ -12,17 +12,39 @@ export type BillState = {
   closed: boolean;
   /** Set once the bill is paid: nothing more can be ordered on it. */
   paid: PaidBill | null;
+  /** Someone at the table is paying online: the bill takes no orders or cancels meanwhile. */
+  frozen: boolean;
+  /** Set while the guest may pay the bill online, with the server's total for it. */
+  payOnline: { totalCents: number } | null;
 };
 
 export const emptyBill = (): BillState => ({
   ordersById: {},
   closed: false,
   paid: null,
+  frozen: false,
+  payOnline: null,
 });
 
 /** The payment on the server's bill, if it has one. A bill without one never un-pays a known payment. */
 export const withServerPayment = (state: BillState, payment: { receiptToken: string } | null): BillState =>
   payment ? { ...state, paid: { receiptToken: payment.receiptToken } } : state;
+
+/** What the server's bill says about paying: paid, frozen (`paying`), and whether it can be paid online. */
+export const withServerBill = (
+  state: BillState,
+  bill: Pick<SessionBill, "payment" | "canPayOnline" | "totalCents"> & { session: Pick<SessionBill["session"], "status"> }
+): BillState => {
+  const frozen = bill.session.status === "paying";
+  return {
+    ...withServerPayment(state, bill.payment),
+    frozen,
+    payOnline: bill.canPayOnline && !frozen ? { totalCents: bill.totalCents } : null,
+  };
+};
+
+/** An order or cancel was refused with `BILL_FROZEN`: someone is paying online right now. */
+export const markBillFrozen = (state: BillState): BillState => ({ ...state, frozen: true, payOnline: null });
 
 /** An order was refused because the bill is paid. Keeps the receipt if it is already known. */
 export const markBillPaid = (state: BillState): BillState =>
@@ -80,6 +102,17 @@ export const applyBillEvent = (state: BillState, event: ServerEvent, sessionId: 
         return state;
       }
       return { ...state, paid: { receiptToken: event.data.receiptToken } };
+    case "bill.frozen":
+      if (event.data.sessionId !== sessionId) {
+        return state;
+      }
+      return markBillFrozen(state);
+    case "bill.unfrozen":
+      if (event.data.sessionId !== sessionId) {
+        return state;
+      }
+      // Whether it can be paid online again is the server's call: the provider re-reads the bill.
+      return { ...state, frozen: false };
     default:
       return state;
   }
@@ -108,7 +141,8 @@ export const loadBill = (sessionId: string): BillState => {
       return emptyBill();
     }
     const paid = parsed.paid && typeof parsed.paid === "object" ? { receiptToken: parsed.paid.receiptToken ?? null } : null;
-    return { ordersById: parsed.ordersById, closed: Boolean(parsed.closed), paid };
+    // Frozen and payable online are the server's to say on every load, never remembered.
+    return { ...emptyBill(), ordersById: parsed.ordersById, closed: Boolean(parsed.closed), paid };
   } catch {
     return emptyBill();
   }

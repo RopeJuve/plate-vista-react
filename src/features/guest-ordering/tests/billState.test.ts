@@ -1,5 +1,17 @@
+// @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
-import { applyBillEvent, emptyBill, markBillPaid, payableCents, payableOrders, withServerPayment } from "../billState";
+import {
+  applyBillEvent,
+  emptyBill,
+  loadBill,
+  markBillFrozen,
+  markBillPaid,
+  payableCents,
+  payableOrders,
+  saveBill,
+  withServerBill,
+  withServerPayment,
+} from "../billState";
 
 const soup = { status: "served" as const, totalCents: 900 };
 const cola = { status: "pending" as const, totalCents: 300 };
@@ -43,14 +55,67 @@ describe("a paid bill", () => {
   });
 });
 
-describe("online payment events (protocol 2.5)", () => {
+describe("a frozen bill (protocol 2.5)", () => {
   const expiresAt = "2026-11-07T20:00:00.000Z";
+  const frozenEvent = (sessionId: string) => ({ event: "bill.frozen" as const, data: { sessionId, expiresAt } });
+  const unfrozenEvent = (sessionId: string) => ({ event: "bill.unfrozen" as const, data: { sessionId } });
+  const serverBill = (status: "open" | "paying", canPayOnline: boolean) => ({
+    payment: null,
+    session: { status },
+    canPayOnline,
+    totalCents: 2050,
+  });
 
-  it("leave the guest's bill as it is until a later ticket handles them", () => {
-    const state = emptyBill();
-    const frozen = { event: "bill.frozen" as const, data: { sessionId: "session-1", expiresAt } };
-    const unfrozen = { event: "bill.unfrozen" as const, data: { sessionId: "session-1" } };
-    expect(applyBillEvent(state, frozen, "session-1")).toBe(state);
-    expect(applyBillEvent(state, unfrozen, "session-1")).toBe(state);
+  it("starts neither frozen nor payable online until the server says so", () => {
+    expect(emptyBill()).toMatchObject({ frozen: false, payOnline: null });
+  });
+
+  it("is payable online with the server's total when the bill allows it", () => {
+    expect(withServerBill(emptyBill(), serverBill("open", true))).toMatchObject({
+      frozen: false,
+      payOnline: { totalCents: 2050 },
+    });
+    expect(withServerBill(emptyBill(), serverBill("open", false)).payOnline).toBeNull();
+  });
+
+  it("is frozen when the server's session is paying, and not payable online again", () => {
+    expect(withServerBill(emptyBill(), serverBill("paying", false))).toMatchObject({ frozen: true, payOnline: null });
+  });
+
+  it("thaws when the server's session is open again", () => {
+    const frozen = withServerBill(emptyBill(), serverBill("paying", false));
+    expect(withServerBill(frozen, serverBill("open", true))).toMatchObject({ frozen: false, payOnline: { totalCents: 2050 } });
+  });
+
+  it("takes the payment from the server's bill too", () => {
+    const paid = withServerBill(emptyBill(), { ...serverBill("open", false), payment: { receiptToken: "receipt-1" } });
+    expect(paid.paid).toEqual({ receiptToken: "receipt-1" });
+  });
+
+  it("freezes on bill.frozen for the guest's own session and hides paying online", () => {
+    const payable = withServerBill(emptyBill(), serverBill("open", true));
+    expect(applyBillEvent(payable, frozenEvent("session-1"), "session-1")).toMatchObject({ frozen: true, payOnline: null });
+  });
+
+  it("thaws on bill.unfrozen for the guest's own session", () => {
+    const frozen = markBillFrozen(emptyBill());
+    expect(applyBillEvent(frozen, unfrozenEvent("session-1"), "session-1").frozen).toBe(false);
+  });
+
+  it("ignores bill.frozen and bill.unfrozen for another session", () => {
+    const payable = withServerBill(emptyBill(), serverBill("open", true));
+    expect(applyBillEvent(payable, frozenEvent("session-2"), "session-1")).toBe(payable);
+    const frozen = markBillFrozen(emptyBill());
+    expect(applyBillEvent(frozen, unfrozenEvent("session-2"), "session-1")).toBe(frozen);
+  });
+
+  it("is frozen when an order is refused with BILL_FROZEN", () => {
+    const payable = withServerBill(emptyBill(), serverBill("open", true));
+    expect(markBillFrozen(payable)).toMatchObject({ frozen: true, payOnline: null });
+  });
+
+  it("never comes back frozen from storage: the server decides on load", () => {
+    saveBill("session-1", markBillFrozen(emptyBill()));
+    expect(loadBill("session-1")).toMatchObject({ frozen: false, payOnline: null });
   });
 });
