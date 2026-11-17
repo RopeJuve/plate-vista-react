@@ -33,7 +33,10 @@ export const withServerPayment = (state: BillState, payment: { receiptToken: str
 /** What the server's bill says about paying: paid, frozen (`paying`), and whether it can be paid online. */
 export const withServerBill = (
   state: BillState,
-  bill: Pick<SessionBill, "payment" | "canPayOnline" | "totalCents"> & { session: Pick<SessionBill["session"], "status"> }
+  bill: Pick<SessionBill, "canPayOnline" | "totalCents"> & {
+    payment: { receiptToken: string } | null;
+    session: Pick<SessionBill["session"], "status">;
+  }
 ): BillState => {
   const frozen = bill.session.status === "paying";
   return {

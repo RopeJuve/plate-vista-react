@@ -11,6 +11,7 @@ import Cart from "./Cart";
 import CategoriesCustomer from "./CategoriesCustomer";
 import MenuItemsList from "./MenuItemsList";
 import NavBarCustomer from "./NavBarCustomer";
+import FrozenBillBanner from "./FrozenBillBanner";
 import PaidBillBanner from "./PaidBillBanner";
 import SkeletonList from "./SkeletonList";
 
@@ -19,7 +20,7 @@ const GuestMenu = ({ profile }: { profile?: PublicProfileState }) => {
   const { session } = useGuestAuth();
   const { items, categories, loading, error, reload } = useMenu();
   const { search } = useStateContext();
-  const { paid } = useGuestBill();
+  const { paid, frozen } = useGuestBill();
   const [selectedCategory, setSelectedCategory] = useState("");
   // The guest who opened the table sees the code up front; anyone can bring it back.
   const [showCode, setShowCode] = useState(() => Boolean(session?.opened));
@@ -41,7 +42,8 @@ const GuestMenu = ({ profile }: { profile?: PublicProfileState }) => {
           onShowCode={() => setShowCode(true)}
         />
         {paid && <PaidBillBanner paid={paid} />}
-        {showCode && session?.joinCode && !paid && (
+        {frozen && !paid && <FrozenBillBanner />}
+        {showCode && session?.joinCode && !paid && !frozen && (
           <JoinCodeBanner code={session.joinCode} onDismiss={() => setShowCode(false)} />
         )}
         <CategoriesCustomer
