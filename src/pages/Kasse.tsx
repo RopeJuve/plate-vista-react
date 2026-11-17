@@ -1,12 +1,16 @@
 import { Header } from "../Components/AdminComponents";
+import { useAuth } from "../contexts/AuthContext";
+import PayoutAccountSection from "../features/kasse/PayoutAccountSection";
 import LegalDetailsForm from "../features/kasse/LegalDetailsForm";
 import TseSection from "../features/kasse/TseSection";
 import { useLegalDetails } from "../features/kasse/hooks/useLegalDetails";
+import { isOwner } from "../shared/auth/roles";
 import { cn } from "@/lib/utils";
 
 /** Till & payments: what the restaurant needs on file before it can take payments with signed receipts. */
 const Kasse = () => {
   const { details, loading, complete, save } = useLegalDetails();
+  const { user } = useAuth();
 
   return (
     <div>
@@ -40,6 +44,11 @@ const Kasse = () => {
       <div className="mt-6">
         <TseSection legalComplete={!loading && complete} />
       </div>
+      {isOwner(user) && (
+        <div className="mt-6">
+          <PayoutAccountSection />
+        </div>
+      )}
     </div>
   );
 };
