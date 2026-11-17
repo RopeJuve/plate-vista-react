@@ -30,6 +30,7 @@ const Table = memo(
     joinCode,
     summary,
     paid = false,
+    payingOnline = false,
   }: {
     tableId: string;
     tableNumber: number;
@@ -40,6 +41,8 @@ const Table = memo(
     summary?: TableSummary;
     /** The bill is settled; the table is only waiting to be closed. */
     paid?: boolean;
+    /** A guest is paying the bill online right now, so the bill is frozen. */
+    payingOnline?: boolean;
   }) => {
     const navigate = useNavigate();
     const seated = status === "occupied";
@@ -77,6 +80,11 @@ const Table = memo(
           >
             {seated ? (paid ? "Paid" : summary?.ready ? `${summary.ready} ready` : "Seated") : reserved ? "Reserved" : "Free"}
           </span>
+          {seated && payingOnline ? (
+            <span className="rounded bg-signal px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-[0.1em] text-ink">
+              Paying online
+            </span>
+          ) : null}
           {seated && joinCode ? (
             <span className="font-mono text-xs font-bold tracking-[0.15em] text-ink-soft">
               <span className="sr-only">Join code </span>

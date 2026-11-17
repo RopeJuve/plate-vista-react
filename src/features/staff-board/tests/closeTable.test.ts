@@ -31,4 +31,8 @@ describe("closing a table", () => {
     expect(closeResult({ response: { status: 409, data: { code: "BILL_PAID" } } })).toBe("failed");
     expect(closeResult(new Error("offline"))).toBe("failed");
   });
+
+  it("knows when the guest's online payment got there first", () => {
+    expect(closeResult({ response: { status: 409, data: { code: "BILL_PAYING_ONLINE" } } })).toBe("paidOnline");
+  });
 });

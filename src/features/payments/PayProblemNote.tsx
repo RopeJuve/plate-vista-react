@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { formatCents } from "../../shared/money/formatCents";
-import type { PayProblem } from "./billPayment";
+import { PAID_ONLINE_MESSAGE, type PayProblem } from "./billPayment";
 
 /** Why the last payment was not recorded, in words staff can act on. Retryable problems show in the confirm step instead. */
 const PayProblemNote = ({
@@ -18,6 +18,8 @@ const PayProblemNote = ({
         return `The bill changed — new total ${formatCents(problem.totalCents ?? currentTotalCents ?? 0)}. Please confirm again.`;
       case "BILL_PAID":
         return "Already paid";
+      case "BILL_PAYING_ONLINE":
+        return PAID_ONLINE_MESSAGE;
       case "BILL_EMPTY":
         return "Nothing to pay — close the table instead";
       case "TSE_NOT_ACTIVE":

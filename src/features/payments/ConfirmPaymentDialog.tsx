@@ -9,12 +9,22 @@ type ConfirmPaymentDialogProps = {
   totalCents: number;
   pending: boolean;
   problem: PayProblem | null;
+  /** A guest is paying this bill online right now; recording cash or card cancels that. */
+  payingOnline: boolean;
   onCancel: () => void;
   onConfirm: () => void;
 };
 
 /** Asks staff to confirm the guest really paid this amount this way, before anything is recorded. */
-const ConfirmPaymentDialog = ({ method, totalCents, pending, problem, onCancel, onConfirm }: ConfirmPaymentDialogProps) => (
+const ConfirmPaymentDialog = ({
+  method,
+  totalCents,
+  pending,
+  problem,
+  payingOnline,
+  onCancel,
+  onConfirm,
+}: ConfirmPaymentDialogProps) => (
   <Dialog open={Boolean(method)} onOpenChange={(open) => !open && !pending && onCancel()}>
     <DialogContent className="max-w-sm">
       <DialogHeader>
@@ -31,6 +41,11 @@ const ConfirmPaymentDialog = ({ method, totalCents, pending, problem, onCancel, 
           <dd className="font-bold">{method ? methodLabel(method) : ""}</dd>
         </div>
       </dl>
+      {payingOnline && (
+        <p className="rounded-md bg-signal/10 px-3 py-2 text-sm font-semibold text-signal-ink">
+          A guest is paying online right now. Recording this payment cancels their online payment.
+        </p>
+      )}
       {problem?.kind === "NETWORK" && (
         <p role="alert" className="text-sm font-semibold text-alert-ink">
           Could not reach the server. Confirm again to retry — the guest will not be charged twice.
