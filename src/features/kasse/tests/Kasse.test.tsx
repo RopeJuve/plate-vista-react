@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
 import ToastProvider from "../../../Components/ToastProvider";
+import { AuthProvider } from "../../../contexts/AuthContext";
 import { emptyLegalDetails } from "../../../mocks/fixtures/legal";
 import { apiPaths } from "../../../mocks/handlers/paths";
 import { mockLegalResponse, mockResponse } from "../../../mocks/overrides";
@@ -24,9 +25,11 @@ const recordPuts = () => {
 const renderKasse = () => {
   const user = userEvent.setup();
   render(
-    <ToastProvider>
-      <Kasse />
-    </ToastProvider>
+    <AuthProvider>
+      <ToastProvider>
+        <Kasse />
+      </ToastProvider>
+    </AuthProvider>
   );
   return user;
 };
