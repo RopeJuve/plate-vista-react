@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { useEffect, type ReactNode } from "react";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import { afterEach, describe, expect, it } from "vitest";
 import OrderDetails from "../../../Components/BarComponents/OrderDetails";
 import TableList from "../../../Components/BarComponents/TableList";
@@ -252,19 +252,35 @@ describe("a table's check while a guest pays online", () => {
 
 describe("the admin table dialog while a guest pays online", () => {
   const renderAdminDialog = () => {
+    const realtime = createMockRealtime();
     const user = userEvent.setup();
     render(
-      <MemoryRouter>
+      <RealtimeTestProviders realtime={realtime}>
         <TableDetailsDialog table={{ _id: TABLE_ID, tableNumber: 4 }} open onOpenChange={() => undefined} />
-      </MemoryRouter>
+      </RealtimeTestProviders>
     );
-    return user;
+    return { user, realtime };
   };
+
+  it("adds and removes the badge as the live events arrive", async () => {
+    mockBillResponse(200, { ...frozenBill, session: { ...frozenBill.session, status: "open" } });
+    const { realtime } = renderAdminDialog();
+    await screen.findByRole("button", { name: "Paid in cash" });
+    expect(screen.queryByText("Paying online")).not.toBeInTheDocument();
+
+    mockBillResponse(200, frozenBill);
+    realtime.emit("bill.frozen", { sessionId: SESSION_ID, expiresAt: "2026-11-17T22:00:00.000Z" });
+    expect(await screen.findByText("Paying online")).toBeInTheDocument();
+
+    mockBillResponse(200, { ...frozenBill, session: { ...frozenBill.session, status: "open" } });
+    realtime.emit("bill.unfrozen", { sessionId: SESSION_ID });
+    await waitFor(() => expect(screen.queryByText("Paying online")).not.toBeInTheDocument());
+  });
 
   it("shows the badge and lets the owner unfreeze the bill", async () => {
     mockBillResponse(200, frozenBill);
     const cancels = recordCancels();
-    const user = renderAdminDialog();
+    const { user } = renderAdminDialog();
 
     expect(await screen.findByText("Paying online")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Unfreeze bill" }));

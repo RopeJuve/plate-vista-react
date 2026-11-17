@@ -1,9 +1,11 @@
 import PayBillPanel from "../payments/PayBillPanel";
+import { useBillEvents } from "./hooks/useBillEvents";
 import { useOpenSession } from "./hooks/useOpenSession";
 
 /** The table's open bill in the admin dialog, where an owner or admin can record its payment. */
 const TableBill = ({ tableId }: { tableId?: string }) => {
   const { sessionId, loading, failed } = useOpenSession(tableId);
+  const billEvents = useBillEvents(sessionId);
 
   const body = () => {
     if (loading) {
@@ -20,7 +22,7 @@ const TableBill = ({ tableId }: { tableId?: string }) => {
       return <p className="text-sm text-ink-soft">No open bill at this table.</p>;
     }
     // Only owners and admins reach the admin pages, so they can activate the TSE and unfreeze bills themselves.
-    return <PayBillPanel key={sessionId} sessionId={sessionId} canActivateTse canUnfreeze />;
+    return <PayBillPanel key={sessionId} sessionId={sessionId} refreshKey={billEvents} canActivateTse canUnfreeze />;
   };
 
   return (
