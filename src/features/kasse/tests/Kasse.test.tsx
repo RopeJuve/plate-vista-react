@@ -3,12 +3,13 @@ import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
 import ToastProvider from "../../../Components/ToastProvider";
-import { AuthProvider } from "../../../contexts/AuthContext";
 import { emptyLegalDetails } from "../../../mocks/fixtures/legal";
 import { apiPaths } from "../../../mocks/handlers/paths";
 import { mockLegalResponse, mockResponse } from "../../../mocks/overrides";
 import { server } from "../../../mocks/server";
 import Kasse from "../../../pages/Kasse";
+import { createMockRealtime } from "../../../test/mockRealtime";
+import RealtimeTestProviders from "../../../test/RealtimeTestProviders";
 
 const recordPuts = () => {
   const bodies: unknown[] = [];
@@ -25,11 +26,11 @@ const recordPuts = () => {
 const renderKasse = () => {
   const user = userEvent.setup();
   render(
-    <AuthProvider>
+    <RealtimeTestProviders realtime={createMockRealtime()}>
       <ToastProvider>
         <Kasse />
       </ToastProvider>
-    </AuthProvider>
+    </RealtimeTestProviders>
   );
   return user;
 };

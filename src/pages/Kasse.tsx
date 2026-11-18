@@ -1,6 +1,7 @@
 import { Header } from "../Components/AdminComponents";
 import { useAuth } from "../contexts/AuthContext";
 import PayoutAccountSection from "../features/kasse/PayoutAccountSection";
+import LateRefundsSection from "../features/kasse/LateRefundsSection";
 import LegalDetailsForm from "../features/kasse/LegalDetailsForm";
 import TseSection from "../features/kasse/TseSection";
 import { useLegalDetails } from "../features/kasse/hooks/useLegalDetails";
@@ -49,6 +50,9 @@ const Kasse = () => {
           <PayoutAccountSection />
         </div>
       )}
+      <div className="mt-6">
+        <LateRefundsSection />
+      </div>
     </div>
   );
 };
