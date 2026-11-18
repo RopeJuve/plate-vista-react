@@ -267,6 +267,7 @@ describe("Kasse online payments", () => {
     expect(await online.findByText("Online payments aren't available on this server yet.")).toBeInTheDocument();
     expect(online.queryByRole("button")).not.toBeInTheDocument();
   });
+
   it("enables the setup button again and re-reads the status after Back from Stripe", async () => {
     mockPayoutAccountResponse(200, payoutAccounts.notConnected);
     recordOnboarding();
