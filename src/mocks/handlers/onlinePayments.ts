@@ -5,6 +5,7 @@ import type {
   OnlinePaymentsSwitchBody,
   PayoutAccount,
   PayoutOnboardingLink,
+  ReceiptTokenPaying,
 } from "../../shared/api/payments";
 import { lateRefunds, payoutAccounts } from "../fixtures/onlinePayments";
 import { apiPaths } from "./paths";
@@ -18,7 +19,10 @@ const ONLINE_PAYMENT_MINUTES = 30;
  */
 const ownOrigin = (request: Request) => globalThis.location?.origin ?? new URL(request.url).origin;
 
-/** By default the Payout Account is ready with online payments on, and every Late Payment is listed. */
+/**
+ * By default the Payout Account is ready with online payments on, every Late Payment is listed,
+ * and an online payment the guest came back from is still going through.
+ */
 export const onlinePaymentHandlers = [
   http.post(apiPaths.payoutAccount, ({ request }) =>
     HttpResponse.json<PayoutOnboardingLink>({
@@ -51,4 +55,6 @@ export const onlinePaymentHandlers = [
     })
   ),
   http.post(apiPaths.cancelOnlinePayment, () => new HttpResponse(null, { status: 200 })),
+  // The webhook has not arrived yet: tests pick the answer they need.
+  http.get(apiPaths.receiptToken, () => HttpResponse.json<ReceiptTokenPaying>({ status: "PAYING" }, { status: 202 })),
 ];

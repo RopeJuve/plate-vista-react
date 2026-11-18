@@ -133,6 +133,16 @@ export interface OnlinePaymentStart {
   expiresAt: string;
 }
 
+/** `GET /sessions/:id/receipt-token` → 200: the bill is paid, here is its receipt. */
+export interface ReceiptTokenPaid {
+  receiptToken: string;
+}
+
+/** `GET /sessions/:id/receipt-token` → 202: an online payment is still going through. 404: the bill is not paid. */
+export interface ReceiptTokenPaying {
+  status: "PAYING";
+}
+
 /** Error codes of the online payment endpoints (and `BILL_FROZEN` for orders on a frozen bill). */
 export type OnlinePaymentErrorCode =
   | "STRIPE_NOT_CONFIGURED"
