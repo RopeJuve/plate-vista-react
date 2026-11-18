@@ -12,13 +12,20 @@ type OnlinePaymentsSwitchProps = {
 const OnlinePaymentsSwitch = ({ enabled, saving, failedTo, onChange }: OnlinePaymentsSwitchProps) => (
   <div className="space-y-3">
     <p className="text-sm font-bold text-ink">Online payments are ready</p>
-    <label className="flex min-h-11 cursor-pointer items-center justify-between gap-4">
-      <span className="text-sm text-ink">Let guests pay online</span>
+    <div className="flex min-h-11 items-center justify-between gap-4">
+      {/* The text is part of the click target, as a label would make it; the button stays the keyboard control. */}
+      <span
+        id="online-payments-switch-label"
+        onClick={() => !saving && onChange(!enabled)}
+        className="flex min-h-11 flex-1 cursor-pointer items-center text-sm text-ink"
+      >
+        Let guests pay online
+      </span>
       <button
         type="button"
         role="switch"
         aria-checked={enabled}
-        aria-label="Let guests pay online"
+        aria-labelledby="online-payments-switch-label"
         disabled={saving}
         onClick={() => onChange(!enabled)}
         className={cn(
@@ -33,7 +40,8 @@ const OnlinePaymentsSwitch = ({ enabled, saving, failedTo, onChange }: OnlinePay
           )}
         />
       </button>
-    </label>
+    </div>
+    {!enabled && <p className="text-sm text-ink-soft">{"Guests can't pay online right now."}</p>}
     {failedTo !== null && (
       <p role="alert" className="text-sm text-red-700">
         {`We couldn't switch online payments ${failedTo ? "on" : "off"}. Please try again.`}
