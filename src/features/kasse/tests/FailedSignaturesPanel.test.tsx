@@ -3,22 +3,23 @@ import userEvent from "@testing-library/user-event";
 import { http, HttpResponse, delay } from "msw";
 import { describe, expect, it } from "vitest";
 import ToastProvider from "../../../Components/ToastProvider";
-import { AuthProvider } from "../../../contexts/AuthContext";
 import { activeTse, activeTseWithFailures, failedSignatures } from "../../../mocks/fixtures/tse";
 import { apiPaths } from "../../../mocks/handlers/paths";
 import { mockTseFailedResponse, mockTseResponse, mockTseRetryResponse } from "../../../mocks/overrides";
 import { server } from "../../../mocks/server";
 import Kasse from "../../../pages/Kasse";
 import { formatFailedAt } from "../failedSignatures";
+import { createMockRealtime } from "../../../test/mockRealtime";
+import RealtimeTestProviders from "../../../test/RealtimeTestProviders";
 
 const renderKasse = () => {
   const user = userEvent.setup();
   render(
-    <AuthProvider>
+    <RealtimeTestProviders realtime={createMockRealtime()}>
       <ToastProvider>
         <Kasse />
       </ToastProvider>
-    </AuthProvider>
+    </RealtimeTestProviders>
   );
   return user;
 };

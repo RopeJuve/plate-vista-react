@@ -137,7 +137,9 @@ describe("Kasse online payments", () => {
 
     expect(await screen.findByText("tss-serial-0001")).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Online payments" })).not.toBeInTheDocument();
-    expect(screen.queryByText(/online payments/i)).not.toBeInTheDocument();
+    // The refunded online payments list is for admins too; nothing else mentions online payments.
+    const refunds = screen.getByRole("region", { name: "Refunded online payments" });
+    expect(screen.queryAllByText(/online payments/i).filter((node) => !refunds.contains(node))).toEqual([]);
     expect(methods).toEqual([]);
   });
 

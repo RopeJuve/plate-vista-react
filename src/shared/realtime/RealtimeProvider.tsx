@@ -150,7 +150,7 @@ export const RealtimeProvider = ({
 
   const enabled = guestPathRef.current
     ? Boolean(session?.token) && !sessionEnded
-    : location.pathname.startsWith("/bar") && Boolean(authToken);
+    : (location.pathname.startsWith("/bar") || location.pathname.startsWith("/admin/kasse")) && Boolean(authToken);
 
   useEffect(() => {
     const client = clientRef.current;
