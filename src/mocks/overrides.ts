@@ -69,3 +69,7 @@ export const mockStartOnlinePaymentResponse = (status: number, body?: unknown) =
 
 export const mockCancelOnlinePaymentResponse = (status: number, body?: unknown) =>
   mockResponse("post", "cancelOnlinePayment", status, body);
+
+/** `mockReceiptTokenResponse(202, { status: "PAYING" })`, `(200, { receiptToken })` or `(404, { code: "NOT_FOUND" })`. */
+export const mockReceiptTokenResponse = (status: number, body?: unknown) =>
+  mockResponse("get", "receiptToken", status, body);

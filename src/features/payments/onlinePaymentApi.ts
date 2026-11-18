@@ -1,7 +1,7 @@
 import axios from "axios";
 import { plateVistaConfig } from "../../Config/plateVista.config";
 import api from "../../shared/api/client";
-import type { OnlinePaymentStart } from "../../shared/api/payments";
+import type { OnlinePaymentStart, ReceiptTokenPaid } from "../../shared/api/payments";
 
 const onlinePaymentPath = (sessionId: string) => `/sessions/${encodeURIComponent(sessionId)}/online-payment`;
 
@@ -30,4 +30,32 @@ export const startOnlinePayment = (sessionId: string, guestToken?: string) =>
 /** `POST /sessions/:id/online-payment/cancel`: unfreezes the bill (also fine when it was not frozen). */
 export const cancelOnlinePayment = async (sessionId: string, guestToken?: string): Promise<void> => {
   await post<unknown>(`${onlinePaymentPath(sessionId)}/cancel`, guestToken);
+};
+
+/** What the server says about a bill the guest just tried to pay online. */
+export type ReceiptTokenAnswer =
+  | { state: "PAID"; receiptToken: string }
+  /** The payment is still going through: ask again. */
+  | { state: "PAYING" }
+  /** The bill is not paid and open again. */
+  | { state: "NOT_PAID" };
+
+/**
+ * `GET /sessions/:id/receipt-token` with the guest's table token: 200 the receipt,
+ * 202 still paying, 404 not paid. Anything else (or no answer) rejects.
+ */
+export const fetchReceiptToken = async (sessionId: string, guestToken: string): Promise<ReceiptTokenAnswer> => {
+  const base = String(plateVistaConfig.VITE_VERCEL_API_URL || "").replace(/\/$/, "");
+  const response = await axios.get<Partial<ReceiptTokenPaid>>(
+    `${base}/sessions/${encodeURIComponent(sessionId)}/receipt-token`,
+    {
+      headers: { Authorization: `Bearer ${guestToken}` },
+      validateStatus: (status) => status === 200 || status === 202 || status === 404,
+    }
+  );
+  if (response.status === 404) {
+    return { state: "NOT_PAID" };
+  }
+  const receiptToken = response.data?.receiptToken;
+  return response.status === 200 && receiptToken ? { state: "PAID", receiptToken } : { state: "PAYING" };
 };

@@ -2,7 +2,8 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { clearTokens, saveTokens } from "../../../shared/api/tokens";
 import { recordRequests } from "../../../test/recordRequests";
-import { cancelOnlinePayment, startOnlinePayment } from "../onlinePaymentApi";
+import { mockReceiptTokenResponse } from "../../../mocks/overrides";
+import { cancelOnlinePayment, fetchReceiptToken, startOnlinePayment } from "../onlinePaymentApi";
 
 const requests = recordRequests();
 
@@ -54,5 +55,39 @@ describe("cancelOnlinePayment", () => {
       path: "/sessions/session-1/online-payment/cancel",
       authorization: "Bearer staff-token",
     });
+  });
+});
+
+describe("fetchReceiptToken", () => {
+  it("asks with the guest's table token and reads a paid bill's receipt token (200)", async () => {
+    mockReceiptTokenResponse(200, { receiptToken: "receipt-token-1" });
+
+    await expect(fetchReceiptToken("session-1", "guest-token")).resolves.toEqual({
+      state: "PAID",
+      receiptToken: "receipt-token-1",
+    });
+    await expect(requests.only()).resolves.toMatchObject({
+      method: "GET",
+      path: "/sessions/session-1/receipt-token",
+      authorization: "Bearer guest-token",
+    });
+  });
+
+  it("reads a payment still going through (202)", async () => {
+    mockReceiptTokenResponse(202, { status: "PAYING" });
+
+    await expect(fetchReceiptToken("session-1", "guest-token")).resolves.toEqual({ state: "PAYING" });
+  });
+
+  it("reads a bill that is open again (404)", async () => {
+    mockReceiptTokenResponse(404, { code: "NOT_FOUND" });
+
+    await expect(fetchReceiptToken("session-1", "guest-token")).resolves.toEqual({ state: "NOT_PAID" });
+  });
+
+  it("fails on anything else, e.g. a server error", async () => {
+    mockReceiptTokenResponse(500);
+
+    await expect(fetchReceiptToken("session-1", "guest-token")).rejects.toBeTruthy();
   });
 });
