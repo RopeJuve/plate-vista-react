@@ -36,7 +36,15 @@ export const usePaymentReturn = (sessionId: string) => {
   const [stage, setStage] = useState<PaymentReturnStage>(arrival === "RETURN" ? "CONFIRMING" : "IDLE");
   const [round, setRound] = useState(0);
   const handled = useRef(false);
+  const mounted = useRef(true);
   const token = session?.token;
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!arrival || handled.current || !token) {
@@ -47,15 +55,11 @@ export const usePaymentReturn = (sessionId: string) => {
     if (arrival !== "CANCELLED") {
       return;
     }
-    let mounted = true;
     cancelOnlinePayment(sessionId, token).then(recheckBill, (error) => {
-      if (mounted && cancelPaymentProblem(error) === "PAYING_ONLINE") {
+      if (mounted.current && cancelPaymentProblem(error) === "PAYING_ONLINE") {
         setStage("CONFIRMING");
       }
     });
-    return () => {
-      mounted = false;
-    };
   }, [arrival, recheckBill, sessionId, setSearchParams, token]);
 
   useEffect(() => {
