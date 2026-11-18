@@ -89,6 +89,15 @@ export const applySnapshot = (board: StaffBoard): BoardState => {
   return state;
 };
 
+/** An open session starts or stops paying online; a closed or unknown one stays as it is. */
+const withSessionStatus = (state: BoardState, sessionId: string, status: "open" | "paying"): BoardState => {
+  const session = state.sessionsById[sessionId];
+  if (!session || session.status === "closed" || session.status === status) {
+    return state;
+  }
+  return { ...state, sessionsById: { ...state.sessionsById, [sessionId]: { ...session, status } } };
+};
+
 export const applyServerEvent = (state: BoardState, event: ServerEvent): BoardState => {
   switch (event.event) {
     case "session.opened": {
@@ -135,10 +144,14 @@ export const applyServerEvent = (state: BoardState, event: ServerEvent): BoardSt
     case "bill.paid": {
       const { sessionId, paymentId } = event.data;
       return {
-        ...state,
+        ...withSessionStatus(state, sessionId, "open"),
         paymentsBySession: { ...state.paymentsBySession, [sessionId]: { paymentId, signed: false } },
       };
     }
+    case "bill.frozen":
+      return withSessionStatus(state, event.data.sessionId, "paying");
+    case "bill.unfrozen":
+      return withSessionStatus(state, event.data.sessionId, "open");
     case "payment.signed": {
       const entry = Object.entries(state.paymentsBySession).find(
         ([, payment]) => payment.paymentId === event.data.paymentId
@@ -247,6 +260,10 @@ export const boardReducer = (state: BoardState, action: BoardAction): BoardState
 /** The payment the board heard for a session, if its bill was paid. */
 export const sessionPayment = (state: BoardState, sessionId: string | undefined): SessionPayment | undefined =>
   sessionId ? state.paymentsBySession[sessionId] : undefined;
+
+/** A guest is paying this session's bill online right now: the bill is frozen until it is paid or unfrozen. */
+export const isPayingOnline = (state: BoardState, sessionId: string | undefined): boolean =>
+  Boolean(sessionId && state.sessionsById[sessionId]?.status === "paying" && !state.paymentsBySession[sessionId]);
 
 export type ListedTicket = {
   order: TrackedOrder;

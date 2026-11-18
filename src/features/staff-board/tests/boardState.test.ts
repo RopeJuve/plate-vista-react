@@ -4,6 +4,7 @@ import {
   applySnapshot,
   boardReducer,
   emptyBoard,
+  isPayingOnline,
   listTickets,
   sessionPayment,
   summariseTables,
@@ -383,10 +384,37 @@ describe("online payment events (protocol 2.5)", () => {
   };
   const expiresAt = "2026-11-07T20:00:00.000Z";
 
-  it("leaves the board as it is until a later ticket handles them", () => {
+  const frozen = { event: "bill.frozen" as const, data: { sessionId: "session-1", expiresAt } };
+  const unfrozen = { event: "bill.unfrozen" as const, data: { sessionId: "session-1" } };
+  const paid = {
+    event: "bill.paid" as const,
+    data: { sessionId: "session-1", paymentId: "payment-1", receiptToken: "receipt-1", method: "ONLINE" as const, totalCents: 500 },
+  };
+  const loaded = () => applySnapshot(board(1));
+
+  it("leaves the board as it is for a refund or a session it does not know", () => {
     const state = emptyBoard();
     expect(applyServerEvent(state, { event: "bill.frozen", data: { sessionId: "session-1", expiresAt } })).toBe(state);
     expect(applyServerEvent(state, { event: "bill.unfrozen", data: { sessionId: "session-1" } })).toBe(state);
     expect(applyServerEvent(state, { event: "online_payment.refunded", data: { refund } })).toBe(state);
+  });
+
+  it("knows a session the snapshot reports as paying", () => {
+    const snapshot = board(1);
+    const paying = { ...snapshot, sessions: snapshot.sessions.map((session) => ({ ...session, status: "paying" as const })) };
+    expect(isPayingOnline(applySnapshot(paying), "session-1")).toBe(true);
+    expect(isPayingOnline(loaded(), "session-1")).toBe(false);
+    expect(isPayingOnline(loaded(), undefined)).toBe(false);
+  });
+
+  it("marks the bill paying online on bill.frozen and back on bill.unfrozen", () => {
+    const paying = applyServerEvent(loaded(), frozen);
+    expect(isPayingOnline(paying, "session-1")).toBe(true);
+    expect(isPayingOnline(applyServerEvent(paying, unfrozen), "session-1")).toBe(false);
+  });
+
+  it("stops paying online once the bill is paid", () => {
+    const paying = applyServerEvent(loaded(), frozen);
+    expect(isPayingOnline(applyServerEvent(paying, paid), "session-1")).toBe(false);
   });
 });

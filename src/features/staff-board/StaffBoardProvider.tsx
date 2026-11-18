@@ -85,6 +85,8 @@ export const StaffBoardProvider = ({ children }: { children?: ReactNode }) => {
       subscribe("session.closed", (data) => enqueue({ event: "session.closed", data })),
       subscribe("bill.paid", (data) => enqueue({ event: "bill.paid", data })),
       subscribe("payment.signed", (data) => enqueue({ event: "payment.signed", data })),
+      subscribe("bill.frozen", (data) => enqueue({ event: "bill.frozen", data })),
+      subscribe("bill.unfrozen", (data) => enqueue({ event: "bill.unfrozen", data })),
     ];
     return () => offs.forEach((off) => off());
   }, [enqueue, subscribe]);

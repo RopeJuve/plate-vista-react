@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import Table from "./Table";
 import RecentlyClosed from "./RecentlyClosed";
-import { sessionPayment, summariseTables } from "../../features/staff-board/boardState";
+import { isPayingOnline, sessionPayment, summariseTables } from "../../features/staff-board/boardState";
 import { useStaffBoard } from "../../features/staff-board/StaffBoardProvider";
 
 const TableList = () => {
@@ -52,6 +52,7 @@ const TableList = () => {
                 joinCode={state.sessionsById[state.sessionIdByTable[table._id]]?.joinCode}
                 summary={summaries[table._id]}
                 paid={Boolean(sessionPayment(state, state.sessionIdByTable[table._id]))}
+                payingOnline={isPayingOnline(state, state.sessionIdByTable[table._id])}
               />
             </li>
           ))}

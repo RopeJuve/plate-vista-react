@@ -1,10 +1,12 @@
 import { AxiosError, AxiosHeaders } from "axios";
 import { describe, expect, it } from "vitest";
 import { paidBill } from "../../../mocks/fixtures/payments";
-import { unpaidBill } from "../../../mocks/fixtures/bill";
+import { frozenBill, unpaidBill } from "../../../mocks/fixtures/bill";
 import {
+  billPayingOnline,
   canPayBill,
   canRetryPayment,
+  isGuestPayingOnline,
   methodLabel,
   payProblem,
   receiptPath,
@@ -37,6 +39,28 @@ describe("methodLabel", () => {
     expect(methodLabel("CASH")).toBe("Cash");
     expect(methodLabel("CARD_TERMINAL")).toBe("Card");
   });
+
+  it("labels a guest's online payment Online", () => {
+    expect(methodLabel("ONLINE")).toBe("Online");
+  });
+});
+
+describe("a frozen bill", () => {
+  it("is paying online while its session is paying and nothing was recorded", () => {
+    expect(isGuestPayingOnline(frozenBill)).toBe(true);
+    expect(isGuestPayingOnline(unpaidBill)).toBe(false);
+    expect(isGuestPayingOnline({ ...frozenBill, payment: paidBill.payment })).toBe(false);
+  });
+
+  it("can still be paid in cash or by card: staff always win", () => {
+    expect(canPayBill(frozenBill)).toBe(true);
+  });
+
+  it("knows the 409 BILL_PAYING_ONLINE answer: the guest's online payment got there first", () => {
+    expect(billPayingOnline(answer(409, { code: "BILL_PAYING_ONLINE" }))).toBe(true);
+    expect(billPayingOnline(answer(409, { code: "BILL_PAID" }))).toBe(false);
+    expect(billPayingOnline(new Error("boom"))).toBe(false);
+  });
 });
 
 describe("payProblem", () => {
@@ -51,6 +75,12 @@ describe("payProblem", () => {
     expect(payProblem(answer(409, { code: "BILL_PAID" }))).toEqual({ kind: "BILL_PAID" });
     expect(payProblem(answer(412, { code: "TSE_NOT_ACTIVE" }))).toEqual({ kind: "TSE_NOT_ACTIVE" });
     expect(payProblem(answer(422, { code: "BILL_EMPTY" }))).toEqual({ kind: "BILL_EMPTY" });
+  });
+
+  it("reads 409 BILL_PAYING_ONLINE as paid online, which is never retried", () => {
+    const problem = payProblem(answer(409, { code: "BILL_PAYING_ONLINE" }));
+    expect(problem).toEqual({ kind: "BILL_PAYING_ONLINE" });
+    expect(canRetryPayment(problem)).toBe(false);
   });
 
   it("treats a request that got no answer as a network error, which is safe to retry", () => {
@@ -74,6 +104,7 @@ describe("what a problem leads to", () => {
   it("reloads the bill when it changed or was paid elsewhere", () => {
     expect(reloadsBill({ kind: "BILL_CHANGED" })).toBe(true);
     expect(reloadsBill({ kind: "BILL_PAID" })).toBe(true);
+    expect(reloadsBill({ kind: "BILL_PAYING_ONLINE" })).toBe(true);
     expect(reloadsBill({ kind: "BILL_EMPTY" })).toBe(false);
     expect(reloadsBill({ kind: "NETWORK" })).toBe(false);
   });

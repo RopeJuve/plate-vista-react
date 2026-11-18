@@ -1,7 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import { afterEach, describe, expect, it } from "vitest";
 import OrderDetails from "../../../Components/BarComponents/OrderDetails";
 import { OrderProvider } from "../../../contexts/OrderContext";
@@ -17,9 +17,9 @@ import TableDetailsDialog from "../../tables/TableDetailsDialog";
 const renderAdminDialog = (tableId: string, tableNumber: number) => {
   const user = userEvent.setup();
   render(
-    <MemoryRouter>
+    <RealtimeTestProviders realtime={createMockRealtime()}>
       <TableDetailsDialog table={{ _id: tableId, tableNumber }} open onOpenChange={() => undefined} />
-    </MemoryRouter>
+    </RealtimeTestProviders>
   );
   return user;
 };

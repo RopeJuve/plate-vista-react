@@ -2,6 +2,7 @@ import type { PaymentErrorBody } from "../../shared/api/payments";
 import type { SessionBill } from "../../shared/realtime/protocol";
 import { isOwnerOrAdmin } from "../../shared/auth/roles";
 import type { User } from "../../types";
+import { billPayingOnline } from "../payments/billPayment";
 
 export const RECORD_PAYMENT_FIRST = "Record the payment first";
 export const BILL_NOT_PAID = "This bill isn't paid yet";
@@ -26,10 +27,16 @@ export const closeBlock = (bill: KnownBill): string | null => {
 /** Only an owner or admin may close a table whose bill was never paid. */
 export const canCloseUnpaid = (user: User | null) => isOwnerOrAdmin(user);
 
-/** How `POST /sessions/:id/close` went. `unpaid` means the bill on screen is out of date. */
-export type CloseResult = "closed" | "unpaid" | "failed";
+/**
+ * How `POST /sessions/:id/close` went. `unpaid` means the bill on screen is out of date;
+ * `paidOnline` that a guest's online payment is just going through, so `bill.paid` follows.
+ */
+export type CloseResult = "closed" | "unpaid" | "paidOnline" | "failed";
 
 export const closeResult = (error: unknown): Exclude<CloseResult, "closed"> => {
+  if (billPayingOnline(error)) {
+    return "paidOnline";
+  }
   const answer = (error as { response?: { status?: number; data?: Partial<PaymentErrorBody> } } | null)?.response;
   return answer?.status === 409 && answer.data?.code === "BILL_UNPAID" ? "unpaid" : "failed";
 };

@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { PAID_ONLINE_MESSAGE } from "../../payments/billPayment";
 import { BILL_NOT_PAID, closeBlock, type CloseResult, type KnownBill } from "../closeTable";
 
 type CloseDialog = "confirm" | "unpaid" | null;
@@ -38,6 +39,10 @@ export const useCloseTable = (
       setNotice(BILL_NOT_PAID);
       setKnown({ sessionId, bill: undefined });
       setBillReloads((count) => count + 1);
+    } else if (result === "paidOnline") {
+      // Not an error: the bill shows as paid once `bill.paid` arrives.
+      setDialog(null);
+      setNotice(PAID_ONLINE_MESSAGE);
     }
   };
 
