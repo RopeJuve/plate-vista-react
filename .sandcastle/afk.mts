@@ -156,16 +156,19 @@ function parseBlockers(body: string): number[] {
   return [...line[1].matchAll(/(?<![\w/])#(\d+)/g)].map((m) => Number(m[1]));
 }
 
+// Blockers can be issues or pull requests. The REST issues endpoint answers for
+// both and reports a merged PR as "closed"; `gh issue view` does not resolve PRs,
+// so a merged PR used to count as an open blocker forever.
 const issueStates = new Map<number, string>();
 function isOpen(n: number): boolean {
   if (!issueStates.has(n)) {
     try {
-      issueStates.set(n, gh(["issue", "view", String(n), "--json", "state", "--jq", ".state"]));
+      issueStates.set(n, gh(["api", `repos/{owner}/{repo}/issues/${n}`, "--jq", ".state"]));
     } catch {
-      issueStates.set(n, "UNKNOWN"); // can't tell: treat as still blocking
+      issueStates.set(n, "unknown"); // can't tell: treat as still blocking
     }
   }
-  return issueStates.get(n) !== "CLOSED";
+  return issueStates.get(n) !== "closed";
 }
 
 function openBlockers(issue: Issue): number[] {
