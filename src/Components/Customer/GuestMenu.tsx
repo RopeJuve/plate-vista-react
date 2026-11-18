@@ -13,10 +13,18 @@ import MenuItemsList from "./MenuItemsList";
 import NavBarCustomer from "./NavBarCustomer";
 import FrozenBillBanner from "./FrozenBillBanner";
 import PaidBillBanner from "./PaidBillBanner";
+import PaymentNotCompletedBanner from "./PaymentNotCompletedBanner";
 import SkeletonList from "./SkeletonList";
 
 /** The menu a seated guest orders from: search, categories, dishes, and their cart. */
-const GuestMenu = ({ profile }: { profile?: PublicProfileState }) => {
+const GuestMenu = ({
+  profile,
+  paymentNotCompleted = false,
+}: {
+  profile?: PublicProfileState;
+  /** The guest came back from an online payment that didn't go through. */
+  paymentNotCompleted?: boolean;
+}) => {
   const { session } = useGuestAuth();
   const { items, categories, loading, error, reload } = useMenu();
   const { search } = useStateContext();
@@ -43,6 +51,7 @@ const GuestMenu = ({ profile }: { profile?: PublicProfileState }) => {
         />
         {paid && <PaidBillBanner paid={paid} />}
         {frozen && !paid && <FrozenBillBanner />}
+        {paymentNotCompleted && !paid && !frozen && <PaymentNotCompletedBanner />}
         {showCode && session?.joinCode && !paid && !frozen && (
           <JoinCodeBanner code={session.joinCode} onDismiss={() => setShowCode(false)} />
         )}
