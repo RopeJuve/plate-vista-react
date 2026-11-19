@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { delay, http, HttpResponse } from "msw";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -87,6 +87,15 @@ const openKasseAs = (role: string, path = "/admin/kasse") => {
 };
 
 const section = async () => within(await screen.findByRole("region", { name: "Online payments" }));
+
+/** What the browser fires when it shows the page; `persisted` is true when it came from the back/forward cache. */
+const firePageShow = (persisted: boolean) => {
+  const event = new Event("pageshow");
+  Object.defineProperty(event, "persisted", { value: persisted });
+  act(() => {
+    window.dispatchEvent(event);
+  });
+};
 
 describe("Kasse online payments", () => {
   it("explains online payments and offers setup when no Payout Account is connected", async () => {
@@ -257,5 +266,75 @@ describe("Kasse online payments", () => {
 
     expect(await online.findByText("Online payments aren't available on this server yet.")).toBeInTheDocument();
     expect(online.queryByRole("button")).not.toBeInTheDocument();
+  });
+
+  it("enables the setup button again and re-reads the status after Back from Stripe", async () => {
+    mockPayoutAccountResponse(200, payoutAccounts.notConnected);
+    recordOnboarding();
+    const methods = recordPayoutRequests();
+    const user = openKasseAs("owner");
+    const online = await section();
+
+    await user.click(await online.findByRole("button", { name: "Set up online payments" }));
+    await waitFor(() => expect(assign).toHaveBeenCalledWith(STRIPE_URL));
+    expect(online.getByRole("button", { name: "Opening Stripe…" })).toBeDisabled();
+
+    mockPayoutAccountResponse(200, payoutAccounts.onboardingUnfinished);
+    firePageShow(true);
+
+    expect(await online.findByRole("button", { name: "Continue setup" })).toBeEnabled();
+    expect(methods).toEqual(["GET", "POST", "GET"]);
+  });
+
+  it("changes nothing on a pageshow that is not from the back/forward cache", async () => {
+    mockPayoutAccountResponse(200, payoutAccounts.notConnected);
+    recordOnboarding();
+    const methods = recordPayoutRequests();
+    const user = openKasseAs("owner");
+    const online = await section();
+
+    await user.click(await online.findByRole("button", { name: "Set up online payments" }));
+    await waitFor(() => expect(assign).toHaveBeenCalledWith(STRIPE_URL));
+
+    firePageShow(false);
+
+    expect(online.getByRole("button", { name: "Opening Stripe…" })).toBeDisabled();
+    expect(methods).toEqual(["GET", "POST"]);
+  });
+
+  it("says guests can't pay online when the switch is off, and not when it is on", async () => {
+    mockPayoutAccountResponse(200, payoutAccounts.readySwitchedOff);
+    const user = openKasseAs("owner");
+    const online = await section();
+    const toggle = await online.findByRole("switch", { name: "Let guests pay online" });
+
+    expect(online.getByText("Online payments are ready")).toBeInTheDocument();
+    expect(online.getByText("Guests can't pay online right now.")).toBeInTheDocument();
+
+    await user.click(toggle);
+
+    expect(toggle).toBeChecked();
+    expect(online.queryByText("Guests can't pay online right now.")).not.toBeInTheDocument();
+  });
+
+  it("names the switch by its text, without a label wrapper", async () => {
+    openKasseAs("owner");
+    const online = await section();
+
+    const toggle = await online.findByRole("switch", { name: "Let guests pay online" });
+
+    expect(toggle).not.toHaveAttribute("aria-label");
+    expect(toggle.closest("label")).toBeNull();
+  });
+
+  it("switches when the owner taps the text beside the switch", async () => {
+    server.use(http.patch(apiPaths.payoutAccount, () => HttpResponse.json(payoutAccounts.readySwitchedOff)));
+    const user = openKasseAs("owner");
+    const online = await section();
+    const toggle = await online.findByRole("switch", { name: "Let guests pay online" });
+
+    await user.click(online.getByText("Let guests pay online"));
+
+    expect(toggle).not.toBeChecked();
   });
 });

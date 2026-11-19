@@ -47,6 +47,20 @@ export const usePayoutAccount = () => {
     };
   }, [load]);
 
+  // Back from Stripe can restore this page from the back/forward cache with setup still "starting".
+  useEffect(() => {
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (!event.persisted) {
+        return;
+      }
+      starts.current = false;
+      setStarting(false);
+      void load();
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, [load]);
+
   /** Asks the API for a Stripe onboarding link and sends the browser there. */
   const startSetup = useCallback(async () => {
     if (starts.current) {
