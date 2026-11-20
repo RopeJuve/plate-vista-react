@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Search, X } from "lucide-react";
 import { useStateContext } from "../../contexts/ContextProvider";
 import TableIcon from "./TableIcon";
@@ -9,6 +10,7 @@ const NavBarCustomer = ({
   joinCode,
   onShowCode,
   profile,
+  action,
 }: {
   tableNum?: number;
   /** Shown as a small chip; tapping it brings the big code back. */
@@ -16,6 +18,8 @@ const NavBarCustomer = ({
   onShowCode?: () => void;
   /** The restaurant's logo or name; Plate Vista's wordmark when it cannot be loaded. */
   profile?: PublicProfileState;
+  /** A button for the table, such as calling a waiter. */
+  action?: ReactNode;
 }) => {
   const { search, setSearch } = useStateContext();
 
@@ -26,6 +30,7 @@ const NavBarCustomer = ({
           <RestaurantLogo state={profile} />
         </div>
         <div className="flex items-center gap-2">
+          {action}
           {joinCode && (
             <button
               type="button"

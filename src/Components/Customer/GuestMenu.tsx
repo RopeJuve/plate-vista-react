@@ -7,6 +7,7 @@ import { useMenu } from "../../features/guest-ordering/MenuProvider";
 import { visibleMenuItems } from "../../features/guest-ordering/menu";
 import GuestFooter from "../../features/restaurant-profile/GuestFooter";
 import type { PublicProfileState } from "../../features/restaurant-profile/hooks/usePublicProfile";
+import CallWaiterButton from "./CallWaiterButton";
 import Cart from "./Cart";
 import CategoriesCustomer from "./CategoriesCustomer";
 import MenuItemsList from "./MenuItemsList";
@@ -48,6 +49,7 @@ const GuestMenu = ({
           tableNum={session?.tableNumber}
           joinCode={showCode ? undefined : session?.joinCode}
           onShowCode={() => setShowCode(true)}
+          action={session?.sessionId ? <CallWaiterButton sessionId={session.sessionId} /> : undefined}
         />
         {paid && <PaidBillBanner paid={paid} />}
         {frozen && !paid && <FrozenBillBanner />}

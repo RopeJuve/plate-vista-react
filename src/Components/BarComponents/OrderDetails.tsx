@@ -9,6 +9,7 @@ import { useOrderAmendment } from "../../features/order-amendment/hooks/useOrder
 import { isPayingOnline, sessionPayment, tableCheck } from "../../features/staff-board/boardState";
 import { canCloseUnpaid } from "../../features/staff-board/closeTable";
 import { useCloseTable } from "../../features/staff-board/hooks/useCloseTable";
+import { useCloseWaiterCallOnOpen } from "../../features/staff-board/hooks/useCloseWaiterCallOnOpen";
 import { useOrderActions } from "../../features/staff-board/hooks/useOrderActions";
 import { useStaffBoard } from "../../features/staff-board/StaffBoardProvider";
 import { isOwnerOrAdmin } from "../../shared/auth/roles";
@@ -43,6 +44,7 @@ const OrderDetails = () => {
   });
   const amendment = useOrderAmendment(updateOrder);
   const [sheetOpen, setSheetOpen] = useState(false);
+  useCloseWaiterCallOnOpen(tableId);
 
   const { table, sessionId, joinCode, orders, totalCents } = useMemo(() => tableCheck(state, tableId), [state, tableId]);
   const payment = sessionPayment(state, sessionId);

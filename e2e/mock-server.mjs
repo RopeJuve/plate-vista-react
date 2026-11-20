@@ -822,6 +822,38 @@ server.on("upgrade", (req, socket, head) => {
         ws.send(JSON.stringify({ type: "ack", requestId: message.requestId, ok: true, data: { order } }));
         return;
       }
+      // Like the API (protocol 2.6): a guest calls, staff close the call; both go to every socket.
+      if (message.type === "waiter.call" || message.type === "waiter.dismiss") {
+        const guest = Boolean(identity.sessionId);
+        if (guest !== (message.type === "waiter.call")) {
+          ws.send(
+            JSON.stringify({
+              type: "ack",
+              requestId: message.requestId,
+              ok: false,
+              error: { code: "FORBIDDEN", message: "Forbidden" },
+            })
+          );
+          return;
+        }
+        if (message.type === "waiter.call") {
+          const session = sessions.get(identity.sessionId);
+          const table = session && tables.find((entry) => entry._id === session.tableId);
+          const call = {
+            sessionId: identity.sessionId,
+            tableId: session?.tableId || "",
+            tableNumber: table?.tableNumber ?? null,
+            calledAt: new Date().toISOString(),
+          };
+          ws.send(JSON.stringify({ type: "ack", requestId: message.requestId, ok: true, data: { call } }));
+          emit("waiter.called", call);
+          return;
+        }
+        const sessionId = message.payload?.sessionId;
+        ws.send(JSON.stringify({ type: "ack", requestId: message.requestId, ok: true, data: { sessionId } }));
+        emit("waiter.dismissed", { sessionId });
+        return;
+      }
       if (message.type === "order.status") {
         const order = orders.get(message.payload?.orderId);
         if (!order) {

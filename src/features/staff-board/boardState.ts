@@ -8,6 +8,7 @@ import type {
   StaffBoard,
   Station,
   Ticket,
+  WaiterCall,
 } from "../../shared/realtime/protocol";
 import { sumCents } from "../../shared/money/formatCents";
 import { ticketsOf, withStatusChange } from "../../shared/realtime/tickets";
@@ -27,6 +28,11 @@ export type BoardState = {
   recentlyClosed: ClosedSession[];
   /** Open sessions whose bill was paid, by session id. */
   paymentsBySession: Record<string, SessionPayment>;
+  /**
+   * Open waiter calls by session id. Only the socket knows them (the server
+   * keeps no record), so they outlive a snapshot reload but not a lost connection.
+   */
+  waiterCallsBySession: Record<string, WaiterCall>;
   ready: boolean;
 };
 
@@ -40,6 +46,7 @@ export const emptyBoard = (): BoardState => ({
   tablesById: {},
   recentlyClosed: [],
   paymentsBySession: {},
+  waiterCallsBySession: {},
   ready: false,
 });
 
@@ -201,6 +208,8 @@ export const applyServerEvent = (state: BoardState, event: ServerEvent): BoardSt
       delete sessionIdByTable[tableId];
       const paymentsBySession = { ...state.paymentsBySession };
       delete paymentsBySession[sessionId];
+      const waiterCallsBySession = { ...state.waiterCallsBySession };
+      delete waiterCallsBySession[sessionId];
       const table = state.tablesById[tableId];
       return {
         ...state,
@@ -210,6 +219,7 @@ export const applyServerEvent = (state: BoardState, event: ServerEvent): BoardSt
         sessionIdByTable,
         recentlyClosed,
         paymentsBySession,
+        waiterCallsBySession,
         tablesById: table
           ? { ...state.tablesById, [tableId]: { ...table, status: "vacant" } }
           : state.tablesById,
@@ -222,7 +232,9 @@ export const applyServerEvent = (state: BoardState, event: ServerEvent): BoardSt
 
 export type BoardAction =
   | { type: "hydrate"; board: StaffBoard; events: ServerEvent[] }
-  | { type: "event"; event: ServerEvent };
+  | { type: "event"; event: ServerEvent }
+  /** The socket dropped: the server sends the calls still open again once it reconnects. */
+  | { type: "disconnected" };
 
 /**
  * Payments after a reload: a session the snapshot reports a `payment` for (or
@@ -247,14 +259,61 @@ const withPayments = (next: BoardState, known: BoardState, board: StaffBoard): B
   return { ...next, paymentsBySession };
 };
 
+/** Calls heard before or during a reload stay, for tables the snapshot still shows open. */
+const withWaiterCalls = (next: BoardState, known: BoardState): BoardState => {
+  const open = new Set(Object.values(next.sessionIdByTable));
+  return {
+    ...next,
+    waiterCallsBySession: Object.fromEntries(
+      Object.entries(known.waiterCallsBySession).filter(([sessionId]) => open.has(sessionId))
+    ),
+  };
+};
+
+/**
+ * A waiter call is heard whether or not the snapshot has loaded yet: the server
+ * replays open calls the moment the socket connects, often before the snapshot.
+ */
+const applyWaiterEvent = (state: BoardState, event: ServerEvent): BoardState | null => {
+  if (event.event === "waiter.called") {
+    return {
+      ...state,
+      waiterCallsBySession: { ...state.waiterCallsBySession, [event.data.sessionId]: event.data },
+    };
+  }
+  if (event.event === "waiter.dismissed") {
+    if (!state.waiterCallsBySession[event.data.sessionId]) {
+      return state;
+    }
+    const waiterCallsBySession = { ...state.waiterCallsBySession };
+    delete waiterCallsBySession[event.data.sessionId];
+    return { ...state, waiterCallsBySession };
+  }
+  return null;
+};
+
 export const boardReducer = (state: BoardState, action: BoardAction): BoardState => {
   if (action.type === "hydrate") {
-    return action.events.reduce(applyServerEvent, withPayments(applySnapshot(action.board), state, action.board));
+    const next = withWaiterCalls(withPayments(applySnapshot(action.board), state, action.board), state);
+    return action.events.reduce((current, event) => applyWaiterEvent(current, event) ?? applyServerEvent(current, event), next);
+  }
+  if (action.type === "disconnected") {
+    return Object.keys(state.waiterCallsBySession).length ? { ...state, waiterCallsBySession: {} } : state;
+  }
+  const waiter = applyWaiterEvent(state, action.event);
+  if (waiter) {
+    return waiter;
   }
   if (!state.ready) {
     return state;
   }
   return applyServerEvent(state, action.event);
+};
+
+/** The open waiter call at a table, if its guests asked for someone. */
+export const waiterCallAt = (state: BoardState, tableId: string): WaiterCall | undefined => {
+  const sessionId = state.sessionIdByTable[tableId];
+  return sessionId ? state.waiterCallsBySession[sessionId] : undefined;
 };
 
 /** The payment the board heard for a session, if its bill was paid. */

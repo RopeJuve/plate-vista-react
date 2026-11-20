@@ -23,7 +23,7 @@ const RestaurantLogo = ({ state }: { state?: PublicProfileState }) => {
       />
     );
   }
-  return <span className="truncate text-lg font-extrabold leading-none tracking-[-0.01em] text-ink">{name}</span>;
+  return <span className="block truncate text-lg font-extrabold leading-none tracking-[-0.01em] text-ink">{name}</span>;
 };
 
 export default RestaurantLogo;
