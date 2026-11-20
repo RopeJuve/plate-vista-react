@@ -224,7 +224,21 @@ export interface OrderCancelPayload {
   station?: Station;
 }
 
-export type ClientMessageType = "order.create" | "order.update" | "order.status" | "order.cancel";
+/** 2.6: a guest asks for a waiter at their own table. */
+export type WaiterCallPayload = Record<string, never>;
+
+/** 2.6: staff close a table's waiter call. */
+export interface WaiterDismissPayload {
+  sessionId: string;
+}
+
+export type ClientMessageType =
+  | "order.create"
+  | "order.update"
+  | "order.status"
+  | "order.cancel"
+  | "waiter.call"
+  | "waiter.dismiss";
 
 export type ClientPayloadOf<T extends ClientMessageType> = T extends "order.create"
   ? OrderCreatePayload
@@ -234,6 +248,10 @@ export type ClientPayloadOf<T extends ClientMessageType> = T extends "order.crea
   ? OrderStatusPayload
   : T extends "order.cancel"
   ? OrderCancelPayload
+  : T extends "waiter.call"
+  ? WaiterCallPayload
+  : T extends "waiter.dismiss"
+  ? WaiterDismissPayload
   : never;
 
 export interface OutboundMessage<T extends ClientMessageType = ClientMessageType> {
@@ -401,6 +419,29 @@ export interface OnlinePaymentRefundedEvent {
   data: { refund: OnlinePaymentRefund };
 }
 
+/** An open waiter call at a table (2.6). */
+export interface WaiterCall {
+  sessionId: string;
+  tableId: string;
+  tableNumber: number | null;
+  calledAt: string;
+}
+
+/**
+ * Staff and session rooms (2.6): a guest called a waiter. Also sent to a socket
+ * right after it connects, for every call still open.
+ */
+export interface WaiterCalledEvent {
+  event: "waiter.called";
+  data: WaiterCall;
+}
+
+/** Staff and session rooms (2.6): staff closed the table's waiter call. */
+export interface WaiterDismissedEvent {
+  event: "waiter.dismissed";
+  data: { sessionId: string };
+}
+
 export type ServerEvent =
   | SessionOpenedEvent
   | OrderCreatedEvent
@@ -413,7 +454,9 @@ export type ServerEvent =
   | PaymentSignFailedEvent
   | BillFrozenEvent
   | BillUnfrozenEvent
-  | OnlinePaymentRefundedEvent;
+  | OnlinePaymentRefundedEvent
+  | WaiterCalledEvent
+  | WaiterDismissedEvent;
 
 export type ServerEventName = ServerEvent["event"];
 

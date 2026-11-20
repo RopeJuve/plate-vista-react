@@ -11,6 +11,7 @@ import {
 import api from "../../services/api";
 import { useRealtime } from "../../shared/realtime/RealtimeProvider";
 import type { ServerEvent, StaffBoard } from "../../shared/realtime/protocol";
+import { notify } from "../../utils/notify";
 import { boardReducer, emptyBoard, type BoardState } from "./boardState";
 import { useSignFailedAlert } from "./hooks/useSignFailedAlert";
 
@@ -19,6 +20,8 @@ type StaffBoardValue = {
   reload: () => Promise<void>;
   /** True while the snapshot is missing, so live events cannot be applied yet. */
   snapshotFailed: boolean;
+  /** Answers a table's waiter call; the mark goes when the server confirms it to every screen. */
+  dismissWaiterCall: (sessionId: string) => void;
 };
 
 const StaffBoardContext = createContext<StaffBoardValue | undefined>(undefined);
@@ -45,8 +48,10 @@ const asBoard = (data: unknown): StaffBoard => {
 };
 
 export const StaffBoardProvider = ({ children }: { children?: ReactNode }) => {
-  const { status, subscribe } = useRealtime();
+  const { status, subscribe, request } = useRealtime();
   const [state, setState] = useState<BoardState>(emptyBoard);
+  const waiterCallsRef = useRef(state.waiterCallsBySession);
+  waiterCallsRef.current = state.waiterCallsBySession;
   const [failedAttempts, setFailedAttempts] = useState(0);
   const hydratingRef = useRef(false);
   const queueRef = useRef<ServerEvent[]>([]);
@@ -87,6 +92,14 @@ export const StaffBoardProvider = ({ children }: { children?: ReactNode }) => {
       subscribe("payment.signed", (data) => enqueue({ event: "payment.signed", data })),
       subscribe("bill.frozen", (data) => enqueue({ event: "bill.frozen", data })),
       subscribe("bill.unfrozen", (data) => enqueue({ event: "bill.unfrozen", data })),
+      subscribe("waiter.called", (data) => {
+        // The server repeats open calls on every reconnect; only a new one is news.
+        if (!waiterCallsRef.current[data.sessionId]) {
+          notify(data.tableNumber ? `Table ${data.tableNumber} is calling a waiter` : "A table is calling a waiter", "info");
+        }
+        enqueue({ event: "waiter.called", data });
+      }),
+      subscribe("waiter.dismissed", (data) => enqueue({ event: "waiter.dismissed", data })),
     ];
     return () => offs.forEach((off) => off());
   }, [enqueue, subscribe]);
@@ -123,10 +136,21 @@ export const StaffBoardProvider = ({ children }: { children?: ReactNode }) => {
 
   useEffect(() => {
     if (status !== "open") {
+      // Waiter calls live only on the socket: the server says the open ones again on reconnect.
+      setState((current) => boardReducer(current, { type: "disconnected" }));
       return;
     }
     void reload();
   }, [reload, status]);
+
+  const dismissWaiterCall = useCallback(
+    (sessionId: string) => {
+      request("waiter.dismiss", { sessionId }).catch(() =>
+        notify("Couldn't close the waiter call. Try again.", "error")
+      );
+    },
+    [request]
+  );
 
   useEffect(() => {
     if (failedAttempts === 0 || status !== "open") {
@@ -140,8 +164,8 @@ export const StaffBoardProvider = ({ children }: { children?: ReactNode }) => {
   }, [failedAttempts, reload, status]);
 
   const value = useMemo(
-    () => ({ state, reload, snapshotFailed: failedAttempts > 0 }),
-    [state, reload, failedAttempts]
+    () => ({ state, reload, snapshotFailed: failedAttempts > 0, dismissWaiterCall }),
+    [state, reload, failedAttempts, dismissWaiterCall]
   );
 
   return <StaffBoardContext.Provider value={value}>{children}</StaffBoardContext.Provider>;

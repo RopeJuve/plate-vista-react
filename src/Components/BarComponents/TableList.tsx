@@ -1,11 +1,11 @@
 import { useMemo } from "react";
 import Table from "./Table";
 import RecentlyClosed from "./RecentlyClosed";
-import { isPayingOnline, sessionPayment, summariseTables } from "../../features/staff-board/boardState";
+import { isPayingOnline, sessionPayment, summariseTables, waiterCallAt } from "../../features/staff-board/boardState";
 import { useStaffBoard } from "../../features/staff-board/StaffBoardProvider";
 
 const TableList = () => {
-  const { state } = useStaffBoard();
+  const { state, dismissWaiterCall } = useStaffBoard();
   const tables = Object.values(state.tablesById).sort((a, b) => a.tableNumber - b.tableNumber);
 
   const summaries = useMemo(() => summariseTables(state), [state]);
@@ -53,6 +53,12 @@ const TableList = () => {
                 summary={summaries[table._id]}
                 paid={Boolean(sessionPayment(state, state.sessionIdByTable[table._id]))}
                 payingOnline={isPayingOnline(state, state.sessionIdByTable[table._id])}
+                waiterCalled={Boolean(waiterCallAt(state, table._id))}
+                onCloseWaiterCall={
+                  waiterCallAt(state, table._id)
+                    ? () => dismissWaiterCall(state.sessionIdByTable[table._id])
+                    : undefined
+                }
               />
             </li>
           ))}

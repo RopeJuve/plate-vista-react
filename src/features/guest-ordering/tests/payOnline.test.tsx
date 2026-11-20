@@ -132,6 +132,37 @@ describe("guest paying online", () => {
     expect(screen.getByText(/ask the staff/i)).toBeInTheDocument();
   });
 
+  it("shows the pay online button once the first order lands on an empty bill, without a reload", async () => {
+    mockBillResponse(200, { ...unpaidBill, orders: [], totalCents: 0, canPayOnline: false });
+    const { realtime, user } = renderGuest();
+    await openBill(user);
+    await screen.findByText("No orders yet");
+    expect(screen.queryByRole("button", { name: /Pay online/ })).not.toBeInTheDocument();
+    mockBillResponse(200, unpaidBill);
+
+    realtime.emit("order.created", { order: unpaidBill.orders[0] });
+
+    expect(await screen.findByRole("button", { name: PAY_ONLINE })).toBeEnabled();
+  });
+
+  it("pays the new total after the bill changes, not the one it had when the page opened", async () => {
+    const { realtime, user } = renderGuest();
+    await openBill(user);
+    await screen.findByRole("button", { name: PAY_ONLINE });
+    const [order] = unpaidBill.orders;
+    mockBillResponse(200, { ...unpaidBill, totalCents: 1200 });
+
+    realtime.emit("order.statusChanged", {
+      orderId: order._id,
+      status: order.status,
+      rev: order.rev + 1,
+      tickets: order.tickets,
+      totalCents: 1200,
+    });
+
+    expect(await screen.findByRole("button", { name: `Pay online ${formatCents(1200)}` })).toBeEnabled();
+  });
+
   it("shows no pay online button when the bill can't be paid online, and still the staff path", async () => {
     mockBillResponse(200, { ...unpaidBill, canPayOnline: false });
     const { user } = renderGuest();

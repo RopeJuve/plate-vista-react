@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   ReactNode,
 } from "react";
@@ -47,6 +48,8 @@ type GuestBillValue = {
   recheckBill: () => void;
 };
 
+const BILL_RECHECK_DELAY_MS = 300;
+
 const GuestBillContext = createContext<GuestBillValue | undefined>(undefined);
 
 export const GuestBillProvider = ({
@@ -69,6 +72,16 @@ export const GuestBillProvider = ({
 
   const recheckBill = useCallback(() => setBillChecks((count) => count + 1), []);
 
+  // Whether and how much the guest can pay online is the server's call, so a
+  // change to the table's orders reads the bill again. A burst of events (a
+  // whole round served at once) makes one read, not one per event.
+  const billChangeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const recheckBillSoon = useCallback(() => {
+    clearTimeout(billChangeTimer.current);
+    billChangeTimer.current = setTimeout(recheckBill, BILL_RECHECK_DELAY_MS);
+  }, [recheckBill]);
+  useEffect(() => () => clearTimeout(billChangeTimer.current), []);
+
   useEffect(() => {
     setState(loadBill(sessionId));
   }, [sessionId]);
@@ -80,11 +93,19 @@ export const GuestBillProvider = ({
   useEffect(() => {
     const offCreated = subscribe("order.created", (data) => {
       setState((current) => applyBillEvent(current, { event: "order.created", data }, sessionId));
+      if (data.order.sessionId === sessionId) {
+        recheckBillSoon();
+      }
     });
     const offUpdated = subscribe("order.updated", (data) => {
       setState((current) => applyBillEvent(current, { event: "order.updated", data }, sessionId));
+      if (data.order.sessionId === sessionId) {
+        recheckBillSoon();
+      }
     });
     const offStatus = subscribe("order.statusChanged", (data) => {
+      // A guest's socket only hears its own table's orders; a cancel changes the total.
+      recheckBillSoon();
       setState((current) => {
         const previous = current.ordersById[data.orderId];
         const next = applyBillEvent(current, { event: "order.statusChanged", data }, sessionId);
@@ -124,7 +145,7 @@ export const GuestBillProvider = ({
       offFrozen();
       offUnfrozen();
     };
-  }, [navigate, recheckBill, sessionId, subscribe]);
+  }, [navigate, recheckBill, recheckBillSoon, sessionId, subscribe]);
 
   const rememberOrder = useCallback((order: Order) => {
     setState((current) => upsertBillOrder(current, order));

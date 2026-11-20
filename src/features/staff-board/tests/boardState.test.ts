@@ -9,6 +9,7 @@ import {
   sessionPayment,
   summariseTables,
   tableCheck,
+  waiterCallAt,
 } from "../boardState";
 import type { Order, OrderItem, StaffBoard, Ticket } from "../../../shared/realtime/protocol";
 
@@ -416,5 +417,65 @@ describe("online payment events (protocol 2.5)", () => {
   it("stops paying online once the bill is paid", () => {
     const paying = applyServerEvent(loaded(), frozen);
     expect(isPayingOnline(applyServerEvent(paying, paid), "session-1")).toBe(false);
+  });
+});
+
+describe("waiter calls on the board (protocol 2.6)", () => {
+  const called = {
+    event: "waiter.called" as const,
+    data: { sessionId: "session-1", tableId: "table-1", tableNumber: 4, calledAt: "2026-01-01T00:10:00.000Z" },
+  };
+
+  it("marks the table whose guests called, until staff close the call", () => {
+    let state = boardReducer(emptyBoard(), { type: "hydrate", board: board(1), events: [] });
+
+    state = boardReducer(state, { type: "event", event: called });
+    expect(waiterCallAt(state, "table-1")?.calledAt).toBe("2026-01-01T00:10:00.000Z");
+
+    state = boardReducer(state, { type: "event", event: { event: "waiter.dismissed", data: { sessionId: "session-1" } } });
+    expect(waiterCallAt(state, "table-1")).toBeUndefined();
+  });
+
+  it("keeps a call heard before the board snapshot loaded, for a table the snapshot shows open", () => {
+    let state = boardReducer(emptyBoard(), { type: "event", event: called });
+
+    state = boardReducer(state, { type: "hydrate", board: board(1), events: [] });
+
+    expect(waiterCallAt(state, "table-1")).toBeDefined();
+  });
+
+  it("keeps a call that arrived while the snapshot was loading", () => {
+    const state = boardReducer(emptyBoard(), { type: "hydrate", board: board(1), events: [called] });
+
+    expect(waiterCallAt(state, "table-1")).toBeDefined();
+  });
+
+  it("drops a call on reload when the snapshot no longer has its table open", () => {
+    let state = boardReducer(emptyBoard(), { type: "event", event: called });
+
+    state = boardReducer(state, { type: "hydrate", board: { ...board(1), sessions: [], orders: [] }, events: [] });
+
+    expect(waiterCallAt(state, "table-1")).toBeUndefined();
+  });
+
+  it("ends the call when the table is closed", () => {
+    let state = boardReducer(emptyBoard(), { type: "hydrate", board: board(1), events: [] });
+    state = boardReducer(state, { type: "event", event: called });
+
+    state = boardReducer(state, {
+      type: "event",
+      event: { event: "session.closed", data: { sessionId: "session-1", tableId: "table-1" } },
+    });
+
+    expect(waiterCallAt(state, "table-1")).toBeUndefined();
+  });
+
+  it("forgets every call when the connection drops, since the server says them again on reconnect", () => {
+    let state = boardReducer(emptyBoard(), { type: "hydrate", board: board(1), events: [] });
+    state = boardReducer(state, { type: "event", event: called });
+
+    state = boardReducer(state, { type: "disconnected" });
+
+    expect(waiterCallAt(state, "table-1")).toBeUndefined();
   });
 });
