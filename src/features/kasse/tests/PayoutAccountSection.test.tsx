@@ -86,7 +86,10 @@ const openKasseAs = (role: string, path = "/admin/kasse") => {
   return user;
 };
 
-const section = async () => within(await screen.findByRole("region", { name: "Online payments" }));
+// The first test in the file renders the whole app and loads the lazy Kasse page
+// in a cold worker; on CI that alone can take about a second.
+const section = async () =>
+  within(await screen.findByRole("region", { name: "Online payments" }, { timeout: 5000 }));
 
 /** What the browser fires when it shows the page; `persisted` is true when it came from the back/forward cache. */
 const firePageShow = (persisted: boolean) => {
