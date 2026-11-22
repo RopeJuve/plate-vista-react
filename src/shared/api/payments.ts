@@ -198,6 +198,22 @@ export interface ReceiptSignature {
   qrCodeData?: string;
 }
 
+/**
+ * How the guest paid online, as Stripe saw it; kept when the payment was recorded.
+ * `type` is Stripe's payment method type (`card`, `paypal`, `klarna`, ...); the card fields only for cards.
+ */
+export interface ReceiptPaymentDetails {
+  type: string;
+  brand?: string;
+  last4?: string;
+  funding?: string;
+  wallet?: string;
+  authorizationCode?: string;
+  /** The Stripe PaymentIntent id. */
+  transactionId?: string;
+  authorizedAt?: string;
+}
+
 /** `GET /receipts/:token` (public) → Receipt | 404. */
 export interface Receipt {
   restaurant: {
@@ -207,10 +223,17 @@ export interface Receipt {
     taxNumber?: string;
     vatId?: string;
   };
+  /** The TSE transaction number (ADR-0007); null until the payment is signed. */
+  receiptNumber: number | null;
+  tableNumber?: number;
+  /** From the first order that was not wholly cancelled to the payment. */
+  servicePeriod: { start: string; end: string };
   lines: ReceiptLine[];
   totalsByVat: ReceiptVatTotal[];
   totalCents: number;
   method: PaymentMethod;
+  /** ONLINE only, and only when Stripe could be read when the payment was recorded. */
+  paymentDetails?: ReceiptPaymentDetails;
   paidAt: string;
   signature: ReceiptSignature;
 }

@@ -1,10 +1,12 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
 import { Route, Routes } from "react-router-dom";
 import {
   FAILED_RECEIPT_TOKEN,
   MISSING_RECEIPT_TOKEN,
+  ONLINE_RECEIPT_TOKEN,
+  PAYPAL_RECEIPT_TOKEN,
   PENDING_RECEIPT_TOKEN,
   SIGNED_RECEIPT_TOKEN,
   signedReceipt,
@@ -36,7 +38,7 @@ const shown = (cents: number) => formatCents(cents).replace(/\s/g, " ");
 const tseBlock = () => screen.queryByRole("region", { name: "TSE-Signatur" });
 
 describe("ReceiptPage", () => {
-  it("shows the restaurant, the time paid, the lines and the payment method", async () => {
+  it("shows the restaurant, the Beleg block, the lines and the payment method", async () => {
     renderReceipt(SIGNED_RECEIPT_TOKEN);
 
     expect(await screen.findByRole("heading", { name: "Plate Vista" })).toBeInTheDocument();
@@ -46,15 +48,47 @@ describe("ReceiptPage", () => {
     expect(screen.getByText(`${zip} ${city}`)).toBeInTheDocument();
     expect(screen.getByText(`Steuernummer: ${signedReceipt.restaurant.taxNumber}`)).toBeInTheDocument();
     expect(screen.getByText(`USt-IdNr.: ${signedReceipt.restaurant.vatId}`)).toBeInTheDocument();
-    const header = screen.getByRole("heading", { name: "Plate Vista" }).parentElement!;
-    expect(within(header).getByText("07.11.2026, 20:30:00")).toBeInTheDocument();
-
-    const lines = within(screen.getByRole("list", { name: "Positionen" })).getAllByRole("listitem");
-    expect(lines[0]).toHaveTextContent(`2 × Tomato soup${shown(1300)}`);
-    expect(lines[1]).toHaveTextContent(`1 × House red${shown(750)}`);
 
     expect(screen.getByText("Summe").closest("div")).toHaveTextContent(shown(2050));
     expect(screen.getByText("Zahlungsart").closest("div")).toHaveTextContent("Karte");
+    expect(screen.getByText("Danke für Ihren Besuch!")).toBeInTheDocument();
+  });
+
+  it("shows the Receipt Number, date, table and Service Period", async () => {
+    renderReceipt(SIGNED_RECEIPT_TOKEN);
+
+    const meta = within(await screen.findByLabelText("Belegdaten"));
+    const value = (label: string) => meta.getByText(label).nextElementSibling;
+    expect(screen.getByRole("heading", { name: "Beleg" })).toBeInTheDocument();
+    expect(value("Beleg-Nr")).toHaveTextContent("1042");
+    expect(value("Datum")).toHaveTextContent("07.11.2026, 20:30:00");
+    expect(value("Tisch")).toHaveTextContent("12");
+    expect(value("Leistungszeitraum")).toHaveTextContent("07.11.2026, 19:05:12 – 07.11.2026, 20:30:00");
+  });
+
+  it("says the Receipt Number follows while the payment is not signed", async () => {
+    renderReceipt(PENDING_RECEIPT_TOKEN);
+
+    const meta = within(await screen.findByLabelText("Belegdaten"));
+    expect(meta.getByText("Beleg-Nr").nextElementSibling).toHaveTextContent("wird nachgereicht");
+  });
+
+  it("lists the positions as a numbered table with quantity, unit price, total and VAT letter", async () => {
+    renderReceipt(SIGNED_RECEIPT_TOKEN);
+
+    const table = await screen.findByRole("table", { name: "Positionen" });
+    const rows = within(table).getAllByRole("row");
+    expect(within(rows[0]).getAllByRole("columnheader").map((cell) => cell.textContent)).toEqual([
+      "Nr",
+      "Bezeichnung",
+      "Menge",
+      "Preis",
+      "Gesamt",
+      "St",
+    ]);
+    const cells = (row: HTMLElement) => within(row).getAllByRole("cell").map((cell) => cell.textContent);
+    expect(cells(rows[1])).toEqual(["1", "Tomato soup", "2", formatCents(650), formatCents(1300), "B"]);
+    expect(cells(rows[2])).toEqual(["2", "House red", "1", formatCents(750), formatCents(750), "A"]);
   });
 
   it("prints one VAT row per rate from totalsByVat", async () => {
@@ -64,13 +98,13 @@ describe("ReceiptPage", () => {
     const rows = within(table).getAllByRole("row").slice(1);
     expect(rows).toHaveLength(signedReceipt.totalsByVat.length);
     expect(within(rows[0]).getAllByRole("cell").map((cell) => cell.textContent)).toEqual([
-      "7 %",
+      "B 7 %",
       formatCents(1215),
       formatCents(85),
       formatCents(1300),
     ]);
     expect(within(rows[1]).getAllByRole("cell").map((cell) => cell.textContent)).toEqual([
-      "19 %",
+      "A 19 %",
       formatCents(630),
       formatCents(120),
       formatCents(750),
@@ -116,6 +150,63 @@ describe("ReceiptPage", () => {
     expect(await screen.findByText("TSE-Signatur wird nachgereicht")).toBeInTheDocument();
     expect(screen.getByText("Summe").closest("div")).toHaveTextContent(shown(2050));
     expect(tseBlock()).not.toBeInTheDocument();
+  });
+
+  it("shows how an online card payment was made, as Stripe saw it", async () => {
+    renderReceipt(ONLINE_RECEIPT_TOKEN);
+
+    const section = within(await screen.findByRole("region", { name: "Zahlungsmittel" }));
+    expect(section.getByText("Zahlungsart").closest("div")).toHaveTextContent("Online");
+    expect(section.getByText("VISA")).toBeInTheDocument();
+    expect(section.getByText("•••• 4242")).toBeInTheDocument();
+    expect(section.getByText("via Apple Pay")).toBeInTheDocument();
+    const value = (label: string) => section.getByText(label).nextElementSibling;
+    expect(value("Kartentyp")).toHaveTextContent("Debit");
+    expect(value("Zeit")).toHaveTextContent("07.11.2026, 20:29:58");
+    expect(value("Transaktions-ID")).toHaveTextContent("pi_3QxExample0001");
+    expect(value("Autorisierungscode")).toHaveTextContent("831000");
+  });
+
+  it("shows a payment that was not by card by its name, without card fields", async () => {
+    renderReceipt(PAYPAL_RECEIPT_TOKEN);
+
+    const section = within(await screen.findByRole("region", { name: "Zahlungsmittel" }));
+    expect(section.getByText("PayPal")).toBeInTheDocument();
+    expect(section.getByText("Transaktions-ID").nextElementSibling).toHaveTextContent("pi_3QxExample0002");
+    expect(section.queryByText("Kartentyp")).not.toBeInTheDocument();
+    expect(section.queryByText("Autorisierungscode")).not.toBeInTheDocument();
+  });
+
+  it("shows only the method for a payment without details", async () => {
+    renderReceipt(SIGNED_RECEIPT_TOKEN);
+
+    const section = within(await screen.findByRole("region", { name: "Zahlungsmittel" }));
+    expect(section.queryByLabelText("Zahlungsdetails")).not.toBeInTheDocument();
+  });
+
+  it("folds the payment section away on screen but keeps it in print", async () => {
+    renderReceipt(ONLINE_RECEIPT_TOKEN);
+
+    const toggle = await screen.findByRole("button", { name: "Zahlungsmittel" });
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    const body = document.getElementById(toggle.getAttribute("aria-controls")!)!;
+    expect(body).toHaveClass("hidden", "print:block");
+  });
+
+  it("has a blank Hospitality Section, folded on screen until opened and always printed", async () => {
+    renderReceipt(SIGNED_RECEIPT_TOKEN);
+
+    const toggle = await screen.findByRole("button", { name: "Bewirtungsinformationen" });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    const body = document.getElementById(toggle.getAttribute("aria-controls")!)!;
+    expect(body).toHaveClass("hidden", "print:block");
+    fireEvent.click(toggle);
+    expect(body).not.toHaveClass("hidden");
+    for (const label of ["Bewirtete Personen", "Anlass der Bewirtung", "Ort, Datum", "Unterschrift"]) {
+      expect(within(body).getByText(label)).toBeInTheDocument();
+    }
   });
 
   it("says the receipt was not found on a 404", async () => {
