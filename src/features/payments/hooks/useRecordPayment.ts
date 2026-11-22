@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { PaymentMethod } from "../../../shared/api/payments";
+import type { CardReaderPayment, PaymentMethod } from "../../../shared/api/payments";
 import type { SessionBill } from "../../../shared/realtime/protocol";
 import { canRetryPayment, payProblem, reloadsBill, type PayProblem } from "../billPayment";
 import { fetchBill, payBill } from "../paymentsApi";
@@ -79,7 +79,12 @@ export const useRecordPayment = (sessionId: string, refreshKey?: unknown) => {
 
   const clearProblem = useCallback(() => setProblem(null), []);
 
-  return { bill, loading, loadFailed, reload: load, pending, problem, pay, clearProblem };
+  /** A card reader payment just started: show it until the bill is read again. */
+  const showCardReaderPayment = useCallback((cardReaderPayment: CardReaderPayment) => {
+    setBill((current) => (current ? { ...current, cardReaderPayment } : current));
+  }, []);
+
+  return { bill, loading, loadFailed, reload: load, pending, problem, pay, clearProblem, showCardReaderPayment };
 };
 
 export type RecordPayment = ReturnType<typeof useRecordPayment>;

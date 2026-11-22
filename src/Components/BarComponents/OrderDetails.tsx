@@ -6,7 +6,7 @@ import { useMenu } from "../../features/guest-ordering/MenuProvider";
 import { usePlaceOrder } from "../../features/guest-ordering/hooks/usePlaceOrder";
 import PayBillPanel from "../../features/payments/PayBillPanel";
 import { useOrderAmendment } from "../../features/order-amendment/hooks/useOrderAmendment";
-import { isPayingOnline, sessionPayment, tableCheck } from "../../features/staff-board/boardState";
+import { isBillFrozen, sessionPayment, tableCheck } from "../../features/staff-board/boardState";
 import { canCloseUnpaid } from "../../features/staff-board/closeTable";
 import { useCloseTable } from "../../features/staff-board/hooks/useCloseTable";
 import { useCloseWaiterCallOnOpen } from "../../features/staff-board/hooks/useCloseWaiterCallOnOpen";
@@ -48,9 +48,9 @@ const OrderDetails = () => {
 
   const { table, sessionId, joinCode, orders, totalCents } = useMemo(() => tableCheck(state, tableId), [state, tableId]);
   const payment = sessionPayment(state, sessionId);
-  // A payment, signature or online payment heard live reloads the bill, so the panel shows it as it is.
+  // A payment, signature, or online or card reader payment heard live reloads the bill, so the panel shows it as it is.
   const paymentKey = payment ? `${payment.paymentId}:${payment.signed}` : "";
-  const payingOnline = isPayingOnline(state, sessionId);
+  const frozen = isBillFrozen(state, sessionId);
   const closing = useCloseTable(sessionId, closeSession);
   const handleDialogChange = (dialog: "confirm" | "unpaid") => (open: boolean) =>
     closing.setDialog(open ? dialog : null);
@@ -94,7 +94,7 @@ const OrderDetails = () => {
           <PayBillPanel
             key={sessionId}
             sessionId={sessionId}
-            refreshKey={`${totalCents}:${closing.billReloads}:${paymentKey}:${payingOnline}`}
+            refreshKey={`${totalCents}:${closing.billReloads}:${paymentKey}:${frozen}`}
             canActivateTse={false}
             canUnfreeze={isOwnerOrAdmin(user)}
             onBillChange={closing.setBill}

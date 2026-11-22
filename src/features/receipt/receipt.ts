@@ -40,6 +40,8 @@ export const vatRateLetter = (rate: VatRate) => VAT_RATE_LETTERS[rate];
 const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   CASH: "Bar",
   CARD_TERMINAL: "Karte",
+  // Guests are not told whether the card was taken on a reader or a terminal.
+  CARD_READER: "Karte",
   ONLINE: "Online",
 };
 

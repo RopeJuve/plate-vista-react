@@ -4,6 +4,7 @@ import {
   applySnapshot,
   boardReducer,
   emptyBoard,
+  isPayingOnCardReader,
   isPayingOnline,
   listTickets,
   sessionPayment,
@@ -417,6 +418,51 @@ describe("online payment events (protocol 2.5)", () => {
   it("stops paying online once the bill is paid", () => {
     const paying = applyServerEvent(loaded(), frozen);
     expect(isPayingOnline(applyServerEvent(paying, paid), "session-1")).toBe(false);
+  });
+});
+
+describe("card reader payment events (protocol 2.7)", () => {
+  const loaded = () => applySnapshot(board(1));
+  const frozenOn = (kind: "ONLINE" | "CARD_READER") => ({
+    event: "bill.frozen" as const,
+    data: {
+      sessionId: "session-1",
+      expiresAt: "2026-11-22T19:05:00.000Z",
+      kind,
+      readerName: kind === "CARD_READER" ? "Bar" : null,
+      totalCents: 500,
+    },
+  });
+  const paid = {
+    event: "bill.paid" as const,
+    data: { sessionId: "session-1", paymentId: "payment-1", receiptToken: "receipt-1", method: "CARD_READER" as const, totalCents: 500 },
+  };
+
+  it("marks the bill paying on a card reader, not online, on bill.frozen with the card reader kind", () => {
+    const paying = applyServerEvent(loaded(), frozenOn("CARD_READER"));
+    expect(isPayingOnCardReader(paying, "session-1")).toBe(true);
+    expect(isPayingOnline(paying, "session-1")).toBe(false);
+  });
+
+  it("keeps an online freeze online", () => {
+    const paying = applyServerEvent(loaded(), frozenOn("ONLINE"));
+    expect(isPayingOnline(paying, "session-1")).toBe(true);
+    expect(isPayingOnCardReader(paying, "session-1")).toBe(false);
+  });
+
+  it("stops paying on the card reader on bill.unfrozen or bill.paid", () => {
+    const paying = applyServerEvent(loaded(), frozenOn("CARD_READER"));
+    const unfrozen = applyServerEvent(paying, { event: "bill.unfrozen", data: { sessionId: "session-1", reason: "FAILED" } });
+    expect(isPayingOnCardReader(unfrozen, "session-1")).toBe(false);
+    const settled = applyServerEvent(paying, paid);
+    expect(isPayingOnCardReader(settled, "session-1")).toBe(false);
+    expect(sessionPayment(settled, "session-1")?.paymentId).toBe("payment-1");
+  });
+
+  it("goes back to online when a later freeze is an online one", () => {
+    const reader = applyServerEvent(loaded(), frozenOn("CARD_READER"));
+    const unfrozen = applyServerEvent(reader, { event: "bill.unfrozen", data: { sessionId: "session-1" } });
+    expect(isPayingOnline(applyServerEvent(unfrozen, frozenOn("ONLINE")), "session-1")).toBe(true);
   });
 });
 

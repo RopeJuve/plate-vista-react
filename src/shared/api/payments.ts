@@ -8,7 +8,8 @@
 /** `NORMAL` is the standard German VAT rate, `REDUCED_1` the first reduced rate. */
 export type VatRate = "NORMAL" | "REDUCED_1";
 
-export type PaymentMethod = "CASH" | "CARD_TERMINAL" | "ONLINE";
+/** `CARD_READER` is recorded only by Stripe's webhook, never sent by the staff app. */
+export type PaymentMethod = "CASH" | "CARD_TERMINAL" | "CARD_READER" | "ONLINE";
 
 /** State of the TSE signature on a payment. */
 export type SignatureStatus = "PENDING" | "SIGNED" | "FAILED";
@@ -223,10 +224,92 @@ export type PaymentErrorCode =
 
 /** Error body; `BILL_CHANGED` carries the server's current `totalCents`. */
 export interface PaymentErrorBody {
-  code: PaymentErrorCode;
+  code: PaymentErrorCode | CardReaderPaymentErrorCode;
   message?: string;
   totalCents?: number;
+  /** Card reader errors carry their extras here (`totalCents`, `kind`, `readerName`, `tableNumber`, `reason`). */
+  details?: Record<string, unknown>;
 }
+
+/**
+ * Card reader payments (Stripe Terminal), `docs/payments-contract.md` → "Card reader payments".
+ * The API drives the reader; the staff app starts the payment and watches the events.
+ * The reader itself is `CardReader` above.
+ */
+
+export type PaymentFailureReason =
+  | "DECLINED"
+  | "INSUFFICIENT_FUNDS"
+  | "LOST_OR_STOLEN_CARD"
+  | "EXPIRED_CARD"
+  | "PROCESSING_ERROR"
+  | "CANCELLED_ON_READER"
+  | "READER_OFFLINE"
+  | "OTHER";
+
+/** One attempt to take a bill's payment on a reader. Once paid it is a Payment; once cancelled or expired it is gone. */
+export interface CardReaderPayment {
+  id: string;
+  sessionId: string;
+  reader: { id: string; name: string; simulated: boolean };
+  /** The bill's total when the attempt started. */
+  amountCents: number;
+  status: "IN_PROGRESS" | "FAILED";
+  failure: { reason: PaymentFailureReason; message: string } | null;
+  startedAt: string;
+  expiresAt: string;
+}
+
+/** Why the bill is frozen (session status `paying`). */
+export interface BillFreeze {
+  kind: "ONLINE" | "CARD_READER";
+  /** CARD_READER only. */
+  readerName: string | null;
+  totalCents: number;
+  expiresAt: string;
+}
+
+export type CardReaderUnavailableReason =
+  | "PAYOUT_ACCOUNT_NOT_READY"
+  | "TSE_NOT_ACTIVE"
+  | "BILL_PAID"
+  | "BILL_EMPTY"
+  | "PAYMENT_IN_PROGRESS"
+  | "NO_READER_AVAILABLE";
+
+/** Whether the pay panel offers "Card reader": HIDDEN shows no button, DISABLED a greyed one with the reason. */
+export interface CardReaderAvailability {
+  state: "OFFERED" | "DISABLED" | "HIDDEN";
+  /** DISABLED only. */
+  reason: CardReaderUnavailableReason | null;
+  /** [] when HIDDEN; online and not busy ones can be picked. */
+  readers: CardReader[];
+}
+
+/** Body of `POST /sessions/:id/card-reader-payment`. */
+export interface StartCardReaderPaymentBody {
+  readerId: string;
+  expectedTotalCents: number;
+}
+
+/** Stripe test cards a Simulated Reader can be shown (test mode only). */
+export type TestCard =
+  | "APPROVED"
+  | "DECLINED"
+  | "INSUFFICIENT_FUNDS"
+  | "LOST_CARD"
+  | "STOLEN_CARD"
+  | "EXPIRED_CARD"
+  | "PROCESSING_ERROR";
+
+/** Error codes of the card reader payment endpoints, on top of the payment ones. */
+export type CardReaderPaymentErrorCode =
+  | "PAYMENT_IN_PROGRESS"
+  | "CARD_READER_BUSY"
+  | "CARD_READER_OFFLINE"
+  | "CARD_READER_PAYMENT_UNAVAILABLE"
+  | "CARD_READER_NOT_SIMULATED"
+  | "SIMULATED_READER_LIVE_MODE";
 
 export interface ReceiptLine {
   title: string;

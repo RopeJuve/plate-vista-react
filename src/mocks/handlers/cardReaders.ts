@@ -4,8 +4,10 @@ import type {
   AddSimulatedReaderBody,
   CardReader,
   CardReaderList,
+  CardReaderPayment,
+  StartCardReaderPaymentBody,
 } from "../../shared/api/payments";
-import { cardReaderLists } from "../fixtures/cardReaders";
+import { cardReaderLists, cardReaderPaymentInProgress, cardReaders, idleSimulatedReader } from "../fixtures/cardReaders";
 import { apiPaths } from "./paths";
 
 const MAX_NAME = 40;
@@ -28,9 +30,14 @@ const newReader = (name: string, reader: Partial<CardReader>): CardReader => ({
   ...reader,
 });
 
+const readerById = (id: string) =>
+  [...Object.values(cardReaders), idleSimulatedReader].find((reader) => reader.id === id);
+
 /**
- * By default the server is in test mode with a ready Payout Account and the contract's three readers.
- * The answers do not remember readers added or removed: the section keeps its own list.
+ * Card Readers (Kasse): by default the server is in test mode with a ready Payout Account and the
+ * contract's three readers; the answers do not remember readers added or removed.
+ * Card reader payments: starting works on any known reader, and a test card is always taken;
+ * what follows (paid, declined) only arrives as realtime events, which tests emit themselves.
  */
 export const cardReaderHandlers = [
   http.get(apiPaths.cardReaders, () => HttpResponse.json<CardReaderList>(cardReaderLists.testMode)),
@@ -52,4 +59,22 @@ export const cardReaderHandlers = [
     );
   }),
   http.delete(apiPaths.cardReader, () => new HttpResponse(null, { status: 204 })),
+  http.post(apiPaths.cardReaderPayment, async ({ params, request }) => {
+    const body = (await request.json()) as Partial<StartCardReaderPaymentBody>;
+    const reader = readerById(String(body?.readerId));
+    if (!reader) {
+      return new HttpResponse(null, { status: 404 });
+    }
+    return HttpResponse.json<CardReaderPayment>({
+      ...cardReaderPaymentInProgress(reader),
+      sessionId: String(params.sessionId),
+      amountCents: Number(body.expectedTotalCents),
+    });
+  }),
+  http.post(apiPaths.cardReaderTestCard, ({ params }) =>
+    HttpResponse.json<CardReaderPayment>({
+      ...cardReaderPaymentInProgress(idleSimulatedReader),
+      sessionId: String(params.sessionId),
+    })
+  ),
 ];

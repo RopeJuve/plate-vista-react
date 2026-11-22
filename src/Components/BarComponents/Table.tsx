@@ -31,6 +31,7 @@ const Table = memo(
     summary,
     paid = false,
     payingOnline = false,
+    payingOnCardReader = false,
     waiterCalled = false,
     onCloseWaiterCall,
   }: {
@@ -45,6 +46,8 @@ const Table = memo(
     paid?: boolean;
     /** A guest is paying the bill online right now, so the bill is frozen. */
     payingOnline?: boolean;
+    /** Staff are taking the bill on a card reader right now, so the bill is frozen. */
+    payingOnCardReader?: boolean;
     /** Guests at this table asked for a waiter and nobody has answered yet. */
     waiterCalled?: boolean;
     /** Answers the call without opening the table. */
@@ -101,9 +104,9 @@ const Table = memo(
           >
             {seated ? (paid ? "Paid" : summary?.ready ? `${summary.ready} ready` : "Seated") : reserved ? "Reserved" : "Free"}
           </span>
-          {seated && payingOnline ? (
+          {seated && (payingOnline || payingOnCardReader) ? (
             <span className="rounded bg-signal px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-[0.1em] text-ink">
-              Paying online
+              {payingOnCardReader ? "Paying by card" : "Paying online"}
             </span>
           ) : null}
           {seated && joinCode ? (

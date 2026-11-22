@@ -1,7 +1,13 @@
 import { useMemo } from "react";
 import Table from "./Table";
 import RecentlyClosed from "./RecentlyClosed";
-import { isPayingOnline, sessionPayment, summariseTables, waiterCallAt } from "../../features/staff-board/boardState";
+import {
+  isPayingOnCardReader,
+  isPayingOnline,
+  sessionPayment,
+  summariseTables,
+  waiterCallAt,
+} from "../../features/staff-board/boardState";
 import { useStaffBoard } from "../../features/staff-board/StaffBoardProvider";
 
 const TableList = () => {
@@ -53,6 +59,7 @@ const TableList = () => {
                 summary={summaries[table._id]}
                 paid={Boolean(sessionPayment(state, state.sessionIdByTable[table._id]))}
                 payingOnline={isPayingOnline(state, state.sessionIdByTable[table._id])}
+                payingOnCardReader={isPayingOnCardReader(state, state.sessionIdByTable[table._id])}
                 waiterCalled={Boolean(waiterCallAt(state, table._id))}
                 onCloseWaiterCall={
                   waiterCallAt(state, table._id)

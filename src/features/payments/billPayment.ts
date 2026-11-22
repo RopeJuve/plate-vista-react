@@ -10,6 +10,7 @@ export const PAY_METHODS: ReadonlyArray<{ method: PaymentMethod; button: string 
 const METHOD_LABEL: Record<PaymentMethod, string> = {
   CASH: "Cash",
   CARD_TERMINAL: "Card",
+  CARD_READER: "Card",
   ONLINE: "Online",
 };
 
@@ -18,8 +19,12 @@ export const methodLabel = (method: PaymentMethod) => METHOD_LABEL[method];
 /** Only an unpaid bill with something on it can be paid; an empty one is closed instead. */
 export const canPayBill = (bill: SessionBill) => !bill.payment && bill.totalCents > 0;
 
-/** A guest is paying this bill online right now, so it is frozen; staff may still record cash or card. */
-export const isGuestPayingOnline = (bill: SessionBill) => !bill.payment && bill.session.status === "paying";
+/**
+ * A guest is paying this bill online right now, so it is frozen; staff may still record cash or card.
+ * A bill frozen for a card reader payment is not (a server before 2.7 sends no `freeze`: online).
+ */
+export const isGuestPayingOnline = (bill: SessionBill) =>
+  !bill.payment && bill.session.status === "paying" && bill.freeze?.kind !== "CARD_READER";
 
 /** What staff see when the guest's online payment got there first: the bill shows as paid once `bill.paid` arrives. */
 export const PAID_ONLINE_MESSAGE = "The guest has just paid online.";
