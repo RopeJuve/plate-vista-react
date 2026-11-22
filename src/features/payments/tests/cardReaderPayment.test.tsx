@@ -9,11 +9,16 @@ import ToastProvider from "../../../Components/ToastProvider";
 import { OrderProvider } from "../../../contexts/OrderContext";
 import { useAuth } from "../../../contexts/AuthContext";
 import { SESSION_ID, unpaidBill } from "../../../mocks/fixtures/bill";
-import { cardReaderBill, cardReaderPayingBill, cardReaders } from "../../../mocks/fixtures/cardReaders";
+import {
+  cardReaderBill,
+  cardReaderErrors,
+  cardReaderPayingBill,
+  cardReaders,
+} from "../../../mocks/fixtures/cardReaders";
 import { paidBill, payment } from "../../../mocks/fixtures/payments";
 import { TABLE_ID } from "../../../mocks/fixtures/staffBoard";
 import { apiPaths } from "../../../mocks/handlers/paths";
-import { mockBillResponse } from "../../../mocks/overrides";
+import { mockBillResponse, mockStartCardReaderPaymentResponse } from "../../../mocks/overrides";
 import { server } from "../../../mocks/server";
 import { clearTokens, saveTokens } from "../../../shared/api/tokens";
 import { formatCents } from "../../../shared/money/formatCents";
@@ -209,5 +214,42 @@ describe("a card reader payment that goes through", () => {
     mockBillResponse(200, { ...paidBill, payment: { ...payment, method: "CARD_READER" } });
     realtime.emit("bill.paid", paidOnReader);
     expect(await screen.findByText(/Paid · Card ·/)).toBeInTheDocument();
+  });
+});
+
+describe("a card reader payment that cannot start", () => {
+  it.each([
+    ["billPaid", "Already paid."],
+    ["billEmpty", "Nothing to pay — close the table instead."],
+    ["billChanged", `The bill changed — new total ${shown(2750)}. Please start again.`],
+    ["onlineInProgress", "A guest is paying this bill online right now."],
+    ["readerInProgress", "This bill is already being paid on the card reader “Terrasse”."],
+    ["busy", "The card reader is taking table 7’s payment."],
+    ["offline", "The card reader is offline. Check it is switched on and connected."],
+    ["tseNotActive", "Card reader payments need an active TSE."],
+    ["payoutNotReady", "Card reader payments need a payout account that can take payments."],
+    ["providerError", "The card reader could not be reached through Stripe. Try again."],
+    ["stripeNotConfigured", "Card reader payments are not set up on the server."],
+  ] as const)("says so readably on %s", async (name, message) => {
+    mockBillResponse(200, cardReaderBill());
+    const { status, body } = cardReaderErrors[name];
+    mockStartCardReaderPaymentResponse(status, body);
+    const { user } = renderStaffCheck();
+
+    await user.click(await screen.findByRole("button", { name: CARD_READER }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(message);
+    expect(screen.queryByText("Waiting for card")).not.toBeInTheDocument();
+  });
+
+  it("asks to try again when the server can't be reached", async () => {
+    mockBillResponse(200, cardReaderBill());
+    server.use(http.post(apiPaths.cardReaderPayment, () => HttpResponse.error()));
+    const { user } = renderStaffCheck();
+
+    await user.click(await screen.findByRole("button", { name: CARD_READER }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Could not reach the server. Try again.");
+    expect(screen.getByRole("button", { name: CARD_READER })).toBeEnabled();
   });
 });
