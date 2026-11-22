@@ -6,7 +6,15 @@
  * fields (e.g. `title | name`) — if the server doesn't send it, we don't type it.
  */
 
-import type { OnlinePaymentRefund, Payment, PaymentMethod, VatRate } from "../api/payments";
+import type {
+  BillFreeze,
+  CardReaderAvailability,
+  CardReaderPayment,
+  OnlinePaymentRefund,
+  Payment,
+  PaymentMethod,
+  VatRate,
+} from "../api/payments";
 
 export const PROTOCOL_VERSION = "2";
 
@@ -135,6 +143,12 @@ export interface SessionBill {
   payment: Payment | null;
   /** 2.5: whether the guest may pay this bill online now. */
   canPayOnline: boolean;
+  /** 2.7: why the bill is frozen; null unless the session is `paying`. */
+  freeze?: BillFreeze | null;
+  /** 2.7, staff only: whether the pay panel offers a card reader. */
+  cardReader?: CardReaderAvailability;
+  /** 2.7, staff only: the bill's current card reader attempt (IN_PROGRESS, or the last FAILED one). */
+  cardReaderPayment?: CardReaderPayment | null;
 }
 
 export interface BoardTable {
@@ -401,16 +415,25 @@ export interface PaymentSignFailedEvent {
   data: { paymentId: string };
 }
 
-/** Staff and session rooms (2.5): a guest started paying online; the session is `paying`. */
+/**
+ * Staff and session rooms (2.5): a guest started paying online, or (2.7) staff started a
+ * card reader payment; the session is `paying`. The 2.7 fields are absent from older servers.
+ */
 export interface BillFrozenEvent {
   event: "bill.frozen";
-  data: { sessionId: string; expiresAt: string };
+  data: {
+    sessionId: string;
+    expiresAt: string;
+    kind?: BillFreeze["kind"];
+    readerName?: string | null;
+    totalCents?: number;
+  };
 }
 
-/** Staff and session rooms (2.5): the online payment was abandoned, expired or unfrozen by staff. */
+/** Staff and session rooms (2.5): the payment in progress was abandoned, expired, failed or unfrozen by staff. */
 export interface BillUnfrozenEvent {
   event: "bill.unfrozen";
-  data: { sessionId: string };
+  data: { sessionId: string; reason?: "CANCELLED" | "EXPIRED" | "STAFF_PAYMENT" | "FAILED" };
 }
 
 /** Staff room only (2.5): a Late Payment was refunded. */

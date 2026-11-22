@@ -10,6 +10,7 @@ export const PAY_METHODS: ReadonlyArray<{ method: PaymentMethod; button: string 
 const METHOD_LABEL: Record<PaymentMethod, string> = {
   CASH: "Cash",
   CARD_TERMINAL: "Card",
+  CARD_READER: "Card",
   ONLINE: "Online",
 };
 
