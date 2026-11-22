@@ -5,6 +5,7 @@ import { useEffect, type ReactNode } from "react";
 import { Route, Routes } from "react-router-dom";
 import { afterEach, describe, expect, it } from "vitest";
 import OrderDetails from "../../../Components/BarComponents/OrderDetails";
+import TableList from "../../../Components/BarComponents/TableList";
 import ToastProvider from "../../../Components/ToastProvider";
 import { OrderProvider } from "../../../contexts/OrderContext";
 import { useAuth } from "../../../contexts/AuthContext";
@@ -36,19 +37,20 @@ const SignedInAs = ({ role, children }: { role: string; children: ReactNode }) =
   return user ? <>{children}</> : null;
 };
 
-/** Table 4's check on the staff screen, signed in so the board connects and loads. */
-const renderStaffCheck = (role = "bar") => {
+/** Table 4's check (or, at `/bar`, the floor) on the staff screen, signed in so the board connects and loads. */
+const renderStaffCheck = (role = "bar", path = `/bar/table/${TABLE_ID}`) => {
   saveTokens({ accessToken: "staff-token" });
   server.use(http.get("*/menu-items", () => HttpResponse.json([])));
   const realtime = createMockRealtime();
   const user = userEvent.setup();
   render(
     <ToastProvider>
-      <RealtimeTestProviders realtime={realtime} path={`/bar/table/${TABLE_ID}`}>
+      <RealtimeTestProviders realtime={realtime} path={path}>
         <SignedInAs role={role}>
           <MenuProvider>
             <StaffBoardProvider>
               <Routes>
+                <Route path="/bar" element={<TableList />} />
                 <Route
                   path="/bar/table/:tableId"
                   element={
@@ -251,5 +253,26 @@ describe("a card reader payment that cannot start", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Could not reach the server. Try again.");
     expect(screen.getByRole("button", { name: CARD_READER })).toBeEnabled();
+  });
+});
+
+describe("the floor while a card reader takes a table's payment", () => {
+  it("marks the table paying by card from bill.frozen, not online, then Paid from bill.paid", async () => {
+    const { realtime } = renderStaffCheck("bar", "/bar");
+    const table = await screen.findByRole("button", { name: "Open table 4" });
+
+    realtime.emit("bill.frozen", {
+      sessionId: SESSION_ID,
+      expiresAt: "2026-11-22T19:05:00.000Z",
+      kind: "CARD_READER",
+      readerName: "Bar",
+      totalCents: unpaidBill.totalCents,
+    });
+    expect(within(table).getByText("Paying by card")).toBeInTheDocument();
+    expect(within(table).queryByText("Paying online")).not.toBeInTheDocument();
+
+    realtime.emit("bill.paid", paidOnReader);
+    expect(within(table).queryByText("Paying by card")).not.toBeInTheDocument();
+    expect(within(table).getByText("Paid")).toBeInTheDocument();
   });
 });

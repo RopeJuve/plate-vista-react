@@ -33,6 +33,8 @@ export type BoardState = {
    * keeps no record), so they outlive a snapshot reload but not a lost connection.
    */
   waiterCallsBySession: Record<string, WaiterCall>;
+  /** Sessions whose bill staff are taking on a card reader right now (2.7), heard from `bill.frozen`. */
+  cardReaderPayingSessions: Record<string, true>;
   ready: boolean;
 };
 
@@ -47,6 +49,7 @@ export const emptyBoard = (): BoardState => ({
   recentlyClosed: [],
   paymentsBySession: {},
   waiterCallsBySession: {},
+  cardReaderPayingSessions: {},
   ready: false,
 });
 
@@ -94,6 +97,16 @@ export const applySnapshot = (board: StaffBoard): BoardState => {
     state = withOrder(state, order);
   });
   return state;
+};
+
+/** Forget that a session's bill is being paid on a card reader. */
+const withoutCardReaderPayment = (state: BoardState, sessionId: string): BoardState => {
+  if (!state.cardReaderPayingSessions[sessionId]) {
+    return state;
+  }
+  const cardReaderPayingSessions = { ...state.cardReaderPayingSessions };
+  delete cardReaderPayingSessions[sessionId];
+  return { ...state, cardReaderPayingSessions };
 };
 
 /** An open session starts or stops paying online; a closed or unknown one stays as it is. */
@@ -151,14 +164,20 @@ export const applyServerEvent = (state: BoardState, event: ServerEvent): BoardSt
     case "bill.paid": {
       const { sessionId, paymentId } = event.data;
       return {
-        ...withSessionStatus(state, sessionId, "open"),
+        ...withoutCardReaderPayment(withSessionStatus(state, sessionId, "open"), sessionId),
         paymentsBySession: { ...state.paymentsBySession, [sessionId]: { paymentId, signed: false } },
       };
     }
-    case "bill.frozen":
-      return withSessionStatus(state, event.data.sessionId, "paying");
+    case "bill.frozen": {
+      const { sessionId, kind } = event.data;
+      const paying = withSessionStatus(state, sessionId, "paying");
+      if (kind !== "CARD_READER" || !paying.sessionsById[sessionId]) {
+        return withoutCardReaderPayment(paying, sessionId);
+      }
+      return { ...paying, cardReaderPayingSessions: { ...paying.cardReaderPayingSessions, [sessionId]: true } };
+    }
     case "bill.unfrozen":
-      return withSessionStatus(state, event.data.sessionId, "open");
+      return withoutCardReaderPayment(withSessionStatus(state, event.data.sessionId, "open"), event.data.sessionId);
     case "payment.signed": {
       const entry = Object.entries(state.paymentsBySession).find(
         ([, payment]) => payment.paymentId === event.data.paymentId
@@ -320,9 +339,17 @@ export const waiterCallAt = (state: BoardState, tableId: string): WaiterCall | u
 export const sessionPayment = (state: BoardState, sessionId: string | undefined): SessionPayment | undefined =>
   sessionId ? state.paymentsBySession[sessionId] : undefined;
 
+/** The session's bill is frozen for a payment in progress (online or on a card reader) until it is paid or unfrozen. */
+export const isBillFrozen = (state: BoardState, sessionId: string | undefined): boolean =>
+  Boolean(sessionId && state.sessionsById[sessionId]?.status === "paying" && !state.paymentsBySession[sessionId]);
+
+/** Staff are taking this session's bill on a card reader right now. */
+export const isPayingOnCardReader = (state: BoardState, sessionId: string | undefined): boolean =>
+  Boolean(sessionId && isBillFrozen(state, sessionId) && state.cardReaderPayingSessions[sessionId]);
+
 /** A guest is paying this session's bill online right now: the bill is frozen until it is paid or unfrozen. */
 export const isPayingOnline = (state: BoardState, sessionId: string | undefined): boolean =>
-  Boolean(sessionId && state.sessionsById[sessionId]?.status === "paying" && !state.paymentsBySession[sessionId]);
+  isBillFrozen(state, sessionId) && !isPayingOnCardReader(state, sessionId);
 
 export type ListedTicket = {
   order: TrackedOrder;
