@@ -1,11 +1,12 @@
 import { Header } from "../Components/AdminComponents";
 import { useAuth } from "../contexts/AuthContext";
+import CardReadersSection from "../features/kasse/CardReadersSection";
 import PayoutAccountSection from "../features/kasse/PayoutAccountSection";
 import LateRefundsSection from "../features/kasse/LateRefundsSection";
 import LegalDetailsForm from "../features/kasse/LegalDetailsForm";
 import TseSection from "../features/kasse/TseSection";
 import { useLegalDetails } from "../features/kasse/hooks/useLegalDetails";
-import { isOwner } from "../shared/auth/roles";
+import { isOwner, isOwnerOrAdmin } from "../shared/auth/roles";
 import { cn } from "@/lib/utils";
 
 /** Till & payments: what the restaurant needs on file before it can take payments with signed receipts. */
@@ -48,6 +49,11 @@ const Kasse = () => {
       {isOwner(user) && (
         <div className="mt-6">
           <PayoutAccountSection />
+        </div>
+      )}
+      {isOwnerOrAdmin(user) && (
+        <div className="mt-6">
+          <CardReadersSection canOpenPayoutAccount={isOwner(user)} />
         </div>
       )}
       <div className="mt-6">

@@ -121,3 +121,14 @@ export const profileSchema = z
   });
 
 export type ProfileValues = z.infer<typeof profileSchema>;
+
+/** Adding a Card Reader: the code the reader shows on screen, and a name staff recognise. */
+export const cardReaderSchema = z.object({
+  registrationCode: z.string().trim().min(1, "Enter the code the reader shows"),
+  name: z.string().trim().min(1, "Give the reader a name").max(40, "Keep the name to 40 characters"),
+});
+
+export type CardReaderValues = z.infer<typeof cardReaderSchema>;
+
+/** A Simulated Reader only needs a name; its form leaves the code empty. */
+export const simulatedReaderSchema = cardReaderSchema.extend({ registrationCode: z.string() });

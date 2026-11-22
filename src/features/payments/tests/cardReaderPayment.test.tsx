@@ -12,9 +12,10 @@ import { useAuth } from "../../../contexts/AuthContext";
 import { SESSION_ID, unpaidBill } from "../../../mocks/fixtures/bill";
 import {
   cardReaderBill,
-  cardReaderErrors,
+  cardReaderPaymentErrors,
   cardReaderPayingBill,
   cardReaders,
+  idleSimulatedReader,
 } from "../../../mocks/fixtures/cardReaders";
 import { paidBill, payment } from "../../../mocks/fixtures/payments";
 import { TABLE_ID } from "../../../mocks/fixtures/staffBoard";
@@ -159,12 +160,12 @@ describe("starting a card reader payment", () => {
   });
 
   it("presents an approved test card on a Simulated Reader", async () => {
-    mockBillResponse(200, cardReaderPayingBill(cardReaders.simulated));
+    mockBillResponse(200, cardReaderPayingBill(idleSimulatedReader));
     const cards: unknown[] = [];
     server.use(
       http.post(apiPaths.cardReaderTestCard, async ({ request }) => {
         cards.push(await request.json());
-        return HttpResponse.json(cardReaderPayingBill(cardReaders.simulated).cardReaderPayment);
+        return HttpResponse.json(cardReaderPayingBill(idleSimulatedReader).cardReaderPayment);
       })
     );
     const { user } = renderStaffCheck();
@@ -186,7 +187,7 @@ const paidOnReader: EventData<"bill.paid"> = {
 
 describe("a card reader payment that goes through", () => {
   it("moves the panel to Paid on the paid event", async () => {
-    mockBillResponse(200, cardReaderBill(cardReaders.simulated));
+    mockBillResponse(200, cardReaderBill(idleSimulatedReader));
     const { realtime, user } = renderStaffCheck();
     await user.click(await screen.findByRole("button", { name: CARD_READER }));
     await screen.findByText("Waiting for card");
@@ -234,7 +235,7 @@ describe("a card reader payment that cannot start", () => {
     ["stripeNotConfigured", "Card reader payments are not set up on the server."],
   ] as const)("says so readably on %s", async (name, message) => {
     mockBillResponse(200, cardReaderBill());
-    const { status, body } = cardReaderErrors[name];
+    const { status, body } = cardReaderPaymentErrors[name];
     mockStartCardReaderPaymentResponse(status, body);
     const { user } = renderStaffCheck();
 

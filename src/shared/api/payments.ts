@@ -109,6 +109,63 @@ export interface OnlinePaymentsSwitchBody {
   onlinePaymentsEnabled: boolean;
 }
 
+/** A Stripe smart reader the restaurant takes card payments on. Ids are ours, not Stripe's. */
+export interface CardReader {
+  id: string;
+  /** 1–40 characters, chosen by the owner or admin; need not be unique. */
+  name: string;
+  /** Stripe's device type, e.g. `stripe_s700`, `bbpos_wisepos_e`, `simulated_wisepos_e`. */
+  deviceType: string;
+  serialNumber: string;
+  /** As Stripe last reported it, at most 30 s old. */
+  status: "online" | "offline";
+  /** A Simulated Reader, which only exists in test mode. */
+  simulated: boolean;
+  /** The bill whose card reader payment it is taking now. */
+  busyWith: { sessionId: string; tableNumber: number } | null;
+  addedAt: string;
+}
+
+/**
+ * `GET /restaurant/card-readers` (owner, admin), sorted by name. `payoutAccountReady` is the
+ * Payout Account's `chargesEnabled`; `testMode` says whether Simulated Readers can be added.
+ */
+export interface CardReaderList {
+  items: CardReader[];
+  testMode: boolean;
+  payoutAccountReady: boolean;
+}
+
+/** Body of `POST /restaurant/card-readers`: the code the reader shows on screen, and its name. */
+export interface AddCardReaderBody {
+  registrationCode: string;
+  name: string;
+}
+
+/** Body of `POST /restaurant/card-readers/simulated`. */
+export interface AddSimulatedReaderBody {
+  name: string;
+}
+
+/** Error codes of the Card Reader endpoints. */
+export type CardReaderErrorCode =
+  | "STRIPE_NOT_CONFIGURED"
+  | "VALIDATION"
+  | "PAYOUT_ACCOUNT_NOT_READY"
+  | "RESTAURANT_DETAILS_MISSING"
+  | "CARD_READER_CODE_INVALID"
+  | "SIMULATED_READER_LIVE_MODE"
+  | "CARD_READER_BUSY"
+  | "PAYMENT_PROVIDER_ERROR"
+  | "NOT_FOUND";
+
+/** Error body of the Card Reader endpoints; `CARD_READER_BUSY` names the table it is taking a payment for. */
+export interface CardReaderErrorBody {
+  code: CardReaderErrorCode;
+  message?: string;
+  details?: { tableNumber?: number };
+}
+
 /** Why a Late Payment was refunded instead of becoming a Payment. */
 export type OnlinePaymentRefundReason = "BILL_ALREADY_PAID" | "BILL_NOT_FROZEN" | "SESSION_CLOSED";
 
@@ -167,7 +224,7 @@ export type PaymentErrorCode =
 
 /** Error body; `BILL_CHANGED` carries the server's current `totalCents`. */
 export interface PaymentErrorBody {
-  code: PaymentErrorCode | CardReaderErrorCode;
+  code: PaymentErrorCode | CardReaderPaymentErrorCode;
   message?: string;
   totalCents?: number;
   /** Card reader errors carry their extras here (`totalCents`, `kind`, `readerName`, `tableNumber`, `reason`). */
@@ -177,20 +234,8 @@ export interface PaymentErrorBody {
 /**
  * Card reader payments (Stripe Terminal), `docs/payments-contract.md` → "Card reader payments".
  * The API drives the reader; the staff app starts the payment and watches the events.
+ * The reader itself is `CardReader` above.
  */
-export interface CardReader {
-  id: string;
-  name: string;
-  deviceType: string;
-  serialNumber: string;
-  /** As Stripe last reported it, at most 30 s old. */
-  status: "online" | "offline";
-  /** A Simulated Reader (test mode only). */
-  simulated: boolean;
-  /** The bill whose card reader payment it is taking now. */
-  busyWith: { sessionId: string; tableNumber: number } | null;
-  addedAt: string;
-}
 
 export type PaymentFailureReason =
   | "DECLINED"
@@ -257,8 +302,8 @@ export type TestCard =
   | "EXPIRED_CARD"
   | "PROCESSING_ERROR";
 
-/** Error codes of the card reader endpoints, on top of the payment ones. */
-export type CardReaderErrorCode =
+/** Error codes of the card reader payment endpoints, on top of the payment ones. */
+export type CardReaderPaymentErrorCode =
   | "PAYMENT_IN_PROGRESS"
   | "CARD_READER_BUSY"
   | "CARD_READER_OFFLINE"

@@ -69,6 +69,7 @@ const PayoutAccountSection = () => {
   return (
     <section
       ref={section}
+      id="online-payments"
       aria-labelledby="online-payments-title"
       className="scroll-mt-4 max-w-2xl rounded-xl bg-white p-5 ring-1 ring-ink/[0.07] md:p-6"
     >

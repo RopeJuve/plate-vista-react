@@ -2,7 +2,7 @@ import { http, HttpResponse } from "msw";
 import { apiPaths, type ApiPath } from "./handlers/paths";
 import { server } from "./server";
 
-type Method = "get" | "post" | "put" | "patch";
+type Method = "get" | "post" | "put" | "patch" | "delete";
 
 /**
  * Replaces one endpoint's answer for the rest of the current test
@@ -79,3 +79,16 @@ export const mockStartCardReaderPaymentResponse = (status: number, body?: unknow
 
 export const mockTestCardResponse = (status: number, body?: unknown) =>
   mockResponse("post", "cardReaderTestCard", status, body);
+
+/** Card Readers: pair with `cardReaderLists` and `cardReaderErrors` from `fixtures/cardReaders`. */
+export const mockCardReadersResponse = (status: number, body?: unknown) =>
+  mockResponse("get", "cardReaders", status, body);
+
+export const mockAddCardReaderResponse = (status: number, body?: unknown) =>
+  mockResponse("post", "cardReaders", status, body);
+
+export const mockAddSimulatedReaderResponse = (status: number, body?: unknown) =>
+  mockResponse("post", "simulatedCardReader", status, body);
+
+export const mockRemoveCardReaderResponse = (status: number, body?: unknown) =>
+  mockResponse("delete", "cardReader", status, body);
