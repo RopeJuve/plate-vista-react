@@ -64,6 +64,9 @@ const renderStaffCheck = (role = "bar") => {
 
 const CARD_READER = "Card reader";
 
+/** A total as the screen shows it, its no-break space read as a plain one. */
+const shown = (cents: number) => formatCents(cents).replace(/\s/g, " ");
+
 describe("the card reader option on the pay panel", () => {
   it("is offered next to cash and card when the API offers it", async () => {
     mockBillResponse(200, cardReaderBill());
@@ -99,5 +102,112 @@ describe("the card reader option on the pay panel", () => {
 
     expect(await screen.findByRole("button", { name: CARD_READER })).toBeDisabled();
     expect(screen.getByText("Every card reader is offline or busy.")).toBeInTheDocument();
+  });
+});
+
+/** Every `POST /sessions/:id/card-reader-payment` body, answered after a short wait so a double tap overlaps. */
+const recordStarts = () => {
+  const starts: unknown[] = [];
+  server.use(
+    http.post(apiPaths.cardReaderPayment, async ({ request }) => {
+      starts.push(await request.json());
+      await delay(50);
+      return HttpResponse.json(cardReaderPayingBill().cardReaderPayment);
+    })
+  );
+  return starts;
+};
+
+describe("starting a card reader payment", () => {
+  it("shows the reader's name, the bill total and that it waits for the card, after one request on a double tap", async () => {
+    mockBillResponse(200, cardReaderBill());
+    const starts = recordStarts();
+    const { user } = renderStaffCheck();
+
+    await user.dblClick(await screen.findByRole("button", { name: CARD_READER }));
+
+    const status = await screen.findByRole("region", { name: "Card reader payment" });
+    expect(within(status).getByText("Bar")).toBeInTheDocument();
+    expect(within(status).getByText(shown(unpaidBill.totalCents))).toBeInTheDocument();
+    expect(within(status).getByText("Waiting for card")).toBeInTheDocument();
+    expect(starts).toEqual([{ readerId: cardReaders.bar.id, expectedTotalCents: unpaidBill.totalCents }]);
+  });
+
+  it("shows the payment in progress when the check opens on a bill a reader is taking", async () => {
+    mockBillResponse(200, cardReaderPayingBill());
+    renderStaffCheck();
+
+    const status = await screen.findByRole("region", { name: "Card reader payment" });
+    expect(within(status).getByText("Waiting for card")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: CARD_READER })).not.toBeInTheDocument();
+    expect(screen.queryByText("Paying online")).not.toBeInTheDocument();
+  });
+
+  it("has no test card button on a real reader", async () => {
+    mockBillResponse(200, cardReaderPayingBill());
+    renderStaffCheck();
+
+    await screen.findByText("Waiting for card");
+    expect(screen.queryByRole("button", { name: "Present test card" })).not.toBeInTheDocument();
+  });
+
+  it("presents an approved test card on a Simulated Reader", async () => {
+    mockBillResponse(200, cardReaderPayingBill(cardReaders.simulated));
+    const cards: unknown[] = [];
+    server.use(
+      http.post(apiPaths.cardReaderTestCard, async ({ request }) => {
+        cards.push(await request.json());
+        return HttpResponse.json(cardReaderPayingBill(cardReaders.simulated).cardReaderPayment);
+      })
+    );
+    const { user } = renderStaffCheck();
+
+    await user.click(await screen.findByRole("button", { name: "Present test card" }));
+
+    await waitFor(() => expect(cards).toEqual([{ card: "APPROVED" }]));
+    expect(screen.getByText("Waiting for card")).toBeInTheDocument();
+  });
+});
+
+const paidOnReader: EventData<"bill.paid"> = {
+  sessionId: SESSION_ID,
+  paymentId: payment.id,
+  receiptToken: payment.receiptToken,
+  method: "CARD_READER",
+  totalCents: payment.amountCents,
+};
+
+describe("a card reader payment that goes through", () => {
+  it("moves the panel to Paid on the paid event", async () => {
+    mockBillResponse(200, cardReaderBill(cardReaders.simulated));
+    const { realtime, user } = renderStaffCheck();
+    await user.click(await screen.findByRole("button", { name: CARD_READER }));
+    await screen.findByText("Waiting for card");
+
+    mockBillResponse(200, { ...paidBill, payment: { ...payment, method: "CARD_READER" } });
+    realtime.emit("bill.paid", paidOnReader);
+
+    expect(await screen.findByText(/Paid · Card ·/)).toBeInTheDocument();
+    expect(screen.queryByText("Waiting for card")).not.toBeInTheDocument();
+  });
+
+  it("shows the payment on another device at the table from bill.frozen, then Paid from bill.paid", async () => {
+    mockBillResponse(200, cardReaderBill());
+    const { realtime } = renderStaffCheck();
+    await screen.findByRole("button", { name: CARD_READER });
+
+    mockBillResponse(200, cardReaderPayingBill());
+    realtime.emit("bill.frozen", {
+      sessionId: SESSION_ID,
+      expiresAt: "2026-11-22T19:05:00.000Z",
+      kind: "CARD_READER",
+      readerName: "Bar",
+      totalCents: unpaidBill.totalCents,
+    });
+    expect(await screen.findByText("Waiting for card")).toBeInTheDocument();
+
+    mockBillResponse(200, { ...paidBill, payment: { ...payment, method: "CARD_READER" } });
+    realtime.emit("bill.paid", paidOnReader);
+    expect(await screen.findByText(/Paid · Card ·/)).toBeInTheDocument();
   });
 });
