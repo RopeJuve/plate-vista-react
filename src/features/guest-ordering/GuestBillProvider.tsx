@@ -40,6 +40,8 @@ type GuestBillValue = {
   markPaid: () => void;
   /** Someone at the table is paying online: no ordering or cancelling until it ends. */
   frozen: boolean;
+  /** The bill is frozen because staff are taking it on a card reader, so there is nothing to continue online. */
+  payingOnCardReader: boolean;
   /** An order command came back `BILL_FROZEN`: lock the bill and read it again. */
   markFrozen: () => void;
   /** Set while the guest may pay the bill online, with the total they would pay. */
@@ -178,11 +180,12 @@ export const GuestBillProvider = ({
       rememberOrder,
       markPaid,
       frozen: state.frozen,
+      payingOnCardReader: state.payingOnCardReader,
       markFrozen,
       payOnline: state.payOnline,
       recheckBill,
     }),
-    [orders, closed, state.paid, rememberOrder, markPaid, state.frozen, markFrozen, state.payOnline, recheckBill]
+    [orders, closed, state.paid, rememberOrder, markPaid, state.frozen, state.payingOnCardReader, markFrozen, state.payOnline, recheckBill]
   );
 
   return <GuestBillContext.Provider value={value}>{children}</GuestBillContext.Provider>;

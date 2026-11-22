@@ -12,8 +12,10 @@ export type BillState = {
   closed: boolean;
   /** Set once the bill is paid: nothing more can be ordered on it. */
   paid: PaidBill | null;
-  /** Someone at the table is paying online: the bill takes no orders or cancels meanwhile. */
+  /** Someone at the table is paying online, or staff on a card reader: the bill takes no orders or cancels meanwhile. */
   frozen: boolean;
+  /** The bill is frozen because staff are taking it on a card reader (2.7), not online. */
+  payingOnCardReader: boolean;
   /** Set while the guest may pay the bill online, with the server's total for it. */
   payOnline: { totalCents: number } | null;
 };
@@ -23,6 +25,7 @@ export const emptyBill = (): BillState => ({
   closed: false,
   paid: null,
   frozen: false,
+  payingOnCardReader: false,
   payOnline: null,
 });
 
@@ -33,7 +36,7 @@ export const withServerPayment = (state: BillState, payment: { receiptToken: str
 /** What the server's bill says about paying: paid, frozen (`paying`), and whether it can be paid online. */
 export const withServerBill = (
   state: BillState,
-  bill: Pick<SessionBill, "canPayOnline" | "totalCents"> & {
+  bill: Pick<SessionBill, "canPayOnline" | "totalCents" | "freeze"> & {
     payment: { receiptToken: string } | null;
     session: Pick<SessionBill["session"], "status">;
   }
@@ -42,6 +45,7 @@ export const withServerBill = (
   return {
     ...withServerPayment(state, bill.payment),
     frozen,
+    payingOnCardReader: frozen && bill.freeze?.kind === "CARD_READER",
     payOnline: bill.canPayOnline && !frozen ? { totalCents: bill.totalCents } : null,
   };
 };
@@ -109,13 +113,13 @@ export const applyBillEvent = (state: BillState, event: ServerEvent, sessionId: 
       if (event.data.sessionId !== sessionId) {
         return state;
       }
-      return markBillFrozen(state);
+      return { ...markBillFrozen(state), payingOnCardReader: event.data.kind === "CARD_READER" };
     case "bill.unfrozen":
       if (event.data.sessionId !== sessionId) {
         return state;
       }
       // Whether it can be paid online again is the server's call: the provider re-reads the bill.
-      return { ...state, frozen: false };
+      return { ...state, frozen: false, payingOnCardReader: false };
     default:
       return state;
   }

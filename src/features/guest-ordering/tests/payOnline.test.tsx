@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import CustomerPage from "../../../Components/Customer/CustomerPage";
 import { ContextProvider } from "../../../contexts/ContextProvider";
 import { frozenBill, SESSION_ID, unpaidBill } from "../../../mocks/fixtures/bill";
+import { guestCardReaderPayingBill } from "../../../mocks/fixtures/cardReaders";
 import { onlinePaymentErrors } from "../../../mocks/fixtures/onlinePayments";
 import { apiPaths } from "../../../mocks/handlers/paths";
 import { mockBillResponse, mockStartOnlinePaymentResponse } from "../../../mocks/overrides";
@@ -322,6 +323,66 @@ describe("guest at a frozen bill", () => {
       paymentId: "payment-1",
       receiptToken: "receipt-token-1",
       method: "ONLINE",
+      totalCents: 2050,
+    });
+
+    expect(await screen.findByText("Receipt receipt-token-1")).toBeInTheDocument();
+  });
+});
+
+const CARD_READER_BANNER = "Your bill is being paid on the card reader.";
+
+const frozenOnReader: EventData<"bill.frozen"> = {
+  sessionId: SESSION_ID,
+  expiresAt: "2026-11-22T19:05:00.000Z",
+  kind: "CARD_READER",
+  readerName: "Bar",
+  totalCents: 2050,
+};
+
+describe("guest while staff take the bill on a card reader", () => {
+  it("shows the bill is being paid, without online payment, when it is already so on load", async () => {
+    mockBillResponse(200, guestCardReaderPayingBill);
+    const { user } = renderGuest();
+
+    const banner = (await screen.findByText(CARD_READER_BANNER)).closest("[role=status]") as HTMLElement;
+    expect(within(banner).queryByRole("button")).not.toBeInTheDocument();
+    expect(screen.queryByText(FROZEN_BANNER)).not.toBeInTheDocument();
+    await waitFor(async () => expect(await addSoup()).toBeDisabled());
+    await openBill(user);
+    const dialog = screen.getByRole("dialog", { name: "Cart" });
+    expect(within(dialog).getByText("Being paid on the card reader")).toBeInTheDocument();
+    expect(within(dialog).queryByRole("button", { name: /Pay online/ })).not.toBeInTheDocument();
+  });
+
+  it("switches to being paid on bill.frozen with the card reader kind, and back on bill.unfrozen", async () => {
+    const { realtime, user } = renderGuest();
+    await waitFor(async () => expect(await addSoup()).toBeEnabled());
+
+    realtime.emit("bill.frozen", frozenOnReader);
+
+    expect(await screen.findByText(CARD_READER_BANNER)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Continue to payment" })).not.toBeInTheDocument();
+    await openBill(user);
+    expect(screen.queryByRole("button", { name: /Pay online/ })).not.toBeInTheDocument();
+
+    realtime.emit("bill.unfrozen", { sessionId: SESSION_ID, reason: "FAILED" });
+
+    await waitFor(() => expect(screen.queryByText(CARD_READER_BANNER)).not.toBeInTheDocument());
+    expect(screen.queryByText("Being paid on the card reader")).not.toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: PAY_ONLINE })).toBeInTheDocument();
+  });
+
+  it("moves to the receipt when the card reader payment goes through", async () => {
+    mockBillResponse(200, guestCardReaderPayingBill);
+    const { realtime } = renderGuest();
+    await screen.findByText(CARD_READER_BANNER);
+
+    realtime.emit("bill.paid", {
+      sessionId: SESSION_ID,
+      paymentId: "payment-1",
+      receiptToken: "receipt-token-1",
+      method: "CARD_READER",
       totalCents: 2050,
     });
 
