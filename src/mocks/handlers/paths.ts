@@ -22,6 +22,9 @@ export const apiPaths = {
   onlinePayment: "*/sessions/:sessionId/online-payment",
   cancelOnlinePayment: "*/sessions/:sessionId/online-payment/cancel",
   receiptToken: "*/sessions/:sessionId/receipt-token",
+  cardReaders: "*/restaurant/card-readers",
+  simulatedCardReader: "*/restaurant/card-readers/simulated",
+  cardReader: "*/restaurant/card-readers/:id",
 } as const;
 
 export type ApiPath = keyof typeof apiPaths;
