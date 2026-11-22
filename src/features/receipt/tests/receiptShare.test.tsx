@@ -20,9 +20,13 @@ const renderReceipt = async () => {
 const setClipboard = (clipboard: Partial<Clipboard> | undefined) =>
   Object.defineProperty(navigator, "clipboard", { value: clipboard, configurable: true });
 
+const setShare = (share: Navigator["share"] | undefined) =>
+  Object.defineProperty(navigator, "share", { value: share, configurable: true });
+
 afterEach(() => {
   vi.restoreAllMocks();
   setClipboard(undefined);
+  setShare(undefined);
 });
 
 describe("receipt print and share", () => {
@@ -33,6 +37,34 @@ describe("receipt print and share", () => {
     fireEvent.click(screen.getByRole("button", { name: "Drucken / als PDF speichern" }));
 
     expect(print).toHaveBeenCalledTimes(1);
+  });
+
+  it("offers the browser's share sheet with the page URL where there is one", async () => {
+    const share = vi.fn().mockResolvedValue(undefined);
+    setShare(share);
+    await renderReceipt();
+
+    fireEvent.click(screen.getByRole("button", { name: "Teilen" }));
+
+    expect(share).toHaveBeenCalledWith({ title: "Beleg", url: window.location.href });
+    expect(screen.getByRole("button", { name: "Link kopieren" })).toBeInTheDocument();
+  });
+
+  it("shows no share button without a share sheet; copying the link stays", async () => {
+    setShare(undefined);
+    await renderReceipt();
+
+    expect(screen.queryByRole("button", { name: "Teilen" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Link kopieren" })).toBeInTheDocument();
+  });
+
+  it("closing the share sheet changes nothing", async () => {
+    setShare(vi.fn().mockRejectedValue(new DOMException("cancelled", "AbortError")));
+    await renderReceipt();
+
+    fireEvent.click(screen.getByRole("button", { name: "Teilen" }));
+
+    expect(await screen.findByRole("button", { name: "Teilen" })).toBeInTheDocument();
   });
 
   it("copies the page URL and confirms it", async () => {

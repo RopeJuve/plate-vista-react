@@ -1,4 +1,4 @@
-import { Check, Link2, Printer } from "lucide-react";
+import { Check, Link2, Printer, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useCopyLink } from "./hooks/useCopyLink";
@@ -9,7 +9,18 @@ const selectOnMount = (input: HTMLInputElement | null) => {
   input?.select();
 };
 
-/** Print/PDF and copy-link buttons under the receipt; never printed themselves. */
+/** The browser's own share sheet (mail, messengers, ...), where it has one. */
+const canShare = () => typeof navigator !== "undefined" && typeof navigator.share === "function";
+
+const share = async (url: string) => {
+  try {
+    await navigator.share({ title: "Beleg", url });
+  } catch {
+    // The guest closed the share sheet, or the browser refused: nothing to do.
+  }
+};
+
+/** Print/PDF, share and copy-link buttons under the receipt; never printed themselves. */
 const ReceiptActions = ({ className }: { className?: string }) => {
   const url = window.location.href;
   const { state, copy } = useCopyLink(url);
@@ -21,6 +32,12 @@ const ReceiptActions = ({ className }: { className?: string }) => {
           <Printer aria-hidden="true" />
           Drucken / als PDF speichern
         </Button>
+        {canShare() && (
+          <Button type="button" variant="outline" onClick={() => void share(url)}>
+            <Share2 aria-hidden="true" />
+            Teilen
+          </Button>
+        )}
         <Button type="button" variant="outline" onClick={() => void copy()}>
           <Link2 aria-hidden="true" />
           Link kopieren

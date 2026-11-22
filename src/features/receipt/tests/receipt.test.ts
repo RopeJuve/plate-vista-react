@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  cardBrandLabel,
   FAST_POLL_FOR_MS,
+  formatServicePeriod,
+  fundingLabel,
+  paymentMethodTypeLabel,
+  vatRateLetter,
+  walletLabel,
   formatReceiptDateTime,
   isReceiptMissing,
   paymentMethodLabel,
@@ -72,5 +78,38 @@ describe("isReceiptMissing", () => {
     expect(isReceiptMissing({ response: { status: 500 } })).toBe(false);
     expect(isReceiptMissing(new Error("offline"))).toBe(false);
     expect(isReceiptMissing(null)).toBe(false);
+  });
+});
+
+describe("receipt labels for the redesigned receipt", () => {
+  it("marks 19 % with A and 7 % with B", () => {
+    expect(vatRateLetter("NORMAL")).toBe("A");
+    expect(vatRateLetter("REDUCED_1")).toBe("B");
+  });
+
+  it("prints card brands in capitals, known or not", () => {
+    expect(cardBrandLabel("visa")).toBe("VISA");
+    expect(cardBrandLabel("amex")).toBe("AMEX");
+    expect(cardBrandLabel("cartes_bancaires")).toBe("CB");
+    expect(cardBrandLabel("new_brand")).toBe("NEW BRAND");
+    expect(cardBrandLabel(undefined)).toBe("KARTE");
+  });
+
+  it("names wallets, funding and payment method types as guests know them", () => {
+    expect(walletLabel("apple_pay")).toBe("Apple Pay");
+    expect(walletLabel("masterpass")).toBe("Masterpass");
+    expect(fundingLabel("credit")).toBe("Kredit");
+    expect(fundingLabel("unknown")).toBeNull();
+    expect(fundingLabel(undefined)).toBeNull();
+    expect(paymentMethodTypeLabel("sepa_debit")).toBe("SEPA-Lastschrift");
+    expect(paymentMethodTypeLabel("paypal")).toBe("PayPal");
+    expect(paymentMethodTypeLabel("revolut_pay")).toBe("Revolut Pay");
+    expect(paymentMethodTypeLabel("twint")).toBe("Twint");
+  });
+
+  it("prints the Service Period in German local time", () => {
+    expect(formatServicePeriod({ start: "2026-11-07T18:05:12.000Z", end: "2026-11-07T19:30:00.000Z" })).toBe(
+      "07.11.2026, 19:05:12 – 07.11.2026, 20:30:00"
+    );
   });
 });
