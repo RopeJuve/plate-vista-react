@@ -108,6 +108,63 @@ export interface OnlinePaymentsSwitchBody {
   onlinePaymentsEnabled: boolean;
 }
 
+/** A Stripe smart reader the restaurant takes card payments on. Ids are ours, not Stripe's. */
+export interface CardReader {
+  id: string;
+  /** 1–40 characters, chosen by the owner or admin; need not be unique. */
+  name: string;
+  /** Stripe's device type, e.g. `stripe_s700`, `bbpos_wisepos_e`, `simulated_wisepos_e`. */
+  deviceType: string;
+  serialNumber: string;
+  /** As Stripe last reported it, at most 30 s old. */
+  status: "online" | "offline";
+  /** A Simulated Reader, which only exists in test mode. */
+  simulated: boolean;
+  /** The bill whose card reader payment it is taking now. */
+  busyWith: { sessionId: string; tableNumber: number } | null;
+  addedAt: string;
+}
+
+/**
+ * `GET /restaurant/card-readers` (owner, admin), sorted by name. `payoutAccountReady` is the
+ * Payout Account's `chargesEnabled`; `testMode` says whether Simulated Readers can be added.
+ */
+export interface CardReaderList {
+  items: CardReader[];
+  testMode: boolean;
+  payoutAccountReady: boolean;
+}
+
+/** Body of `POST /restaurant/card-readers`: the code the reader shows on screen, and its name. */
+export interface AddCardReaderBody {
+  registrationCode: string;
+  name: string;
+}
+
+/** Body of `POST /restaurant/card-readers/simulated`. */
+export interface AddSimulatedReaderBody {
+  name: string;
+}
+
+/** Error codes of the Card Reader endpoints. */
+export type CardReaderErrorCode =
+  | "STRIPE_NOT_CONFIGURED"
+  | "VALIDATION"
+  | "PAYOUT_ACCOUNT_NOT_READY"
+  | "RESTAURANT_DETAILS_MISSING"
+  | "CARD_READER_CODE_INVALID"
+  | "SIMULATED_READER_LIVE_MODE"
+  | "CARD_READER_BUSY"
+  | "PAYMENT_PROVIDER_ERROR"
+  | "NOT_FOUND";
+
+/** Error body of the Card Reader endpoints; `CARD_READER_BUSY` names the table it is taking a payment for. */
+export interface CardReaderErrorBody {
+  code: CardReaderErrorCode;
+  message?: string;
+  details?: { tableNumber?: number };
+}
+
 /** Why a Late Payment was refunded instead of becoming a Payment. */
 export type OnlinePaymentRefundReason = "BILL_ALREADY_PAID" | "BILL_NOT_FROZEN" | "SESSION_CLOSED";
 
