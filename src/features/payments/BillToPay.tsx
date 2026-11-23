@@ -32,6 +32,7 @@ const BillToPay = ({
       <CardReaderFailure
         payment={cardReader.failed}
         totalCents={totalCents}
+        retryBlocked={cardReader.retryBlocked}
         pending={cardReader.pending}
         onRetry={onRetry}
       />

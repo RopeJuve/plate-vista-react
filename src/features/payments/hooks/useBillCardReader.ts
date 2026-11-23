@@ -1,7 +1,7 @@
 import type { CardReaderPayment } from "../../../shared/api/payments";
 import type { BillUnfrozenReason, SessionBill } from "../../../shared/realtime/protocol";
 import { cardReaderFailed, cardReaderInProgress } from "../cardReaderAttempt";
-import { cardReaderOption, readerOnline } from "../cardReaderAvailability";
+import { cardReaderOption, readerOnline, retryBlockedNote } from "../cardReaderAvailability";
 import { useCardReaderEndNote } from "./useCardReaderEndNote";
 import { useCardReaderPayment } from "./useCardReaderPayment";
 import { useLastCardReader } from "./useLastCardReader";
@@ -45,10 +45,13 @@ export const useBillCardReader = ({
     }
   };
 
+  const failed = bill && !inProgress ? cardReaderFailed(bill) : null;
+
   return {
     ...requests,
     inProgress,
-    failed: bill && !inProgress ? cardReaderFailed(bill) : null,
+    failed,
+    retryBlocked: bill && failed ? retryBlockedNote(bill, failed) : null,
     // A new start is allowed after a failure too, so staff can switch to another reader instead of Retry.
     option: bill && !inProgress ? cardReaderOption(bill) : null,
     readerOnline: bill && inProgress ? readerOnline(bill, inProgress) : null,

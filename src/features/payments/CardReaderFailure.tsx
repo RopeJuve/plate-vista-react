@@ -5,16 +5,20 @@ import { Button } from "@/components/ui/button";
 
 /**
  * A card reader attempt that failed: the reader, why (in staff words, with the server's sentence),
- * and the bill's current total, which Retry asks for on the same reader. Cash and card stay below it.
+ * and the bill's current total, which Retry asks for on the same reader. Retry is greyed out, with why,
+ * while that reader is offline or busy; cash, card and the other readers stay below it.
  */
 const CardReaderFailure = ({
   payment,
   totalCents,
+  retryBlocked,
   pending,
   onRetry,
 }: {
   payment: CardReaderPayment;
   totalCents: number;
+  /** Why the reader that failed can't take Retry right now; `null` when it can. */
+  retryBlocked: string | null;
   pending: boolean;
   onRetry: () => void;
 }) => {
@@ -27,9 +31,18 @@ const CardReaderFailure = ({
         <p className="font-semibold">{title}</p>
         {sentence && sentence !== title && <p>{sentence}</p>}
       </div>
-      <Button type="button" size="sm" variant="outline" onClick={onRetry} disabled={pending}>
-        Retry
-      </Button>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={onRetry}
+          disabled={pending || retryBlocked !== null}
+        >
+          Retry
+        </Button>
+        {retryBlocked && <span className="text-xs text-ink-soft">{retryBlocked}</span>}
+      </div>
     </section>
   );
 };

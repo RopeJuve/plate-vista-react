@@ -71,3 +71,12 @@ export const readerOnline = (bill: SessionBill, payment: CardReaderPayment): boo
   const reader = bill.cardReader?.readers.find(({ id }) => id === payment.reader.id);
   return reader ? reader.status === "online" : null;
 };
+
+/**
+ * Why Retry can't go to the reader the attempt failed on (offline, or busy with another table), as the
+ * bill last reported it; `null` when it can, or when the bill doesn't list that reader (the server decides).
+ */
+export const retryBlockedNote = (bill: SessionBill, payment: CardReaderPayment): string | null => {
+  const reader = bill.cardReader?.readers.find(({ id }) => id === payment.reader.id);
+  return reader ? readerChoice(reader).note : null;
+};

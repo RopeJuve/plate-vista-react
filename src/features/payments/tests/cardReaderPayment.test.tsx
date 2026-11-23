@@ -536,6 +536,20 @@ describe("a card reader payment that fails", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Something odd happened on the reader.");
   });
 
+  it("greys out Retry with why when the reader that failed is now offline", async () => {
+    const failed = cardReaderFailedBill({ reason: "READER_OFFLINE", message: "The reader lost its connection." });
+    mockBillResponse(200, {
+      ...failed,
+      cardReader: { state: "OFFERED", reason: null, readers: [{ ...cardReaders.bar, status: "offline" }, idleSimulatedReader] },
+    });
+    renderStaffCheck();
+
+    const status = await screen.findByRole("region", { name: "Card reader payment" });
+    expect(within(status).getByRole("button", { name: "Retry" })).toBeDisabled();
+    expect(within(status).getByText("Reader offline – check its Wi-Fi")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: CARD_READER })).toBeEnabled();
+  });
+
   it("shows the failure when the check opens on a bill whose last attempt failed", async () => {
     mockBillResponse(200, cardReaderFailedBill());
     renderStaffCheck();

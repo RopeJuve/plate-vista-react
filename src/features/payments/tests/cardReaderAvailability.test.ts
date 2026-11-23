@@ -1,10 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { cardReaderBill, cardReaders, idleSimulatedReader } from "../../../mocks/fixtures/cardReaders";
+import {
+  cardReaderBill,
+  cardReaderFailedBill,
+  cardReaders,
+  idleSimulatedReader,
+} from "../../../mocks/fixtures/cardReaders";
 import type { CardReader } from "../../../shared/api/payments";
 import {
   ALL_OFFLINE,
   cardReaderOption,
   preselectedReaderId,
+  retryBlockedNote,
   unavailableReason,
   type ReaderChoice,
 } from "../cardReaderAvailability";
@@ -79,5 +85,29 @@ describe("cardReaderOption", () => {
       cardReader: { state: "OFFERED", reason: null, readers: [cardReaders.terrasse] },
     });
     expect(option).toMatchObject({ available: false, reason: ALL_OFFLINE });
+  });
+});
+
+describe("retryBlockedNote", () => {
+  const failed = cardReaderFailedBill();
+  const attempt = failed.cardReaderPayment!;
+  const listing = (...readers: CardReader[]) => ({
+    ...failed,
+    cardReader: { state: "OFFERED" as const, reason: null, readers },
+  });
+
+  it("lets Retry go to the reader that failed when it is online and free", () => {
+    expect(retryBlockedNote(listing(cardReaders.bar), attempt)).toBeNull();
+  });
+
+  it("says why Retry can't go to the reader that failed: offline, or busy with another table", () => {
+    expect(retryBlockedNote(listing(offline(cardReaders.bar)), attempt)).toBe("Reader offline – check its Wi-Fi");
+    const busy = { ...cardReaders.bar, busyWith: { sessionId: "other-session", tableNumber: 9 } };
+    expect(retryBlockedNote(listing(busy), attempt)).toBe("Busy with table 9");
+  });
+
+  it("leaves Retry to the server when the bill doesn't list the reader", () => {
+    expect(retryBlockedNote(listing(cardReaders.terrasse), attempt)).toBeNull();
+    expect(retryBlockedNote({ ...failed, cardReader: undefined }, attempt)).toBeNull();
   });
 });
