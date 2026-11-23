@@ -143,7 +143,7 @@ export const cardReaderFailedBill = (
   cardReaderPayment: { ...cardReaderPaymentInProgress(reader), status: "FAILED", failure },
 });
 
-const paymentError =(status: number, code: PaymentErrorBody["code"], details?: Record<string, unknown>) => ({
+const paymentError = (status: number, code: PaymentErrorBody["code"], details?: Record<string, unknown>) => ({
   status,
   body: details ? { code, details } : { code },
 });

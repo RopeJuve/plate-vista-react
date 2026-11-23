@@ -340,11 +340,6 @@ export interface ReceiptSignature {
   qrCodeData?: string;
 }
 
-/**
- * How the guest paid online or on a card reader, as Stripe saw it; kept when the payment was recorded.
- * `type` is Stripe's payment method type (`card`, `card_present`, `paypal`, `klarna`, ...);
- * the card fields only for cards, the EMV fields (`aid`, `applicationLabel`, `readMethod`) only for `card_present`.
- */
 /** How a card reader read the card, as Stripe names it. */
 export type CardReadMethod =
   | "contactless_emv"
@@ -353,6 +348,11 @@ export type CardReadMethod =
   | "magnetic_stripe_fallback"
   | "magnetic_stripe_track2";
 
+/**
+ * How the guest paid online or on a card reader, as Stripe saw it; kept when the payment was recorded.
+ * `type` is Stripe's payment method type (`card`, `card_present`, `paypal`, `klarna`, ...);
+ * the card fields only for cards, the EMV fields (`aid`, `applicationLabel`, `readMethod`) only for `card_present`.
+ */
 export interface ReceiptPaymentDetails {
   type: string;
   brand?: string;
