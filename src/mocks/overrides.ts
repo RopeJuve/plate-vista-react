@@ -84,6 +84,10 @@ export const mockTestCardResponse = (status: number, body?: unknown) =>
 export const mockCancelCardReaderPaymentResponse = (status: number, body?: unknown) =>
   mockResponse("post", "cancelCardReaderPayment", status, body);
 
+/** `(404)` when there is no FAILED attempt, or any of `cardReaderPaymentErrors`. */
+export const mockRetryCardReaderPaymentResponse = (status: number, body?: unknown) =>
+  mockResponse("post", "retryCardReaderPayment", status, body);
+
 /** Card Readers: pair with `cardReaderLists` and `cardReaderErrors` from `fixtures/cardReaders`. */
 export const mockCardReadersResponse = (status: number, body?: unknown) =>
   mockResponse("get", "cardReaders", status, body);

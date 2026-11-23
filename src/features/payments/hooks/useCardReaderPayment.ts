@@ -1,10 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { CardReaderPayment } from "../../../shared/api/payments";
-import { cancelCardReaderProblem, cardReaderProblem, type CardReaderProblem } from "../cardReaderPayment";
-import { cancelCardReaderPayment, presentTestCard, startCardReaderPayment } from "../paymentsApi";
+import type { CardReaderPayment, TestCard } from "../../../shared/api/payments";
+import {
+  cancelCardReaderProblem,
+  cardReaderProblem,
+  retryProblem,
+  type CardReaderProblem,
+} from "../cardReaderPayment";
+import {
+  cancelCardReaderPayment,
+  presentTestCard,
+  retryCardReaderPayment,
+  startCardReaderPayment,
+} from "../paymentsApi";
 
 /**
- * Starting a bill's card reader payment, cancelling it and, on a Simulated Reader, presenting a test card.
+ * Starting a bill's card reader payment, retrying a failed one on the same reader, cancelling it and,
+ * on a Simulated Reader, presenting a test card (approved or declined).
  * `onStarted` hears the attempt the server answered with, `onCancelled` that the cancel went through;
  * `reload` reads the bill again when an answer says the bill on screen is out of date. What happens
  * next arrives as events. A second tap while a request is running sends nothing.
@@ -61,11 +72,14 @@ export const useCardReaderPayment = (
   const start = (readerId: string, expectedTotalCents: number) =>
     run(() => startCardReaderPayment(sessionId, { readerId, expectedTotalCents }), onStarted);
 
-  const approveTestCard = () => run(() => presentTestCard(sessionId, "APPROVED"), onStarted);
+  const retry = (expectedTotalCents: number) =>
+    run(() => retryCardReaderPayment(sessionId, expectedTotalCents), onStarted, retryProblem);
+
+  const presentCard = (card: TestCard) => run(() => presentTestCard(sessionId, card), onStarted);
 
   const cancel = () => run(() => cancelCardReaderPayment(sessionId), onCancelled, cancelCardReaderProblem);
 
   const clearProblem = useCallback(() => setProblem(null), []);
 
-  return { pending, problem, start, approveTestCard, cancel, clearProblem };
+  return { pending, problem, start, retry, presentCard, cancel, clearProblem };
 };

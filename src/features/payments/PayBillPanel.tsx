@@ -4,7 +4,8 @@ import type { BillUnfrozenReason, SessionBill } from "../../shared/realtime/prot
 import { formatCents } from "../../shared/money/formatCents";
 import { canPayBill, isGuestPayingOnline, PAY_METHODS } from "./billPayment";
 import CardReaderButton from "./CardReaderButton";
-import { cardReaderInProgress, cardReaderOption } from "./cardReaderPayment";
+import CardReaderFailure from "./CardReaderFailure";
+import { cardReaderFailed, cardReaderInProgress, cardReaderOption } from "./cardReaderPayment";
 import CardReaderStatus from "./CardReaderStatus";
 import ConfirmPaymentDialog from "./ConfirmPaymentDialog";
 import FrozenBill from "./FrozenBill";
@@ -103,11 +104,18 @@ const PayBillPanel = ({
   }
 
   const payingOnline = isGuestPayingOnline(bill);
-  const readerOption = readerPayment ? null : cardReaderOption(bill);
+  const failedPayment = readerPayment ? null : cardReaderFailed(bill);
+  // A failed attempt is retried on its own reader, so there is no second way to start one.
+  const readerOption = readerPayment || failedPayment ? null : cardReaderOption(bill);
 
   const handleStartCardReader = (readerId: string) => {
     clearProblem();
     void cardReader.start(readerId, bill.totalCents);
+  };
+
+  const handleRetryCardReader = () => {
+    clearProblem();
+    void cardReader.retry(bill.totalCents);
   };
 
   return (
@@ -133,8 +141,15 @@ const PayBillPanel = ({
               <CardReaderStatus
                 payment={readerPayment}
                 pending={cardReader.pending}
-                onPresentTestCard={() => void cardReader.approveTestCard()}
+                onPresentTestCard={(card) => void cardReader.presentCard(card)}
                 onCancel={() => void cardReader.cancel()}
+              />
+            ) : failedPayment ? (
+              <CardReaderFailure
+                payment={failedPayment}
+                totalCents={bill.totalCents}
+                pending={cardReader.pending}
+                onRetry={handleRetryCardReader}
               />
             ) : (
               <div className="flex items-baseline gap-2 font-mono">

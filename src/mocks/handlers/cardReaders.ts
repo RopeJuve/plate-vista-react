@@ -36,8 +36,8 @@ const readerById = (id: string) =>
 /**
  * Card Readers (Kasse): by default the server is in test mode with a ready Payout Account and the
  * contract's three readers; the answers do not remember readers added or removed.
- * Card reader payments: starting works on any known reader, a test card is always taken, and a cancel
- * always unfreezes the bill;
+ * Card reader payments: starting works on any known reader, a retry starts again on the Bar reader,
+ * a test card is always taken, and a cancel always unfreezes the bill;
  * what follows (paid, declined) only arrives as realtime events, which tests emit themselves.
  */
 export const cardReaderHandlers = [
@@ -79,4 +79,12 @@ export const cardReaderHandlers = [
     })
   ),
   http.post(apiPaths.cancelCardReaderPayment, () => HttpResponse.json({ status: "open" })),
+  http.post(apiPaths.retryCardReaderPayment, async ({ params, request }) => {
+    const body = (await request.json()) as { expectedTotalCents?: unknown };
+    return HttpResponse.json<CardReaderPayment>({
+      ...cardReaderPaymentInProgress(),
+      sessionId: String(params.sessionId),
+      amountCents: Number(body?.expectedTotalCents),
+    });
+  }),
 ];

@@ -128,7 +128,22 @@ export const guestCardReaderPayingBill: SessionBill = {
   },
 };
 
-const paymentError = (status: number, code: PaymentErrorBody["code"], details?: Record<string, unknown>) => ({
+/**
+ * The bill after the card was declined or the reader failed (`bill.paymentFailed`, then `bill.unfrozen` FAILED):
+ * open again, `reader` free, and the attempt kept as FAILED with its reason so staff can retry.
+ */
+export const cardReaderFailedBill = (
+  failure: NonNullable<CardReaderPayment["failure"]> = {
+    reason: "INSUFFICIENT_FUNDS",
+    message: "The card was declined for insufficient funds.",
+  },
+  reader: CardReader = cardReaders.bar
+): SessionBill => ({
+  ...cardReaderBill(reader),
+  cardReaderPayment: { ...cardReaderPaymentInProgress(reader), status: "FAILED", failure },
+});
+
+const paymentError =(status: number, code: PaymentErrorBody["code"], details?: Record<string, unknown>) => ({
   status,
   body: details ? { code, details } : { code },
 });
