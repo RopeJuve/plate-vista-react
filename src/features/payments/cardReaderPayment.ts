@@ -129,7 +129,7 @@ export const cancelCardReaderProblem = (error: unknown): CardReaderProblem => {
 const ENDED: Partial<Record<BillUnfrozenReason, string>> = {
   CANCELLED: "The card reader payment was cancelled.",
   EXPIRED: "The card reader payment timed out: no card was presented.",
-  STAFF_PAYMENT: "The card reader payment was stopped: the bill was paid in cash or by card instead.",
+  STAFF_PAYMENT: "The card reader payment was stopped: staff recorded a payment or closed the table.",
 };
 
 /** What staff read when a card reader payment ends unpaid (a declined card is told elsewhere). */

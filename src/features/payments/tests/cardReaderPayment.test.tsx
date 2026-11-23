@@ -398,7 +398,7 @@ describe("a card reader payment that ends without being paid", () => {
   it.each([
     ["CANCELLED", "The card reader payment was cancelled."],
     ["EXPIRED", "The card reader payment timed out: no card was presented."],
-    ["STAFF_PAYMENT", "The card reader payment was stopped: the bill was paid in cash or by card instead."],
+    ["STAFF_PAYMENT", "The card reader payment was stopped: staff recorded a payment or closed the table."],
   ] as const)("leaves the card reader screen on every device with a note on %s", async (reason, note) => {
     const { realtime } = await renderCheckOnReader();
 

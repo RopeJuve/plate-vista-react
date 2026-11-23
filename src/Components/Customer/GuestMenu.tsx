@@ -13,6 +13,7 @@ import CategoriesCustomer from "./CategoriesCustomer";
 import MenuItemsList from "./MenuItemsList";
 import NavBarCustomer from "./NavBarCustomer";
 import CardReaderBillBanner from "./CardReaderBillBanner";
+import CardReaderEndedBanner from "./CardReaderEndedBanner";
 import FrozenBillBanner from "./FrozenBillBanner";
 import PaidBillBanner from "./PaidBillBanner";
 import PaymentNotCompletedBanner from "./PaymentNotCompletedBanner";
@@ -30,7 +31,7 @@ const GuestMenu = ({
   const { session } = useGuestAuth();
   const { items, categories, loading, error, reload } = useMenu();
   const { search } = useStateContext();
-  const { paid, frozen, payingOnCardReader } = useGuestBill();
+  const { paid, frozen, payingOnCardReader, cardReaderEndedNote, dismissCardReaderEndedNote } = useGuestBill();
   const [selectedCategory, setSelectedCategory] = useState("");
   // The guest who opened the table sees the code up front; anyone can bring it back.
   const [showCode, setShowCode] = useState(() => Boolean(session?.opened));
@@ -54,6 +55,9 @@ const GuestMenu = ({
         />
         {paid && <PaidBillBanner paid={paid} />}
         {frozen && !paid && (payingOnCardReader ? <CardReaderBillBanner /> : <FrozenBillBanner />)}
+        {cardReaderEndedNote && !paid && !frozen && (
+          <CardReaderEndedBanner note={cardReaderEndedNote} onDismiss={dismissCardReaderEndedNote} />
+        )}
         {paymentNotCompleted && !paid && !frozen && <PaymentNotCompletedBanner />}
         {showCode && session?.joinCode && !paid && !frozen && (
           <JoinCodeBanner code={session.joinCode} onDismiss={() => setShowCode(false)} />

@@ -1,5 +1,5 @@
 import { sumCents } from "../../shared/money/formatCents";
-import type { Order, ServerEvent, SessionBill } from "../../shared/realtime/protocol";
+import type { BillUnfrozenReason, Order, ServerEvent, SessionBill } from "../../shared/realtime/protocol";
 import { withStatusChange } from "../../shared/realtime/tickets";
 
 export type BillOrder = Order & { cancelReason?: string };
@@ -16,6 +16,8 @@ export type BillState = {
   frozen: boolean;
   /** The bill is frozen because staff are taking it on a card reader (2.7), not online. */
   payingOnCardReader: boolean;
+  /** Why the last card reader payment ended unpaid, until the bill freezes again or the guest dismisses it. */
+  cardReaderEnded: BillUnfrozenReason | null;
   /** Set while the guest may pay the bill online, with the server's total for it. */
   payOnline: { totalCents: number } | null;
 };
@@ -26,6 +28,7 @@ export const emptyBill = (): BillState => ({
   paid: null,
   frozen: false,
   payingOnCardReader: false,
+  cardReaderEnded: null,
   payOnline: null,
 });
 
@@ -113,17 +116,40 @@ export const applyBillEvent = (state: BillState, event: ServerEvent, sessionId: 
       if (event.data.sessionId !== sessionId) {
         return state;
       }
-      return { ...markBillFrozen(state), payingOnCardReader: event.data.kind === "CARD_READER" };
+      return {
+        ...markBillFrozen(state),
+        payingOnCardReader: event.data.kind === "CARD_READER",
+        cardReaderEnded: null,
+      };
     case "bill.unfrozen":
       if (event.data.sessionId !== sessionId) {
         return state;
       }
       // Whether it can be paid online again is the server's call: the provider re-reads the bill.
-      return { ...state, frozen: false, payingOnCardReader: false };
+      return {
+        ...state,
+        frozen: false,
+        payingOnCardReader: false,
+        cardReaderEnded: state.payingOnCardReader ? (event.data.reason ?? null) : state.cardReaderEnded,
+      };
     default:
       return state;
   }
 };
+
+/** The guest dismissed the note about a card reader payment that ended. */
+export const dismissCardReaderEnded = (state: BillState): BillState =>
+  state.cardReaderEnded ? { ...state, cardReaderEnded: null } : state;
+
+const CARD_READER_ENDED: Partial<Record<BillUnfrozenReason, string>> = {
+  CANCELLED: "The card payment was cancelled. You can order again.",
+  EXPIRED: "The card payment timed out. You can order again.",
+  STAFF_PAYMENT: "The card payment was stopped by staff.",
+};
+
+/** What the table reads when staff stop taking the bill on a card reader; a declined card is not told to guests. */
+export const cardReaderEndedMessage = (reason: BillUnfrozenReason | null): string | null =>
+  reason ? (CARD_READER_ENDED[reason] ?? null) : null;
 
 export const billOrders = (state: BillState): BillOrder[] =>
   Object.values(state.ordersById).sort((a, b) => a.createdAt.localeCompare(b.createdAt));

@@ -16,7 +16,9 @@ import { receiptPath } from "../payments/billPayment";
 import {
   applyBillEvent,
   billOrders,
+  cardReaderEndedMessage,
   clearBill,
+  dismissCardReaderEnded,
   loadBill,
   markBillFrozen,
   markBillPaid,
@@ -42,6 +44,9 @@ type GuestBillValue = {
   frozen: boolean;
   /** The bill is frozen because staff are taking it on a card reader, so there is nothing to continue online. */
   payingOnCardReader: boolean;
+  /** Why staff stopped taking the bill on a card reader, for the table to read; `null` when there is nothing to say. */
+  cardReaderEndedNote: string | null;
+  dismissCardReaderEndedNote: () => void;
   /** An order command came back `BILL_FROZEN`: lock the bill and read it again. */
   markFrozen: () => void;
   /** Set while the guest may pay the bill online, with the total they would pay. */
@@ -163,7 +168,10 @@ export const GuestBillProvider = ({
     recheckBill();
   }, [recheckBill]);
 
+  const dismissCardReaderEndedNote = useCallback(() => setState(dismissCardReaderEnded), []);
+
   const orders = useMemo(() => billOrders(state), [state]);
+  const cardReaderEndedNote = cardReaderEndedMessage(state.cardReaderEnded);
   const closed = state.closed || sessionEnded;
 
   useEffect(() => {
@@ -181,11 +189,26 @@ export const GuestBillProvider = ({
       markPaid,
       frozen: state.frozen,
       payingOnCardReader: state.payingOnCardReader,
+      cardReaderEndedNote,
+      dismissCardReaderEndedNote,
       markFrozen,
       payOnline: state.payOnline,
       recheckBill,
     }),
-    [orders, closed, state.paid, rememberOrder, markPaid, state.frozen, state.payingOnCardReader, markFrozen, state.payOnline, recheckBill]
+    [
+      orders,
+      closed,
+      state.paid,
+      rememberOrder,
+      markPaid,
+      state.frozen,
+      state.payingOnCardReader,
+      cardReaderEndedNote,
+      dismissCardReaderEndedNote,
+      markFrozen,
+      state.payOnline,
+      recheckBill,
+    ]
   );
 
   return <GuestBillContext.Provider value={value}>{children}</GuestBillContext.Provider>;
