@@ -5,12 +5,13 @@ import { formatCents } from "../../shared/money/formatCents";
 import { canPayBill, isGuestPayingOnline, PAY_METHODS } from "./billPayment";
 import CardReaderButton from "./CardReaderButton";
 import CardReaderFailure from "./CardReaderFailure";
-import { cardReaderFailed, cardReaderInProgress, cardReaderOption } from "./cardReaderPayment";
+import { cardReaderFailed, cardReaderInProgress, cardReaderOption, readerOnline } from "./cardReaderPayment";
 import CardReaderStatus from "./CardReaderStatus";
 import ConfirmPaymentDialog from "./ConfirmPaymentDialog";
 import FrozenBill from "./FrozenBill";
 import { useCardReaderEndNote } from "./hooks/useCardReaderEndNote";
 import { useCardReaderPayment } from "./hooks/useCardReaderPayment";
+import { useLastCardReader } from "./hooks/useLastCardReader";
 import { useRecordPayment } from "./hooks/useRecordPayment";
 import PaidBill from "./PaidBill";
 import PayProblemNote from "./PayProblemNote";
@@ -60,6 +61,7 @@ const PayBillPanel = ({
   const cardReader = useCardReaderPayment(sessionId, showCardReaderPayment, reload, handleCancelled);
   const readerPayment = bill ? cardReaderInProgress(bill) : null;
   const endNote = useCardReaderEndNote(Boolean(readerPayment), unfrozenReason);
+  const { lastReaderId, remember: rememberReader } = useLastCardReader();
   useEffect(() => {
     onBillChange?.(loading ? undefined : loadFailed ? null : bill);
   }, [bill, loading, loadFailed, onBillChange]);
@@ -110,6 +112,7 @@ const PayBillPanel = ({
 
   const handleStartCardReader = (readerId: string) => {
     clearProblem();
+    rememberReader(readerId);
     void cardReader.start(readerId, bill.totalCents);
   };
 
@@ -140,6 +143,7 @@ const PayBillPanel = ({
             {readerPayment ? (
               <CardReaderStatus
                 payment={readerPayment}
+                readerOnline={readerOnline(bill, readerPayment)}
                 pending={cardReader.pending}
                 onPresentTestCard={(card) => void cardReader.presentCard(card)}
                 onCancel={() => void cardReader.cancel()}
@@ -172,7 +176,13 @@ const PayBillPanel = ({
                 </Button>
               ))}
               {readerOption && (
-                <CardReaderButton option={readerOption} pending={cardReader.pending} onStart={handleStartCardReader} />
+                <CardReaderButton
+                  option={readerOption}
+                  lastReaderId={lastReaderId}
+                  pending={cardReader.pending}
+                  onStart={handleStartCardReader}
+                  onRefresh={() => void reload()}
+                />
               )}
             </div>
           </>

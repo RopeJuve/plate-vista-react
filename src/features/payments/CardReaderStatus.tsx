@@ -11,11 +11,14 @@ import { Button } from "@/components/ui/button";
  */
 const CardReaderStatus = ({
   payment,
+  readerOnline,
   pending,
   onPresentTestCard,
   onCancel,
 }: {
   payment: CardReaderPayment;
+  /** The reader's online/offline status as the bill last reported it; `null` hides it. */
+  readerOnline: boolean | null;
   pending: boolean;
   onPresentTestCard: (card: TestCard) => void;
   onCancel: () => void;
@@ -23,6 +26,11 @@ const CardReaderStatus = ({
   <section aria-label="Card reader payment" className="space-y-2 rounded-lg bg-signal/10 px-4 py-3">
     <div className="flex items-baseline gap-2 font-mono">
       <span className="text-sm font-bold uppercase tracking-[0.1em]">{payment.reader.name}</span>
+      {readerOnline !== null && (
+        <span className={`text-xs font-semibold ${readerOnline ? "text-ink-soft" : "text-alert-ink"}`}>
+          {readerOnline ? "Online" : "Offline"}
+        </span>
+      )}
       <span className="leader" aria-hidden="true" />
       <span className="text-lg font-bold tabular">{formatCents(payment.amountCents)}</span>
     </div>

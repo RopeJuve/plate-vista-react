@@ -238,7 +238,7 @@ describe("a card reader payment that cannot start", () => {
     ["billChanged", `The bill changed — new total ${shown(2750)}. Please start again.`],
     ["onlineInProgress", "A guest is paying this bill online right now."],
     ["readerInProgress", "This bill is already being paid on the card reader “Terrasse”."],
-    ["busy", "The card reader is taking table 7’s payment."],
+    ["busy", "This reader is busy with table 7."],
     ["offline", "The card reader is offline. Check it is switched on and connected."],
     ["tseNotActive", "Card reader payments need an active TSE."],
     ["payoutNotReady", "Card reader payments need a payout account that can take payments."],
