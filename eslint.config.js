@@ -4,6 +4,7 @@ import react from "eslint-plugin-react";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
+import paddingBetweenTestBlocks from "./eslint-rules/paddingBetweenTestBlocks.js";
 
 export default [
   // .claude/ holds vendored agent-skill scripts (UMD bundles), not app code.
@@ -93,6 +94,16 @@ export default [
           ],
         },
       ],
+    },
+  },
+  {
+    // Unit/component tests and Playwright specs: a blank line between consecutive test and describe blocks.
+    files: ["src/**/*.test.{ts,tsx}", "e2e/**/*.spec.ts", "eslint-rules/**/*.test.js"],
+    plugins: {
+      "test-blocks": { rules: { "padding-between-test-blocks": paddingBetweenTestBlocks } },
+    },
+    rules: {
+      "test-blocks/padding-between-test-blocks": "error",
     },
   },
   {
