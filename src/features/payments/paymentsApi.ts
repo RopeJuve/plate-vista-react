@@ -26,6 +26,19 @@ const cardReaderPaymentPath = (sessionId: string) => `/sessions/${encodeURICompo
 export const startCardReaderPayment = async (sessionId: string, body: StartCardReaderPaymentBody) =>
   (await api.post<CardReaderPayment>(cardReaderPaymentPath(sessionId), body, { skipErrorToast: true })).data;
 
+/**
+ * `POST /sessions/:id/card-reader-payment/retry`: the FAILED attempt starts again on the same reader.
+ * 404 when there is no FAILED attempt; otherwise every error of starting (BILL_CHANGED with the new total).
+ */
+export const retryCardReaderPayment = async (sessionId: string, expectedTotalCents: number) =>
+  (
+    await api.post<CardReaderPayment>(
+      `${cardReaderPaymentPath(sessionId)}/retry`,
+      { expectedTotalCents },
+      { skipErrorToast: true }
+    )
+  ).data;
+
 /** `POST /sessions/:id/card-reader-payment/test-card` (Simulated Reader, test mode): the outcome follows as events. */
 export const presentTestCard = async (sessionId: string, card: TestCard) =>
   (await api.post<CardReaderPayment>(`${cardReaderPaymentPath(sessionId)}/test-card`, { card }, { skipErrorToast: true }))

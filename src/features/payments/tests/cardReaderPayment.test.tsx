@@ -12,6 +12,7 @@ import { useAuth } from "../../../contexts/AuthContext";
 import { SESSION_ID, unpaidBill } from "../../../mocks/fixtures/bill";
 import {
   cardReaderBill,
+  cardReaderFailedBill,
   cardReaderPaymentErrors,
   cardReaderPayingBill,
   cardReaders,
@@ -23,6 +24,7 @@ import { apiPaths } from "../../../mocks/handlers/paths";
 import {
   mockBillResponse,
   mockCancelCardReaderPaymentResponse,
+  mockRetryCardReaderPaymentResponse,
   mockStartCardReaderPaymentResponse,
 } from "../../../mocks/overrides";
 import { server } from "../../../mocks/server";
@@ -479,5 +481,227 @@ describe("recording cash or card during a card reader payment", () => {
     expect(await screen.findByText(/^Paid · /)).toBeInTheDocument();
     expect(screen.queryByText("Waiting for card")).not.toBeInTheDocument();
     expect(bodies).toEqual([method]);
+  });
+});
+
+type FailureReason = EventData<"bill.paymentFailed">["reason"];
+
+/** The card fails on the reader: the bill reads as `failedBill` from now on, then the two events arrive. */
+const failCardOnReader = (
+  realtime: ReturnType<typeof createMockRealtime>,
+  reason: FailureReason = "INSUFFICIENT_FUNDS",
+  message = "The card was declined for insufficient funds.",
+  failedBill = cardReaderFailedBill({ reason, message })
+) => {
+  mockBillResponse(200, failedBill);
+  realtime.emit("bill.paymentFailed", {
+    sessionId: SESSION_ID,
+    tableNumber: 4,
+    readerName: "Bar",
+    amountCents: unpaidBill.totalCents,
+    reason,
+    message,
+    failedAt: "2026-11-22T19:01:30.000Z",
+  });
+  realtime.emit("bill.unfrozen", { sessionId: SESSION_ID, reason: "FAILED" });
+};
+
+describe("a card reader payment that fails", () => {
+  it.each([
+    ["DECLINED", "The card was declined.", "Card declined"],
+    ["INSUFFICIENT_FUNDS", "The card was declined for insufficient funds.", "Card declined: insufficient funds"],
+    ["LOST_OR_STOLEN_CARD", "The card was reported lost or stolen.", "Card declined: reported lost or stolen"],
+    ["EXPIRED_CARD", "The card has expired.", "Card declined: expired card"],
+    ["PROCESSING_ERROR", "The card network failed.", "Card network error"],
+    ["CANCELLED_ON_READER", "Cancelled on the reader.", "Cancelled on the reader"],
+    ["READER_OFFLINE", "The reader lost its connection.", "Reader offline"],
+  ] as const)("shows why on %s on every staff device at the table", async (reason, message, title) => {
+    const { realtime } = await renderCheckOnReader();
+
+    failCardOnReader(realtime, reason, message);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(title);
+    const status = screen.getByRole("region", { name: "Card reader payment" });
+    expect(within(status).getByRole("alert")).toHaveTextContent(message);
+    expect(within(status).getByText("Bar")).toBeInTheDocument();
+    expect(within(status).getByRole("button", { name: "Retry" })).toBeEnabled();
+    expect(screen.queryByText("Waiting for card")).not.toBeInTheDocument();
+  });
+
+  it("reads the server's sentence for a reason it has no words for", async () => {
+    const { realtime } = await renderCheckOnReader();
+
+    failCardOnReader(realtime, "OTHER", "Something odd happened on the reader.");
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Something odd happened on the reader.");
+  });
+
+  it("shows the failure when the check opens on a bill whose last attempt failed", async () => {
+    mockBillResponse(200, cardReaderFailedBill());
+    renderStaffCheck();
+
+    const status = await screen.findByRole("region", { name: "Card reader payment" });
+    expect(within(status).getByRole("alert")).toHaveTextContent("Card declined: insufficient funds");
+  });
+
+  it("shows the failure in the admin table dialog too", async () => {
+    mockBillResponse(200, cardReaderPayingBill());
+    const realtime = createMockRealtime();
+    render(
+      <RealtimeTestProviders realtime={realtime}>
+        <TableDetailsDialog table={{ _id: TABLE_ID, tableNumber: 4 }} open onOpenChange={() => undefined} />
+      </RealtimeTestProviders>
+    );
+    await screen.findByText("Waiting for card");
+
+    failCardOnReader(realtime);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Card declined: insufficient funds");
+    expect(screen.queryByText("Waiting for card")).not.toBeInTheDocument();
+  });
+});
+
+/** Every `POST /sessions/:id/card-reader-payment/retry` body, answered after a short wait so a double tap overlaps. */
+const recordRetries = () => {
+  const retries: unknown[] = [];
+  server.use(
+    http.post(apiPaths.retryCardReaderPayment, async ({ request }) => {
+      const body = (await request.json()) as { expectedTotalCents: number };
+      retries.push(body);
+      await delay(50);
+      return HttpResponse.json({
+        ...cardReaderPayingBill().cardReaderPayment,
+        amountCents: body.expectedTotalCents,
+      });
+    })
+  );
+  return retries;
+};
+
+describe("retrying a failed card reader payment", () => {
+  it("starts again on the same reader with one request on a double tap", async () => {
+    mockBillResponse(200, cardReaderFailedBill());
+    const retries = recordRetries();
+    const { user } = renderStaffCheck();
+
+    await user.dblClick(await screen.findByRole("button", { name: "Retry" }));
+
+    expect(await screen.findByText("Waiting for card")).toBeInTheDocument();
+    const status = screen.getByRole("region", { name: "Card reader payment" });
+    expect(within(status).getByText("Bar")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
+    expect(retries).toEqual([{ expectedTotalCents: unpaidBill.totalCents }]);
+  });
+
+  it("shows the bill's new total after guests ordered, and retries for it", async () => {
+    const newTotal = unpaidBill.totalCents + 900;
+    mockBillResponse(200, { ...cardReaderFailedBill(), totalCents: newTotal });
+    const retries = recordRetries();
+    const { user } = renderStaffCheck();
+
+    const failure = await screen.findByRole("region", { name: "Card reader payment" });
+    expect(within(failure).getByText(shown(newTotal))).toBeInTheDocument();
+    await user.click(within(failure).getByRole("button", { name: "Retry" }));
+
+    expect(await screen.findByText("Waiting for card")).toBeInTheDocument();
+    expect(screen.getByText(shown(newTotal))).toBeInTheDocument();
+    expect(retries).toEqual([{ expectedTotalCents: newTotal }]);
+  });
+
+  it("says the bill changed, with the new total, when it changed after the screen last read it", async () => {
+    mockBillResponse(200, cardReaderFailedBill());
+    const { status, body } = cardReaderPaymentErrors.billChanged;
+    mockRetryCardReaderPaymentResponse(status, body);
+    const { user } = renderStaffCheck();
+    await screen.findByRole("button", { name: "Retry" });
+
+    mockBillResponse(200, { ...cardReaderFailedBill(), totalCents: 2750 });
+    await user.click(screen.getByRole("button", { name: "Retry" }));
+
+    expect(await screen.findByText(`The bill changed — new total ${shown(2750)}. Please start again.`)).toBeInTheDocument();
+    const failure = screen.getByRole("region", { name: "Card reader payment" });
+    expect(await within(failure).findByText(shown(2750))).toBeInTheDocument();
+  });
+
+  it("says so when there is nothing left to retry", async () => {
+    mockBillResponse(200, cardReaderFailedBill());
+    mockRetryCardReaderPaymentResponse(404);
+    const { user } = renderStaffCheck();
+    await screen.findByRole("button", { name: "Retry" });
+
+    mockBillResponse(200, cardReaderBill());
+    await user.click(screen.getByRole("button", { name: "Retry" }));
+
+    expect(await screen.findByText("There is no failed card reader payment to retry any more.")).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: CARD_READER })).toBeEnabled();
+  });
+});
+
+describe("taking another way to pay after a card reader failure", () => {
+  it("records cash from the failure screen", async () => {
+    const bodies: unknown[] = [];
+    server.use(
+      http.post(apiPaths.pay, async ({ request }) => {
+        const body = (await request.json()) as { method: string };
+        bodies.push(body.method);
+        return HttpResponse.json({ ...payment, method: body.method }, { status: 201 });
+      })
+    );
+    const { realtime, user } = await renderCheckOnReader();
+    failCardOnReader(realtime);
+    await screen.findByRole("button", { name: "Retry" });
+
+    await user.click(screen.getByRole("button", { name: "Paid in cash" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).queryByText(/stops the card reader payment/)).not.toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: "Confirm payment" }));
+
+    expect(await screen.findByText(/^Paid · /)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
+    expect(bodies).toEqual(["CASH"]);
+  });
+
+  it("offers the card terminal next to Retry", async () => {
+    mockBillResponse(200, cardReaderFailedBill());
+    renderStaffCheck();
+
+    expect(await screen.findByRole("button", { name: "Retry" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Paid by card" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Paid in cash" })).toBeEnabled();
+  });
+});
+
+describe("declined test cards", () => {
+  it.each([
+    ["Generic decline", "DECLINED"],
+    ["Insufficient funds", "INSUFFICIENT_FUNDS"],
+    ["Lost card", "LOST_CARD"],
+    ["Stolen card", "STOLEN_CARD"],
+    ["Expired card", "EXPIRED_CARD"],
+    ["Processing error", "PROCESSING_ERROR"],
+  ] as const)("a Simulated Reader presents %s", async (button, card) => {
+    mockBillResponse(200, cardReaderPayingBill(idleSimulatedReader));
+    const cards: unknown[] = [];
+    server.use(
+      http.post(apiPaths.cardReaderTestCard, async ({ request }) => {
+        cards.push(await request.json());
+        return HttpResponse.json(cardReaderPayingBill(idleSimulatedReader).cardReaderPayment);
+      })
+    );
+    const { user } = renderStaffCheck();
+
+    const group = await screen.findByRole("group", { name: "Declined test cards" });
+    await user.click(within(group).getByRole("button", { name: button }));
+
+    await waitFor(() => expect(cards).toEqual([{ card }]));
+    expect(screen.getByText("Waiting for card")).toBeInTheDocument();
+  });
+
+  it("are not offered on a real reader", async () => {
+    mockBillResponse(200, cardReaderPayingBill());
+    renderStaffCheck();
+
+    await screen.findByText("Waiting for card");
+    expect(screen.queryByRole("group", { name: "Declined test cards" })).not.toBeInTheDocument();
   });
 });

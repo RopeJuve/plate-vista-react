@@ -3,6 +3,8 @@ import type {
   CardReaderPayment,
   CardReaderUnavailableReason,
   PaymentErrorBody,
+  PaymentFailureReason,
+  TestCard,
 } from "../../shared/api/payments";
 import type { BillUnfrozenReason, SessionBill } from "../../shared/realtime/protocol";
 import { formatCents } from "../../shared/money/formatCents";
@@ -44,6 +46,34 @@ export const cardReaderOption = (bill: SessionBill): CardReaderOption | null => 
 /** The card reader payment the bill is waiting on right now, if any. */
 export const cardReaderInProgress = (bill: SessionBill): CardReaderPayment | null =>
   !bill.payment && bill.cardReaderPayment?.status === "IN_PROGRESS" ? bill.cardReaderPayment : null;
+
+/** The bill's last card reader attempt failed (declined, or the reader failed) and nothing replaced it yet. */
+export const cardReaderFailed = (bill: SessionBill): CardReaderPayment | null =>
+  !bill.payment && !bill.freeze && bill.cardReaderPayment?.status === "FAILED" ? bill.cardReaderPayment : null;
+
+const FAILURE_TITLES: Partial<Record<PaymentFailureReason, string>> = {
+  DECLINED: "Card declined",
+  INSUFFICIENT_FUNDS: "Card declined: insufficient funds",
+  LOST_OR_STOLEN_CARD: "Card declined: reported lost or stolen",
+  EXPIRED_CARD: "Card declined: expired card",
+  PROCESSING_ERROR: "Card network error",
+  CANCELLED_ON_READER: "Cancelled on the reader",
+  READER_OFFLINE: "Reader offline",
+};
+
+/** Why a card reader attempt failed, in a few words staff read at a glance; the server's sentence for anything else. */
+export const cardReaderFailureTitle = (failure: CardReaderPayment["failure"]): string =>
+  (failure && FAILURE_TITLES[failure.reason]) || failure?.message || "The card reader payment failed.";
+
+/** The Stripe test cards a Simulated Reader can be shown that do not go through, as the developer buttons name them. */
+export const DECLINED_TEST_CARDS: { card: Exclude<TestCard, "APPROVED">; label: string }[] = [
+  { card: "DECLINED", label: "Generic decline" },
+  { card: "INSUFFICIENT_FUNDS", label: "Insufficient funds" },
+  { card: "LOST_CARD", label: "Lost card" },
+  { card: "STOLEN_CARD", label: "Stolen card" },
+  { card: "EXPIRED_CARD", label: "Expired card" },
+  { card: "PROCESSING_ERROR", label: "Processing error" },
+];
 
 /** The bill is frozen for a card reader payment (from the bill's `freeze`). */
 export const isPayingOnCardReader = (bill: Pick<SessionBill, "freeze">) => bill.freeze?.kind === "CARD_READER";
@@ -110,6 +140,12 @@ export const cardReaderProblem = (error: unknown): CardReaderProblem => {
       return { message: "Could not start the card reader payment. Try again.", reloadsBill: false };
   }
 };
+
+/** Why retrying a failed card reader payment did not start: as starting, or nothing left to retry (404). */
+export const retryProblem = (error: unknown): CardReaderProblem =>
+  errorAnswer(error)?.status === 404
+    ? { message: "There is no failed card reader payment to retry any more.", reloadsBill: true }
+    : cardReaderProblem(error);
 
 /** Why cancelling a card reader payment failed; `reloadsBill` when the bill on screen is out of date. */
 export const cancelCardReaderProblem = (error: unknown): CardReaderProblem => {

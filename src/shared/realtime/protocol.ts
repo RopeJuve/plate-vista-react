@@ -12,6 +12,7 @@ import type {
   CardReaderPayment,
   OnlinePaymentRefund,
   Payment,
+  PaymentFailureReason,
   PaymentMethod,
   VatRate,
 } from "../api/payments";
@@ -442,6 +443,24 @@ export interface BillUnfrozenEvent {
   data: { sessionId: string; reason?: BillUnfrozenReason };
 }
 
+/**
+ * Staff room only (2.7): the card was declined or the reader failed. Always followed by `bill.unfrozen`
+ * FAILED; the attempt stays on the bill as FAILED (with this reason) until it is retried or replaced.
+ */
+export interface BillPaymentFailedEvent {
+  event: "bill.paymentFailed";
+  data: {
+    sessionId: string;
+    tableNumber: number;
+    readerName: string;
+    amountCents: number;
+    reason: PaymentFailureReason;
+    /** One English sentence staff can read as is. */
+    message: string;
+    failedAt: string;
+  };
+}
+
 /** Staff room only (2.5): a Late Payment was refunded. */
 export interface OnlinePaymentRefundedEvent {
   event: "online_payment.refunded";
@@ -483,6 +502,7 @@ export type ServerEvent =
   | PaymentSignFailedEvent
   | BillFrozenEvent
   | BillUnfrozenEvent
+  | BillPaymentFailedEvent
   | OnlinePaymentRefundedEvent
   | WaiterCalledEvent
   | WaiterDismissedEvent;

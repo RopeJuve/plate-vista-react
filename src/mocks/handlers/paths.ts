@@ -25,6 +25,7 @@ export const apiPaths = {
   cardReaderPayment: "*/sessions/:sessionId/card-reader-payment",
   cardReaderTestCard: "*/sessions/:sessionId/card-reader-payment/test-card",
   cancelCardReaderPayment: "*/sessions/:sessionId/card-reader-payment/cancel",
+  retryCardReaderPayment: "*/sessions/:sessionId/card-reader-payment/retry",
   cardReaders: "*/restaurant/card-readers",
   simulatedCardReader: "*/restaurant/card-readers/simulated",
   cardReader: "*/restaurant/card-readers/:id",
