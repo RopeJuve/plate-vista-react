@@ -1,4 +1,5 @@
-import type { ReaderChoice } from "./cardReaderPayment";
+import type { ReaderChoice } from "./cardReaderAvailability";
+import { cn } from "@/lib/utils";
 
 /** The restaurant's card readers as radios; ones that can't take a payment are listed greyed out with why. */
 const CardReaderPicker = ({
@@ -16,9 +17,10 @@ const CardReaderPicker = ({
     {readers.map(({ reader, selectable, note }) => (
       <label
         key={reader.id}
-        className={`flex items-baseline gap-2 rounded-md border border-rule px-3 py-2 text-sm ${
+        className={cn(
+          "flex items-baseline gap-2 rounded-md border border-rule px-3 py-2 text-sm",
           selectable ? "cursor-pointer" : "text-ink-soft"
-        }`}
+        )}
       >
         <input
           type="radio"

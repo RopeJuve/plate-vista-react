@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { preselectedReaderId, type CardReaderOption } from "./cardReaderPayment";
+import { preselectedReaderId, type CardReaderOption } from "./cardReaderAvailability";
 import CardReaderPicker from "./CardReaderPicker";
 import { Button } from "@/components/ui/button";
 

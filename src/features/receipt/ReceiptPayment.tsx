@@ -3,6 +3,7 @@ import {
   cardBrandLabel,
   formatReceiptDateTime,
   fundingLabel,
+  hasStripeDetails,
   isCardPayment,
   paymentMethodLabel,
   paymentMethodTypeLabel,
@@ -12,27 +13,19 @@ import {
 import { ReceiptField, ReceiptFields } from "./ReceiptFields";
 import ReceiptSection from "./ReceiptSection";
 
-/** "VISA •••• 4242 via Apple Pay", or "PayPal" for a payment that was not by card. */
-const PaidWith = ({ details }: { details: ReceiptPaymentDetails }) => {
-  if (!isCardPayment(details.type)) {
-    return <p className="text-sm font-bold">{paymentMethodTypeLabel(details.type)}</p>;
-  }
-  return (
-    <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-      <span className="rounded-sm border border-ink px-1.5 py-px font-mono text-[0.65rem] font-bold tracking-[0.08em]">
-        {cardBrandLabel(details.brand)}
-      </span>
-      {details.last4 && <span className="font-mono tabular">{`•••• ${details.last4}`}</span>}
-      {details.wallet && <span className="text-ink-soft">{`via ${walletLabel(details.wallet)}`}</span>}
-    </p>
-  );
-};
+/** "VISA •••• 4242 via Apple Pay". */
+const PaidWithCard = ({ details }: { details: ReceiptPaymentDetails }) => (
+  <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+    <span className="rounded-sm border border-ink px-1.5 py-px font-mono text-[0.65rem] font-bold tracking-[0.08em]">
+      {cardBrandLabel(details.brand)}
+    </span>
+    {details.last4 && <span className="font-mono tabular">{`•••• ${details.last4}`}</span>}
+    {details.wallet && <span className="text-ink-soft">{`via ${walletLabel(details.wallet)}`}</span>}
+  </p>
+);
 
-/** The card fields of a card payment, online or on a card reader; nothing for any other kind. */
+/** The card fields of a card payment, online or on a card reader. */
 const CardFields = ({ details }: { details: ReceiptPaymentDetails }) => {
-  if (!isCardPayment(details.type)) {
-    return null;
-  }
   const funding = fundingLabel(details.funding);
   const readMethod = readMethodLabel(details.readMethod);
   return (
@@ -45,26 +38,33 @@ const CardFields = ({ details }: { details: ReceiptPaymentDetails }) => {
   );
 };
 
-const PaymentDetails = ({ details }: { details: ReceiptPaymentDetails }) => (
-  <div className="space-y-2">
-    <PaidWith details={details} />
-    <ReceiptFields label="Zahlungsdetails">
-      <CardFields details={details} />
-      {details.authorizedAt && <ReceiptField label="Zeit">{formatReceiptDateTime(details.authorizedAt)}</ReceiptField>}
-      {details.transactionId && (
-        <ReceiptField label="Transaktions-ID">
-          <span className="break-all">{details.transactionId}</span>
-        </ReceiptField>
+/** What Stripe told us about the payment; the card fields only for a card, "PayPal" and the like otherwise. */
+const PaymentDetails = ({ details }: { details: ReceiptPaymentDetails }) => {
+  const card = isCardPayment(details.type);
+  return (
+    <div className="space-y-2">
+      {card ? (
+        <PaidWithCard details={details} />
+      ) : (
+        <p className="text-sm font-bold">{paymentMethodTypeLabel(details.type)}</p>
       )}
-      {isCardPayment(details.type) && details.authorizationCode && (
-        <ReceiptField label="Autorisierungscode">{details.authorizationCode}</ReceiptField>
-      )}
-    </ReceiptFields>
-  </div>
-);
-
-/** Only online and card reader payments carry what Stripe told us about them. */
-const hasStripeDetails = (receipt: Receipt) => receipt.method === "ONLINE" || receipt.method === "CARD_READER";
+      <ReceiptFields label="Zahlungsdetails">
+        {card && <CardFields details={details} />}
+        {details.authorizedAt && (
+          <ReceiptField label="Zeit">{formatReceiptDateTime(details.authorizedAt)}</ReceiptField>
+        )}
+        {details.transactionId && (
+          <ReceiptField label="Transaktions-ID">
+            <span className="break-all">{details.transactionId}</span>
+          </ReceiptField>
+        )}
+        {card && details.authorizationCode && (
+          <ReceiptField label="Autorisierungscode">{details.authorizationCode}</ReceiptField>
+        )}
+      </ReceiptFields>
+    </div>
+  );
+};
 
 /** How the bill was paid; for an online or card reader payment, what Stripe told us about it. */
 const ReceiptPayment = ({ receipt }: { receipt: Receipt }) => (
@@ -75,7 +75,7 @@ const ReceiptPayment = ({ receipt }: { receipt: Receipt }) => (
         <span className="leader" aria-hidden="true" />
         <span className="font-bold text-ink">{paymentMethodLabel(receipt.method)}</span>
       </div>
-      {hasStripeDetails(receipt) && receipt.paymentDetails && <PaymentDetails details={receipt.paymentDetails} />}
+      {hasStripeDetails(receipt.method) && receipt.paymentDetails && <PaymentDetails details={receipt.paymentDetails} />}
     </div>
   </ReceiptSection>
 );

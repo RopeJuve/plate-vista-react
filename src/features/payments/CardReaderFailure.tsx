@@ -1,6 +1,6 @@
 import type { CardReaderPayment } from "../../shared/api/payments";
-import { formatCents } from "../../shared/money/formatCents";
-import { cardReaderFailureTitle } from "./cardReaderPayment";
+import BillAmountRow from "./BillAmountRow";
+import { cardReaderFailureTitle } from "./cardReaderAttempt";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -22,11 +22,7 @@ const CardReaderFailure = ({
   const sentence = payment.failure?.message;
   return (
     <section aria-label="Card reader payment" className="space-y-2 rounded-lg bg-alert/10 px-4 py-3">
-      <div className="flex items-baseline gap-2 font-mono">
-        <span className="text-sm font-bold uppercase tracking-[0.1em]">{payment.reader.name}</span>
-        <span className="leader" aria-hidden="true" />
-        <span className="text-lg font-bold tabular">{formatCents(totalCents)}</span>
-      </div>
+      <BillAmountRow label={payment.reader.name} amountCents={totalCents} />
       <div role="alert" className="text-sm text-alert-ink">
         <p className="font-semibold">{title}</p>
         {sentence && sentence !== title && <p>{sentence}</p>}

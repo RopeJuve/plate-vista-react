@@ -5,7 +5,7 @@ import {
   cardReaderProblem,
   retryProblem,
   type CardReaderProblem,
-} from "../cardReaderPayment";
+} from "../cardReaderProblem";
 import {
   cancelCardReaderPayment,
   presentTestCard,

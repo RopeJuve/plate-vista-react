@@ -345,6 +345,14 @@ export interface ReceiptSignature {
  * `type` is Stripe's payment method type (`card`, `card_present`, `paypal`, `klarna`, ...);
  * the card fields only for cards, the EMV fields (`aid`, `applicationLabel`, `readMethod`) only for `card_present`.
  */
+/** How a card reader read the card, as Stripe names it. */
+export type CardReadMethod =
+  | "contactless_emv"
+  | "contact_emv"
+  | "contactless_magstripe_mode"
+  | "magnetic_stripe_fallback"
+  | "magnetic_stripe_track2";
+
 export interface ReceiptPaymentDetails {
   type: string;
   brand?: string;
@@ -356,26 +364,17 @@ export interface ReceiptPaymentDetails {
   aid?: string;
   /** e.g. "VISA CREDIT". */
   applicationLabel?: string;
-  /** contactless_emv | contact_emv | contactless_magstripe_mode | magnetic_stripe_fallback | magnetic_stripe_track2 */
-  readMethod?: string;
+  readMethod?: CardReadMethod;
   /** The Stripe PaymentIntent id. */
   transactionId?: string;
   authorizedAt?: string;
 }
 
-/** The card details a card reader Payment keeps from Stripe. */
-export interface CardPresentDetails {
-  type: "card_present";
-  brand: string;
-  last4: string;
-  funding: string;
-  authorizationCode?: string;
-  aid?: string;
-  applicationLabel?: string;
-  readMethod: string;
-  transactionId: string;
-  authorizedAt: string;
-}
+/** The card details a card reader Payment keeps from Stripe: the receipt's details for a `card_present` card. */
+export type CardPresentDetails = ReceiptPaymentDetails &
+  Required<Pick<ReceiptPaymentDetails, "brand" | "last4" | "funding" | "readMethod" | "transactionId" | "authorizedAt">> & {
+    type: "card_present";
+  };
 
 /** `GET /receipts/:token` (public) → Receipt | 404. */
 export interface Receipt {

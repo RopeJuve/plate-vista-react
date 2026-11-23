@@ -4,6 +4,7 @@ import {
   FAST_POLL_FOR_MS,
   formatServicePeriod,
   fundingLabel,
+  hasStripeDetails,
   paymentMethodTypeLabel,
   vatRateLetter,
   walletLabel,
@@ -80,6 +81,18 @@ describe("labels", () => {
   it("shows nothing for a missing or broken time", () => {
     expect(formatReceiptDateTime(undefined)).toBe("");
     expect(formatReceiptDateTime("nope")).toBe("");
+  });
+});
+
+describe("hasStripeDetails", () => {
+  it("is true for payments Stripe took: online and on a card reader", () => {
+    expect(hasStripeDetails("ONLINE")).toBe(true);
+    expect(hasStripeDetails("CARD_READER")).toBe(true);
+  });
+
+  it("is false for cash and the Card Terminal, which Stripe never saw", () => {
+    expect(hasStripeDetails("CASH")).toBe(false);
+    expect(hasStripeDetails("CARD_TERMINAL")).toBe(false);
   });
 });
 

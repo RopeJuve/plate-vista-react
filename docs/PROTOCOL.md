@@ -184,6 +184,21 @@ Status moves `pending → accepted → preparing → ready → served`. `cancell
 
 Money on an order is integer cents (`unitPriceCents`, `lineTotalCents`, `totalCents`), copied from the menu at creation.
 
+### Bill events
+
+Later releases add bill events; their payloads and the REST side are in the API's `docs/payments-contract.md`, and their types in `src/shared/realtime/protocol.ts`.
+
+```json
+{ "type": "event", "event": "bill.paid", "data": { "sessionId": "...", "paymentId": "...", "receiptToken": "...", "method": "CASH|CARD_TERMINAL|CARD_READER|ONLINE", "totalCents": 4250 } }
+{ "type": "event", "event": "bill.frozen", "data": { "sessionId": "...", "expiresAt": "ISO-8601", "kind": "ONLINE|CARD_READER", "readerName": "Bar", "totalCents": 4250 } }
+{ "type": "event", "event": "bill.unfrozen", "data": { "sessionId": "...", "reason": "CANCELLED|EXPIRED|STAFF_PAYMENT|FAILED" } }
+{ "type": "event", "event": "bill.paymentFailed", "data": { "sessionId": "...", "tableNumber": 4, "readerName": "Bar", "amountCents": 4250, "reason": "INSUFFICIENT_FUNDS", "message": "The card was declined for insufficient funds.", "failedAt": "ISO-8601" } }
+```
+
+`bill.paid` (2.3) is sent when the bill is paid, by staff or online (2.5) or on a card reader (2.7); the bill takes no more orders or cancellations after it. `bill.frozen` (2.5) is sent when a guest starts paying online or (2.7) staff start a card reader payment: the session is `paying` and orders and cancels fail with `BILL_FROZEN` until `bill.unfrozen` or `bill.paid`. `bill.unfrozen` carries why (2.7): cancelled, expired, staff recorded a payment or closed the table, or (card readers only) the card failed. All three go to the staff room and the session's room; `kind`, `readerName`, `totalCents` and `reason` are absent from servers before 2.7.
+
+`bill.paymentFailed` (2.7) goes to the staff room only, so the decline reason never shows on the guests' table devices. It is sent when the card is declined or the reader fails, and is always followed by `bill.unfrozen` with reason `FAILED`. `reason` is one of `DECLINED`, `INSUFFICIENT_FUNDS`, `LOST_OR_STOLEN_CARD`, `EXPIRED_CARD`, `PROCESSING_ERROR`, `CANCELLED_ON_READER`, `READER_OFFLINE`, `OTHER`; `message` is one English sentence staff can read as is. The attempt stays on the bill as `FAILED` until it is retried, a new payment is started (on any reader), it is cancelled, the bill is paid, or the table is closed.
+
 ## Limits
 
 | Limit | Value | Error |
