@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  lastUnfrozenReason,
   applyServerEvent,
   applySnapshot,
   boardReducer,
@@ -457,6 +458,16 @@ describe("card reader payment events (protocol 2.7)", () => {
     const settled = applyServerEvent(paying, paid);
     expect(isPayingOnCardReader(settled, "session-1")).toBe(false);
     expect(sessionPayment(settled, "session-1")?.paymentId).toBe("payment-1");
+  });
+
+  it("remembers why the bill unfroze until it freezes again", () => {
+    const reader = applyServerEvent(loaded(), frozenOn("CARD_READER"));
+    expect(lastUnfrozenReason(reader, "session-1")).toBeNull();
+    const expired = applyServerEvent(reader, { event: "bill.unfrozen", data: { sessionId: "session-1", reason: "EXPIRED" } });
+    expect(lastUnfrozenReason(expired, "session-1")).toBe("EXPIRED");
+    expect(lastUnfrozenReason(applyServerEvent(expired, frozenOn("CARD_READER")), "session-1")).toBeNull();
+    const noReason = applyServerEvent(reader, { event: "bill.unfrozen", data: { sessionId: "session-1" } });
+    expect(lastUnfrozenReason(noReason, "session-1")).toBeNull();
   });
 
   it("goes back to online when a later freeze is an online one", () => {

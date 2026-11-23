@@ -6,7 +6,7 @@ import { useMenu } from "../../features/guest-ordering/MenuProvider";
 import { usePlaceOrder } from "../../features/guest-ordering/hooks/usePlaceOrder";
 import PayBillPanel from "../../features/payments/PayBillPanel";
 import { useOrderAmendment } from "../../features/order-amendment/hooks/useOrderAmendment";
-import { isBillFrozen, sessionPayment, tableCheck } from "../../features/staff-board/boardState";
+import { isBillFrozen, lastUnfrozenReason, sessionPayment, tableCheck } from "../../features/staff-board/boardState";
 import { canCloseUnpaid } from "../../features/staff-board/closeTable";
 import { useCloseTable } from "../../features/staff-board/hooks/useCloseTable";
 import { useCloseWaiterCallOnOpen } from "../../features/staff-board/hooks/useCloseWaiterCallOnOpen";
@@ -98,6 +98,7 @@ const OrderDetails = () => {
             canActivateTse={false}
             canUnfreeze={isOwnerOrAdmin(user)}
             onBillChange={closing.setBill}
+            unfrozenReason={lastUnfrozenReason(state, sessionId)}
           />
         </div>
       )}

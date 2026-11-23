@@ -1,18 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CardReaderPayment } from "../../../shared/api/payments";
-import { cardReaderProblem } from "../cardReaderPayment";
-import { presentTestCard, startCardReaderPayment } from "../paymentsApi";
+import { cancelCardReaderProblem, cardReaderProblem, type CardReaderProblem } from "../cardReaderPayment";
+import { cancelCardReaderPayment, presentTestCard, startCardReaderPayment } from "../paymentsApi";
 
 /**
- * Starting a bill's card reader payment and, on a Simulated Reader, presenting a test card.
- * `onStarted` hears the attempt the server answered with; `reload` reads the bill again when
- * an answer says the bill on screen is out of date. What happens next arrives as events.
- * A second tap while a request is running sends nothing.
+ * Starting a bill's card reader payment, cancelling it and, on a Simulated Reader, presenting a test card.
+ * `onStarted` hears the attempt the server answered with, `onCancelled` that the cancel went through;
+ * `reload` reads the bill again when an answer says the bill on screen is out of date. What happens
+ * next arrives as events. A second tap while a request is running sends nothing.
  */
 export const useCardReaderPayment = (
   sessionId: string,
   onStarted: (payment: CardReaderPayment) => void,
-  reload: () => unknown
+  reload: () => unknown,
+  onCancelled: () => void = () => undefined
 ) => {
   const [pending, setPending] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
@@ -25,7 +26,11 @@ export const useCardReaderPayment = (
     };
   }, []);
 
-  const run = async (send: () => Promise<CardReaderPayment>) => {
+  const run = async <T>(
+    send: () => Promise<T>,
+    onDone: (answer: T) => void,
+    problemOf: (error: unknown) => CardReaderProblem = cardReaderProblem
+  ) => {
     if (inFlight.current) {
       return;
     }
@@ -33,12 +38,12 @@ export const useCardReaderPayment = (
     setPending(true);
     setProblem(null);
     try {
-      const payment = await send();
+      const answer = await send();
       if (mounted.current) {
-        onStarted(payment);
+        onDone(answer);
       }
     } catch (error) {
-      const next = cardReaderProblem(error);
+      const next = problemOf(error);
       if (mounted.current) {
         setProblem(next.message);
       }
@@ -54,11 +59,13 @@ export const useCardReaderPayment = (
   };
 
   const start = (readerId: string, expectedTotalCents: number) =>
-    run(() => startCardReaderPayment(sessionId, { readerId, expectedTotalCents }));
+    run(() => startCardReaderPayment(sessionId, { readerId, expectedTotalCents }), onStarted);
 
-  const approveTestCard = () => run(() => presentTestCard(sessionId, "APPROVED"));
+  const approveTestCard = () => run(() => presentTestCard(sessionId, "APPROVED"), onStarted);
+
+  const cancel = () => run(() => cancelCardReaderPayment(sessionId), onCancelled, cancelCardReaderProblem);
 
   const clearProblem = useCallback(() => setProblem(null), []);
 
-  return { pending, problem, start, approveTestCard, clearProblem };
+  return { pending, problem, start, approveTestCard, cancel, clearProblem };
 };

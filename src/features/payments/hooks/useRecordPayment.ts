@@ -84,7 +84,32 @@ export const useRecordPayment = (sessionId: string, refreshKey?: unknown) => {
     setBill((current) => (current ? { ...current, cardReaderPayment } : current));
   }, []);
 
-  return { bill, loading, loadFailed, reload: load, pending, problem, pay, clearProblem, showCardReaderPayment };
+  /** The card reader payment was just cancelled: the bill is open again until it is read again. */
+  const clearCardReaderPayment = useCallback(() => {
+    setBill((current) =>
+      current
+        ? {
+            ...current,
+            cardReaderPayment: null,
+            freeze: null,
+            session: current.session.status === "paying" ? { ...current.session, status: "open" } : current.session,
+          }
+        : current
+    );
+  }, []);
+
+  return {
+    bill,
+    loading,
+    loadFailed,
+    reload: load,
+    pending,
+    problem,
+    pay,
+    clearProblem,
+    showCardReaderPayment,
+    clearCardReaderPayment,
+  };
 };
 
 export type RecordPayment = ReturnType<typeof useRecordPayment>;

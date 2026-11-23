@@ -22,7 +22,16 @@ const TableBill = ({ tableId }: { tableId?: string }) => {
       return <p className="text-sm text-ink-soft">No open bill at this table.</p>;
     }
     // Only owners and admins reach the admin pages, so they can activate the TSE and unfreeze bills themselves.
-    return <PayBillPanel key={sessionId} sessionId={sessionId} refreshKey={billEvents} canActivateTse canUnfreeze />;
+    return (
+      <PayBillPanel
+        key={sessionId}
+        sessionId={sessionId}
+        refreshKey={billEvents.count}
+        unfrozenReason={billEvents.unfrozenReason}
+        canActivateTse
+        canUnfreeze
+      />
+    );
   };
 
   return (

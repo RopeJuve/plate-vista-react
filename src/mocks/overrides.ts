@@ -80,6 +80,10 @@ export const mockStartCardReaderPaymentResponse = (status: number, body?: unknow
 export const mockTestCardResponse = (status: number, body?: unknown) =>
   mockResponse("post", "cardReaderTestCard", status, body);
 
+/** `(200, { status: "open" })`, or `(409, { code: "BILL_PAID" })` when the card already went through. */
+export const mockCancelCardReaderPaymentResponse = (status: number, body?: unknown) =>
+  mockResponse("post", "cancelCardReaderPayment", status, body);
+
 /** Card Readers: pair with `cardReaderLists` and `cardReaderErrors` from `fixtures/cardReaders`. */
 export const mockCardReadersResponse = (status: number, body?: unknown) =>
   mockResponse("get", "cardReaders", status, body);

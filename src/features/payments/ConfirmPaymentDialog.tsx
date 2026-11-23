@@ -11,6 +11,8 @@ type ConfirmPaymentDialogProps = {
   problem: PayProblem | null;
   /** A guest is paying this bill online right now; recording cash or card cancels that. */
   payingOnline: boolean;
+  /** Staff are taking this bill on a card reader right now; recording cash or card stops that. */
+  payingOnCardReader?: boolean;
   onCancel: () => void;
   onConfirm: () => void;
 };
@@ -22,6 +24,7 @@ const ConfirmPaymentDialog = ({
   pending,
   problem,
   payingOnline,
+  payingOnCardReader = false,
   onCancel,
   onConfirm,
 }: ConfirmPaymentDialogProps) => (
@@ -44,6 +47,11 @@ const ConfirmPaymentDialog = ({
       {payingOnline && (
         <p className="rounded-md bg-signal/10 px-3 py-2 text-sm font-semibold text-signal-ink">
           A guest is paying online right now. Recording this payment cancels their online payment.
+        </p>
+      )}
+      {payingOnCardReader && (
+        <p className="rounded-md bg-signal/10 px-3 py-2 text-sm font-semibold text-signal-ink">
+          The card reader is waiting for the card. Recording this payment stops the card reader payment.
         </p>
       )}
       {problem?.kind === "NETWORK" && (
