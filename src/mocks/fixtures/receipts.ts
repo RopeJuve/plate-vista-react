@@ -6,6 +6,8 @@ export const PENDING_RECEIPT_TOKEN = "receipt-token-pending";
 export const FAILED_RECEIPT_TOKEN = "receipt-token-failed";
 export const ONLINE_RECEIPT_TOKEN = "receipt-token-online";
 export const PAYPAL_RECEIPT_TOKEN = "receipt-token-paypal";
+export const CARD_READER_RECEIPT_TOKEN = "receipt-token-card-reader";
+export const BARE_CARD_READER_RECEIPT_TOKEN = "receipt-token-card-reader-bare";
 export const MISSING_RECEIPT_TOKEN = "receipt-token-missing";
 
 const receiptWith = (signature: Receipt["signature"]): Receipt => ({
@@ -73,6 +75,27 @@ export const paypalReceipt: Receipt = {
   paymentDetails: { type: "paypal", transactionId: "pi_3QxExample0002", authorizedAt: "2026-11-07T19:29:58.000Z" },
 };
 
+/** Paid on a card reader (card present), as in the payments contract's example. */
+export const cardReaderReceipt: Receipt = {
+  ...signedReceipt,
+  method: "CARD_READER",
+  paymentDetails: {
+    type: "card_present",
+    brand: "visa",
+    last4: "4242",
+    funding: "credit",
+    authorizationCode: "123456",
+    aid: "A0000000031010",
+    applicationLabel: "VISA CREDIT",
+    readMethod: "contactless_emv",
+    transactionId: "pi_3QaBcDeFgHiJkLmN0aBcDeFg",
+    authorizedAt: "2026-11-07T19:29:55.000Z",
+  },
+};
+
+/** Paid on a card reader, but Stripe's details could not be read. */
+export const bareCardReaderReceipt: Receipt = { ...signedReceipt, method: "CARD_READER" };
+
 /** Receipts the default handler serves, by token. Any other token answers 404. */
 export const receiptsByToken: Record<string, Receipt> = {
   [SIGNED_RECEIPT_TOKEN]: signedReceipt,
@@ -80,4 +103,6 @@ export const receiptsByToken: Record<string, Receipt> = {
   [FAILED_RECEIPT_TOKEN]: failedReceipt,
   [ONLINE_RECEIPT_TOKEN]: onlineReceipt,
   [PAYPAL_RECEIPT_TOKEN]: paypalReceipt,
+  [CARD_READER_RECEIPT_TOKEN]: cardReaderReceipt,
+  [BARE_CARD_READER_RECEIPT_TOKEN]: bareCardReaderReceipt,
 };
