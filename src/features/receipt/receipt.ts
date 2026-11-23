@@ -84,6 +84,20 @@ const FUNDING: Record<string, string> = { credit: "Kredit", debit: "Debit", prep
 /** Kredit, Debit or Prepaid; nothing when Stripe does not know. */
 export const fundingLabel = (funding: string | undefined) => (funding ? FUNDING[funding] ?? null : null);
 
+/** A card, whether paid online (`card`) or presented on a card reader (`card_present`). */
+export const isCardPayment = (type: string) => type === "card" || type === "card_present";
+
+const READ_METHODS: Record<string, string> = {
+  contactless_emv: "Kontaktlos",
+  contact_emv: "Chip",
+  contactless_magstripe_mode: "Kontaktlos",
+  magnetic_stripe_fallback: "Magnetstreifen",
+  magnetic_stripe_track2: "Magnetstreifen",
+};
+
+/** How the card was read on the card reader, e.g. `contact_emv` → "Chip"; nothing when not known. */
+export const readMethodLabel = (readMethod: string | undefined) => (readMethod ? READ_METHODS[readMethod] ?? null : null);
+
 const PAYMENT_METHOD_TYPES: Record<string, string> = {
   amazon_pay: "Amazon Pay",
   bancontact: "Bancontact",

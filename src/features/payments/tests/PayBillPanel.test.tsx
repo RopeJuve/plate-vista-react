@@ -86,6 +86,7 @@ describe("PayBillPanel", () => {
     await payWith(user, "Paid by card");
 
     expect(await screen.findByText(/Paid · Card ·/)).toBeInTheDocument();
+    expect(screen.getByText("Card terminal")).toBeInTheDocument();
     expect(bodies).toEqual([expect.objectContaining({ method: "CARD_TERMINAL", expectedTotalCents: 2050 })]);
   });
 

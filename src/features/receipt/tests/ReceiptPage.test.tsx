@@ -3,6 +3,8 @@ import { http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
 import { Route, Routes } from "react-router-dom";
 import {
+  BARE_CARD_READER_RECEIPT_TOKEN,
+  CARD_READER_RECEIPT_TOKEN,
   FAILED_RECEIPT_TOKEN,
   MISSING_RECEIPT_TOKEN,
   ONLINE_RECEIPT_TOKEN,
@@ -165,6 +167,32 @@ describe("ReceiptPage", () => {
     expect(value("Zeit")).toHaveTextContent("07.11.2026, 20:29:58");
     expect(value("Transaktions-ID")).toHaveTextContent("pi_3QxExample0001");
     expect(value("Autorisierungscode")).toHaveTextContent("831000");
+  });
+
+  it("labels a card reader payment Karte and shows every card detail", async () => {
+    renderReceipt(CARD_READER_RECEIPT_TOKEN);
+
+    const section = within(await screen.findByRole("region", { name: "Zahlungsmittel" }));
+    expect(section.getByText("Zahlungsart").closest("div")).toHaveTextContent("Karte");
+    expect(section.getByText("VISA")).toBeInTheDocument();
+    expect(section.getByText("•••• 4242")).toBeInTheDocument();
+    const value = (label: string) => section.getByText(label).nextElementSibling;
+    expect(value("Kartentyp")).toHaveTextContent("Kredit");
+    expect(value("Autorisierungscode")).toHaveTextContent("123456");
+    expect(value("AID")).toHaveTextContent("A0000000031010");
+    expect(value("Anwendung")).toHaveTextContent("VISA CREDIT");
+    expect(value("Lesemodus")).toHaveTextContent("Kontaktlos");
+    expect(value("Zeit")).toHaveTextContent("07.11.2026, 20:29:55");
+    expect(value("Transaktions-ID")).toHaveTextContent("pi_3QaBcDeFgHiJkLmN0aBcDeFg");
+  });
+
+  it("labels a card reader payment without details Karte, with no card lines", async () => {
+    renderReceipt(BARE_CARD_READER_RECEIPT_TOKEN);
+
+    const section = within(await screen.findByRole("region", { name: "Zahlungsmittel" }));
+    expect(section.getByText("Zahlungsart").closest("div")).toHaveTextContent("Karte");
+    expect(section.queryByLabelText("Zahlungsdetails")).not.toBeInTheDocument();
+    expect(section.queryByText("VISA")).not.toBeInTheDocument();
   });
 
   it("shows a payment that was not by card by its name, without card fields", async () => {
