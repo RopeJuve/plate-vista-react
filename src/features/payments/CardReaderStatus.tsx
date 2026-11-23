@@ -4,16 +4,19 @@ import { Button } from "@/components/ui/button";
 
 /**
  * A card reader payment in progress: which reader, how much, and that it waits for the card.
+ * Cancel stops it and the panel goes back to the payment choice.
  * A Simulated Reader (test mode only) gets a developer button that presents an approved test card.
  */
 const CardReaderStatus = ({
   payment,
   pending,
   onPresentTestCard,
+  onCancel,
 }: {
   payment: CardReaderPayment;
   pending: boolean;
   onPresentTestCard: () => void;
+  onCancel: () => void;
 }) => (
   <section aria-label="Card reader payment" className="space-y-2 rounded-lg bg-signal/10 px-4 py-3">
     <div className="flex items-baseline gap-2 font-mono">
@@ -24,11 +27,16 @@ const CardReaderStatus = ({
     <p role="status" className="text-sm font-semibold text-ink">
       Waiting for card
     </p>
-    {payment.reader.simulated && (
-      <Button type="button" size="sm" variant="outline" onClick={onPresentTestCard} disabled={pending}>
-        Present test card
+    <div className="flex flex-wrap gap-2">
+      <Button type="button" size="sm" variant="outline" onClick={onCancel} disabled={pending}>
+        Cancel
       </Button>
-    )}
+      {payment.reader.simulated && (
+        <Button type="button" size="sm" variant="outline" onClick={onPresentTestCard} disabled={pending}>
+          Present test card
+        </Button>
+      )}
+    </div>
   </section>
 );
 

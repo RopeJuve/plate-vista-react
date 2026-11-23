@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { PaymentMethod } from "../../shared/api/payments";
-import type { SessionBill } from "../../shared/realtime/protocol";
+import type { BillUnfrozenReason, SessionBill } from "../../shared/realtime/protocol";
 import { formatCents } from "../../shared/money/formatCents";
 import { canPayBill, isGuestPayingOnline, PAY_METHODS } from "./billPayment";
 import CardReaderButton from "./CardReaderButton";
@@ -8,6 +8,7 @@ import { cardReaderInProgress, cardReaderOption } from "./cardReaderPayment";
 import CardReaderStatus from "./CardReaderStatus";
 import ConfirmPaymentDialog from "./ConfirmPaymentDialog";
 import FrozenBill from "./FrozenBill";
+import { useCardReaderEndNote } from "./hooks/useCardReaderEndNote";
 import { useCardReaderPayment } from "./hooks/useCardReaderPayment";
 import { useRecordPayment } from "./hooks/useRecordPayment";
 import PaidBill from "./PaidBill";
@@ -21,6 +22,8 @@ type Confirming = { method: PaymentMethod; clientPaymentId: string };
  * `canActivateTse` is true for an owner or admin, who can fix a missing TSE themselves;
  * `canUnfreeze` lets them cancel a guest's online payment in progress.
  * `onBillChange` hears the bill as it loads and gets paid: `undefined` while loading, `null` if it failed.
+ * `unfrozenReason` is the last `bill.unfrozen` heard for this bill since it last froze, so a card reader
+ * payment that ends unpaid leaves a note saying why.
  */
 const PayBillPanel = ({
   sessionId,
@@ -28,16 +31,34 @@ const PayBillPanel = ({
   canActivateTse,
   canUnfreeze = false,
   onBillChange,
+  unfrozenReason,
 }: {
   sessionId: string;
   refreshKey?: unknown;
   canActivateTse: boolean;
   canUnfreeze?: boolean;
   onBillChange?: (bill: SessionBill | null | undefined) => void;
+  unfrozenReason?: BillUnfrozenReason | null;
 }) => {
-  const { bill, loading, loadFailed, reload, pending, problem, pay, clearProblem, showCardReaderPayment } =
-    useRecordPayment(sessionId, refreshKey);
-  const cardReader = useCardReaderPayment(sessionId, showCardReaderPayment, reload);
+  const {
+    bill,
+    loading,
+    loadFailed,
+    reload,
+    pending,
+    problem,
+    pay,
+    clearProblem,
+    showCardReaderPayment,
+    clearCardReaderPayment,
+  } = useRecordPayment(sessionId, refreshKey);
+  const handleCancelled = () => {
+    clearCardReaderPayment();
+    void reload();
+  };
+  const cardReader = useCardReaderPayment(sessionId, showCardReaderPayment, reload, handleCancelled);
+  const readerPayment = bill ? cardReaderInProgress(bill) : null;
+  const endNote = useCardReaderEndNote(Boolean(readerPayment), unfrozenReason);
   useEffect(() => {
     onBillChange?.(loading ? undefined : loadFailed ? null : bill);
   }, [bill, loading, loadFailed, onBillChange]);
@@ -82,7 +103,6 @@ const PayBillPanel = ({
   }
 
   const payingOnline = isGuestPayingOnline(bill);
-  const readerPayment = cardReaderInProgress(bill);
   const readerOption = readerPayment ? null : cardReaderOption(bill);
 
   const handleStartCardReader = (readerId: string) => {
@@ -94,6 +114,11 @@ const PayBillPanel = ({
     <div className="space-y-3">
       {payingOnline && <FrozenBill sessionId={sessionId} canUnfreeze={canUnfreeze} onUnfrozen={reload} />}
       <PayProblemNote problem={problem} currentTotalCents={bill.totalCents} canActivateTse={canActivateTse} />
+      {endNote && !readerPayment && (
+        <p role="status" className="rounded-md bg-signal/10 px-3 py-2 text-sm font-semibold text-signal-ink">
+          {endNote}
+        </p>
+      )}
       {cardReader.problem && (
         <p role="alert" className="text-sm font-semibold text-alert-ink">
           {cardReader.problem}
@@ -109,6 +134,7 @@ const PayBillPanel = ({
                 payment={readerPayment}
                 pending={cardReader.pending}
                 onPresentTestCard={() => void cardReader.approveTestCard()}
+                onCancel={() => void cardReader.cancel()}
               />
             ) : (
               <div className="flex items-baseline gap-2 font-mono">
@@ -143,6 +169,7 @@ const PayBillPanel = ({
         pending={pending}
         problem={problem}
         payingOnline={payingOnline}
+        payingOnCardReader={Boolean(readerPayment)}
         onCancel={handleCancel}
         onConfirm={handleConfirm}
       />

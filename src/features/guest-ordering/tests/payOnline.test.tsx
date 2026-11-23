@@ -389,3 +389,47 @@ describe("guest while staff take the bill on a card reader", () => {
     expect(await screen.findByText("Receipt receipt-token-1")).toBeInTheDocument();
   });
 });
+
+describe("guest when a card reader payment ends unpaid", () => {
+  it.each([
+    ["CANCELLED", "The card payment was cancelled. You can order again."],
+    ["EXPIRED", "The card payment timed out. You can order again."],
+    ["STAFF_PAYMENT", "The card payment was stopped by staff."],
+  ] as const)("leaves the card reader banner with a note on %s", async (reason, note) => {
+    mockBillResponse(200, guestCardReaderPayingBill);
+    const { realtime } = renderGuest();
+    await screen.findByText(CARD_READER_BANNER);
+
+    mockBillResponse(200, unpaidBill);
+    realtime.emit("bill.unfrozen", { sessionId: SESSION_ID, reason });
+
+    expect(await screen.findByText(note)).toBeInTheDocument();
+    expect(screen.queryByText(CARD_READER_BANNER)).not.toBeInTheDocument();
+  });
+
+  it("can order again after a cancel, and the note can be dismissed", async () => {
+    mockBillResponse(200, guestCardReaderPayingBill);
+    const { realtime, user } = renderGuest();
+    await screen.findByText(CARD_READER_BANNER);
+    await waitFor(async () => expect(await addSoup()).toBeDisabled());
+
+    mockBillResponse(200, unpaidBill);
+    realtime.emit("bill.unfrozen", { sessionId: SESSION_ID, reason: "CANCELLED" });
+
+    await waitFor(async () => expect(await addSoup()).toBeEnabled());
+    await user.click(screen.getByRole("button", { name: "Dismiss" }));
+    expect(screen.queryByText("The card payment was cancelled. You can order again.")).not.toBeInTheDocument();
+  });
+
+  it("says nothing when an online payment ends", async () => {
+    const { realtime } = renderGuest();
+    await waitFor(async () => expect(await addSoup()).toBeEnabled());
+    realtime.emit("bill.frozen", frozen(SESSION_ID));
+    await screen.findByText(FROZEN_BANNER);
+
+    realtime.emit("bill.unfrozen", { sessionId: SESSION_ID, reason: "CANCELLED" });
+
+    await waitFor(() => expect(screen.queryByText(FROZEN_BANNER)).not.toBeInTheDocument());
+    expect(screen.queryByText("The card payment was cancelled. You can order again.")).not.toBeInTheDocument();
+  });
+});

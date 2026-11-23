@@ -2,6 +2,8 @@
 import { describe, expect, it } from "vitest";
 import {
   applyBillEvent,
+  cardReaderEndedMessage,
+  dismissCardReaderEnded,
   emptyBill,
   loadBill,
   markBillFrozen,
@@ -100,6 +102,34 @@ describe("a frozen bill (protocol 2.5)", () => {
   it("thaws on bill.unfrozen for the guest's own session", () => {
     const frozen = markBillFrozen(emptyBill());
     expect(applyBillEvent(frozen, unfrozenEvent("session-1"), "session-1").frozen).toBe(false);
+  });
+
+  it("remembers why a card reader payment ended until the bill freezes again or the note is dismissed", () => {
+    const onReader = applyBillEvent(
+      emptyBill(),
+      { event: "bill.frozen", data: { sessionId: "session-1", expiresAt, kind: "CARD_READER", readerName: "Bar", totalCents: 2050 } },
+      "session-1"
+    );
+    const expired = applyBillEvent(
+      onReader,
+      { event: "bill.unfrozen", data: { sessionId: "session-1", reason: "EXPIRED" } },
+      "session-1"
+    );
+    expect(expired.cardReaderEnded).toBe("EXPIRED");
+    expect(cardReaderEndedMessage(expired.cardReaderEnded)).toBe("The card payment timed out. You can order again.");
+    expect(applyBillEvent(expired, frozenEvent("session-1"), "session-1").cardReaderEnded).toBeNull();
+    expect(dismissCardReaderEnded(expired).cardReaderEnded).toBeNull();
+    expect(cardReaderEndedMessage("FAILED")).toBeNull();
+  });
+
+  it("notes nothing when an online payment ends", () => {
+    const online = applyBillEvent(emptyBill(), frozenEvent("session-1"), "session-1");
+    const cancelled = applyBillEvent(
+      online,
+      { event: "bill.unfrozen", data: { sessionId: "session-1", reason: "CANCELLED" } },
+      "session-1"
+    );
+    expect(cancelled.cardReaderEnded).toBeNull();
   });
 
   it("ignores bill.frozen and bill.unfrozen for another session", () => {

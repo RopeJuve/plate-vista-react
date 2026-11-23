@@ -36,7 +36,8 @@ const readerById = (id: string) =>
 /**
  * Card Readers (Kasse): by default the server is in test mode with a ready Payout Account and the
  * contract's three readers; the answers do not remember readers added or removed.
- * Card reader payments: starting works on any known reader, and a test card is always taken;
+ * Card reader payments: starting works on any known reader, a test card is always taken, and a cancel
+ * always unfreezes the bill;
  * what follows (paid, declined) only arrives as realtime events, which tests emit themselves.
  */
 export const cardReaderHandlers = [
@@ -77,4 +78,5 @@ export const cardReaderHandlers = [
       sessionId: String(params.sessionId),
     })
   ),
+  http.post(apiPaths.cancelCardReaderPayment, () => HttpResponse.json({ status: "open" })),
 ];

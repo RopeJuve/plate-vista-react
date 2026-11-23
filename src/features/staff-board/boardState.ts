@@ -1,4 +1,5 @@
 import type {
+  BillUnfrozenReason,
   BoardTable,
   ClosedSession,
   Order,
@@ -35,6 +36,8 @@ export type BoardState = {
   waiterCallsBySession: Record<string, WaiterCall>;
   /** Sessions whose bill staff are taking on a card reader right now (2.7), heard from `bill.frozen`. */
   cardReaderPayingSessions: Record<string, true>;
+  /** Why each session's bill last opened again (2.7 `bill.unfrozen` reason), until it freezes again. */
+  unfrozenReasons: Record<string, BillUnfrozenReason>;
   ready: boolean;
 };
 
@@ -50,6 +53,7 @@ export const emptyBoard = (): BoardState => ({
   paymentsBySession: {},
   waiterCallsBySession: {},
   cardReaderPayingSessions: {},
+  unfrozenReasons: {},
   ready: false,
 });
 
@@ -107,6 +111,20 @@ const withoutCardReaderPayment = (state: BoardState, sessionId: string): BoardSt
   const cardReaderPayingSessions = { ...state.cardReaderPayingSessions };
   delete cardReaderPayingSessions[sessionId];
   return { ...state, cardReaderPayingSessions };
+};
+
+/** Remember (or, without a reason, forget) why a session's bill last opened again. */
+const withUnfrozenReason = (state: BoardState, sessionId: string, reason: BillUnfrozenReason | undefined): BoardState => {
+  if (!reason && !state.unfrozenReasons[sessionId]) {
+    return state;
+  }
+  const unfrozenReasons = { ...state.unfrozenReasons };
+  if (reason) {
+    unfrozenReasons[sessionId] = reason;
+  } else {
+    delete unfrozenReasons[sessionId];
+  }
+  return { ...state, unfrozenReasons };
 };
 
 /** An open session starts or stops paying online; a closed or unknown one stays as it is. */
@@ -170,14 +188,20 @@ export const applyServerEvent = (state: BoardState, event: ServerEvent): BoardSt
     }
     case "bill.frozen": {
       const { sessionId, kind } = event.data;
-      const paying = withSessionStatus(state, sessionId, "paying");
+      const paying = withUnfrozenReason(withSessionStatus(state, sessionId, "paying"), sessionId, undefined);
       if (kind !== "CARD_READER" || !paying.sessionsById[sessionId]) {
         return withoutCardReaderPayment(paying, sessionId);
       }
       return { ...paying, cardReaderPayingSessions: { ...paying.cardReaderPayingSessions, [sessionId]: true } };
     }
-    case "bill.unfrozen":
-      return withoutCardReaderPayment(withSessionStatus(state, event.data.sessionId, "open"), event.data.sessionId);
+    case "bill.unfrozen": {
+      const { sessionId, reason } = event.data;
+      return withUnfrozenReason(
+        withoutCardReaderPayment(withSessionStatus(state, sessionId, "open"), sessionId),
+        sessionId,
+        reason
+      );
+    }
     case "payment.signed": {
       const entry = Object.entries(state.paymentsBySession).find(
         ([, payment]) => payment.paymentId === event.data.paymentId
@@ -346,6 +370,10 @@ export const isBillFrozen = (state: BoardState, sessionId: string | undefined): 
 /** Staff are taking this session's bill on a card reader right now. */
 export const isPayingOnCardReader = (state: BoardState, sessionId: string | undefined): boolean =>
   Boolean(sessionId && isBillFrozen(state, sessionId) && state.cardReaderPayingSessions[sessionId]);
+
+/** Why the session's bill last opened again since it last froze, if the server said. */
+export const lastUnfrozenReason = (state: BoardState, sessionId: string | undefined): BillUnfrozenReason | null =>
+  (sessionId && state.unfrozenReasons[sessionId]) || null;
 
 /** A guest is paying this session's bill online right now: the bill is frozen until it is paid or unfrozen. */
 export const isPayingOnline = (state: BoardState, sessionId: string | undefined): boolean =>

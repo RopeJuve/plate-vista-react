@@ -30,3 +30,14 @@ export const startCardReaderPayment = async (sessionId: string, body: StartCardR
 export const presentTestCard = async (sessionId: string, card: TestCard) =>
   (await api.post<CardReaderPayment>(`${cardReaderPaymentPath(sessionId)}/test-card`, { card }, { skipErrorToast: true }))
     .data;
+
+/**
+ * `POST /sessions/:id/card-reader-payment/cancel`: the reader is cleared and the bill unfreezes
+ * (`bill.unfrozen` CANCELLED follows). 409 BILL_PAID when the card already went through.
+ */
+export const cancelCardReaderPayment = async (sessionId: string) =>
+  (
+    await api.post<{ status: string }>(`${cardReaderPaymentPath(sessionId)}/cancel`, undefined, {
+      skipErrorToast: true,
+    })
+  ).data;

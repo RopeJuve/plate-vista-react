@@ -430,10 +430,16 @@ export interface BillFrozenEvent {
   };
 }
 
+/**
+ * Why a frozen bill opened again (2.7): cancelled (by a guest going back or staff), expired,
+ * staff recorded a payment or closed the table, or (card readers only) the card failed.
+ */
+export type BillUnfrozenReason = "CANCELLED" | "EXPIRED" | "STAFF_PAYMENT" | "FAILED";
+
 /** Staff and session rooms (2.5): the payment in progress was abandoned, expired, failed or unfrozen by staff. */
 export interface BillUnfrozenEvent {
   event: "bill.unfrozen";
-  data: { sessionId: string; reason?: "CANCELLED" | "EXPIRED" | "STAFF_PAYMENT" | "FAILED" };
+  data: { sessionId: string; reason?: BillUnfrozenReason };
 }
 
 /** Staff room only (2.5): a Late Payment was refunded. */

@@ -4,7 +4,7 @@ import type {
   CardReaderUnavailableReason,
   PaymentErrorBody,
 } from "../../shared/api/payments";
-import type { SessionBill } from "../../shared/realtime/protocol";
+import type { BillUnfrozenReason, SessionBill } from "../../shared/realtime/protocol";
 import { formatCents } from "../../shared/money/formatCents";
 
 const UNAVAILABLE: Record<CardReaderUnavailableReason, string> = {
@@ -110,3 +110,27 @@ export const cardReaderProblem = (error: unknown): CardReaderProblem => {
       return { message: "Could not start the card reader payment. Try again.", reloadsBill: false };
   }
 };
+
+/** Why cancelling a card reader payment failed; `reloadsBill` when the bill on screen is out of date. */
+export const cancelCardReaderProblem = (error: unknown): CardReaderProblem => {
+  const answer = errorAnswer(error);
+  if (!answer?.status) {
+    return { message: "Could not reach the server. Try again.", reloadsBill: false };
+  }
+  if (answer.data?.code === "BILL_PAID") {
+    return { message: "The card already went through, so the bill is paid.", reloadsBill: true };
+  }
+  if (answer.status === 404) {
+    return { message: "There is no card reader payment to cancel any more.", reloadsBill: true };
+  }
+  return { message: "Could not cancel the card reader payment. Try again.", reloadsBill: false };
+};
+
+const ENDED: Partial<Record<BillUnfrozenReason, string>> = {
+  CANCELLED: "The card reader payment was cancelled.",
+  EXPIRED: "The card reader payment timed out: no card was presented.",
+  STAFF_PAYMENT: "The card reader payment was stopped: staff recorded a payment or closed the table.",
+};
+
+/** What staff read when a card reader payment ends unpaid (a declined card is told elsewhere). */
+export const cardReaderEndedNote = (reason: BillUnfrozenReason): string | null => ENDED[reason] ?? null;
