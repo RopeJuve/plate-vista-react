@@ -14,7 +14,16 @@ const METHOD_LABEL: Record<PaymentMethod, string> = {
   ONLINE: "Online",
 };
 
+/** The payment method as staff count it: card reader and Card Terminal are both "Card". */
 export const methodLabel = (method: PaymentMethod) => METHOD_LABEL[method];
+
+const CARD_METHOD: Partial<Record<PaymentMethod, string>> = {
+  CARD_TERMINAL: "Card terminal",
+  CARD_READER: "Card reader",
+};
+
+/** Which device took a card payment, for the payment details; nothing for cash or online. */
+export const cardMethodDetail = (method: PaymentMethod) => CARD_METHOD[method] ?? null;
 
 /** Only an unpaid bill with something on it can be paid; an empty one is closed instead. */
 export const canPayBill = (bill: SessionBill) => !bill.payment && bill.totalCents > 0;

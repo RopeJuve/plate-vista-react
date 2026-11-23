@@ -1,11 +1,12 @@
 import type { Payment } from "../../shared/api/payments";
 import { clockTime } from "../../services/time";
-import { methodLabel, receiptPath } from "./billPayment";
+import { cardMethodDetail, methodLabel, receiptPath } from "./billPayment";
 import { useReceiptQr } from "./hooks/useReceiptQr";
 
 /** A settled bill: how and when it was paid, and the receipt the guest can scan or open. */
 const PaidBill = ({ payment }: { payment: Payment }) => {
   const { url, src } = useReceiptQr(payment.receiptToken);
+  const device = cardMethodDetail(payment.method);
 
   return (
     <div className="flex flex-wrap items-center gap-4">
@@ -13,6 +14,7 @@ const PaidBill = ({ payment }: { payment: Payment }) => {
         <p className="font-mono text-sm font-bold uppercase tracking-[0.1em] text-pass-ink">
           Paid · {methodLabel(payment.method)} · {clockTime(payment.paidAt)}
         </p>
+        {device && <p className="text-xs text-ink-soft">{device}</p>}
         {payment.signature.status !== "SIGNED" && <p className="text-xs text-ink-soft">Signature pending</p>}
         <a
           href={receiptPath(payment.receiptToken)}

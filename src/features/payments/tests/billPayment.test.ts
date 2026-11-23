@@ -40,6 +40,10 @@ describe("methodLabel", () => {
     expect(methodLabel("CARD_TERMINAL")).toBe("Card");
   });
 
+  it("counts a card reader payment as Card, like the Card Terminal", () => {
+    expect(methodLabel("CARD_READER")).toBe("Card");
+  });
+
   it("labels a guest's online payment Online", () => {
     expect(methodLabel("ONLINE")).toBe("Online");
   });

@@ -10,6 +10,7 @@ import {
   formatReceiptDateTime,
   isReceiptMissing,
   paymentMethodLabel,
+  readMethodLabel,
   receiptPollDelay,
   signatureNotice,
   vatRateLabel,
@@ -59,6 +60,16 @@ describe("labels", () => {
     expect(paymentMethodLabel("CASH")).toBe("Bar");
     expect(paymentMethodLabel("CARD_TERMINAL")).toBe("Karte");
     expect(paymentMethodLabel("ONLINE")).toBe("Online");
+  });
+
+  it("does not tell the guest a card reader from a Card Terminal", () => {
+    expect(paymentMethodLabel("CARD_READER")).toBe("Karte");
+  });
+
+  it("names how the card reader read the card: contactless or chip", () => {
+    expect(readMethodLabel("contactless_emv")).toBe("Kontaktlos");
+    expect(readMethodLabel("contact_emv")).toBe("Chip");
+    expect(readMethodLabel(undefined)).toBeNull();
   });
 
   it("formats a time in German, in German local time", () => {
