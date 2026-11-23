@@ -204,6 +204,7 @@ describe("a card reader payment that goes through", () => {
     realtime.emit("bill.paid", paidOnReader);
 
     expect(await screen.findByText(/Paid · Card ·/)).toBeInTheDocument();
+    expect(screen.getByText("Card reader")).toBeInTheDocument();
     expect(screen.queryByText("Waiting for card")).not.toBeInTheDocument();
   });
 
