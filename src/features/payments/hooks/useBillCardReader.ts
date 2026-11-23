@@ -8,7 +8,7 @@ import { useLastCardReader } from "./useLastCardReader";
 
 /**
  * The card reader part of a bill's pay panel: the attempt in progress or the last failed one, the
- * readers staff can start on, the note left when an
+ * readers staff can start on (also after a failure, to try a different reader), the note left when an
  * attempt ends unpaid, and the requests that start, retry and cancel it. Starting remembers the reader
  * on this device so the picker preselects it next time.
  */
@@ -45,13 +45,12 @@ export const useBillCardReader = ({
     }
   };
 
-  const failed = bill && !inProgress ? cardReaderFailed(bill) : null;
   return {
     ...requests,
     inProgress,
-    failed,
-    // A failed attempt is retried on its own reader, so there is no second way to start one.
-    option: bill && !inProgress && !failed ? cardReaderOption(bill) : null,
+    failed: bill && !inProgress ? cardReaderFailed(bill) : null,
+    // A new start is allowed after a failure too, so staff can switch to another reader instead of Retry.
+    option: bill && !inProgress ? cardReaderOption(bill) : null,
     readerOnline: bill && inProgress ? readerOnline(bill, inProgress) : null,
     endNote: inProgress ? null : endNote,
     lastReaderId,

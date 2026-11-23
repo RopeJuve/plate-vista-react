@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SESSION_ID } from "../../../mocks/fixtures/bill";
 import {
   cardReaderBill,
+  cardReaderFailedBill,
   cardReaderPayingBill,
   cardReaderPaymentErrors,
   cardReaderPaymentInProgress,
@@ -153,6 +154,27 @@ describe("picking the card reader", () => {
     await user.click(screen.getByRole("button", { name: "Card reader" }));
 
     await screen.findByText("Waiting for card");
+    expect(starts).toEqual([idleSimulatedReader.id]);
+  });
+});
+
+describe("starting on another reader after a card reader failure", () => {
+  it("offers the picker next to Retry and starts a new payment on the reader staff pick", async () => {
+    mockBillResponse(200, {
+      ...cardReaderFailedBill(),
+      cardReader: { state: "OFFERED", reason: null, readers: [cardReaders.bar, idleSimulatedReader] },
+    });
+    const starts = recordStarts();
+    const user = renderPanel();
+
+    const readers = await picker();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeEnabled();
+    await user.click(within(readers).getByRole("radio", { name: /Test reader/ }));
+    await user.click(screen.getByRole("button", { name: "Card reader" }));
+
+    expect(await screen.findByText("Waiting for card")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Card reader payment" })).toHaveTextContent("Test reader");
+    expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
     expect(starts).toEqual([idleSimulatedReader.id]);
   });
 });
