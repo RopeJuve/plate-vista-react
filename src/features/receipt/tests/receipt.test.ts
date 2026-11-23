@@ -4,12 +4,14 @@ import {
   FAST_POLL_FOR_MS,
   formatServicePeriod,
   fundingLabel,
+  hasStripeDetails,
   paymentMethodTypeLabel,
   vatRateLetter,
   walletLabel,
   formatReceiptDateTime,
   isReceiptMissing,
   paymentMethodLabel,
+  readMethodLabel,
   receiptPollDelay,
   signatureNotice,
   vatRateLabel,
@@ -61,6 +63,16 @@ describe("labels", () => {
     expect(paymentMethodLabel("ONLINE")).toBe("Online");
   });
 
+  it("does not tell the guest a card reader from a Card Terminal", () => {
+    expect(paymentMethodLabel("CARD_READER")).toBe("Karte");
+  });
+
+  it("names how the card reader read the card: contactless or chip", () => {
+    expect(readMethodLabel("contactless_emv")).toBe("Kontaktlos");
+    expect(readMethodLabel("contact_emv")).toBe("Chip");
+    expect(readMethodLabel(undefined)).toBeNull();
+  });
+
   it("formats a time in German, in German local time", () => {
     expect(formatReceiptDateTime("2026-11-07T19:30:00.000Z")).toBe("07.11.2026, 20:30:00");
     expect(formatReceiptDateTime("2026-07-07T19:30:05.000Z")).toBe("07.07.2026, 21:30:05");
@@ -69,6 +81,18 @@ describe("labels", () => {
   it("shows nothing for a missing or broken time", () => {
     expect(formatReceiptDateTime(undefined)).toBe("");
     expect(formatReceiptDateTime("nope")).toBe("");
+  });
+});
+
+describe("hasStripeDetails", () => {
+  it("is true for payments Stripe took: online and on a card reader", () => {
+    expect(hasStripeDetails("ONLINE")).toBe(true);
+    expect(hasStripeDetails("CARD_READER")).toBe(true);
+  });
+
+  it("is false for cash and the Card Terminal, which Stripe never saw", () => {
+    expect(hasStripeDetails("CASH")).toBe(false);
+    expect(hasStripeDetails("CARD_TERMINAL")).toBe(false);
   });
 });
 

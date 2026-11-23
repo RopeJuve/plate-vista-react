@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { BillUnfrozenReason } from "../../../shared/realtime/protocol";
-import { cardReaderEndedNote } from "../cardReaderPayment";
+import { cardReaderEndedNote } from "../cardReaderAttempt";
 
 /**
  * The note for a card reader payment that ended unpaid. `onReader` is whether the panel shows one in

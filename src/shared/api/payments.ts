@@ -77,6 +77,8 @@ export interface Payment {
   paidAt: string;
   receiptToken: string;
   signature: { status: SignatureStatus };
+  /** CARD_READER only, when Stripe could be read; null (or absent from older servers) for every other method. */
+  paymentDetails?: CardPresentDetails | null;
 }
 
 /** Body of `POST /sessions/:id/close` when an owner/admin closes an unpaid bill anyway. */
@@ -338,9 +340,18 @@ export interface ReceiptSignature {
   qrCodeData?: string;
 }
 
+/** How a card reader read the card, as Stripe names it. */
+export type CardReadMethod =
+  | "contactless_emv"
+  | "contact_emv"
+  | "contactless_magstripe_mode"
+  | "magnetic_stripe_fallback"
+  | "magnetic_stripe_track2";
+
 /**
- * How the guest paid online, as Stripe saw it; kept when the payment was recorded.
- * `type` is Stripe's payment method type (`card`, `paypal`, `klarna`, ...); the card fields only for cards.
+ * How the guest paid online or on a card reader, as Stripe saw it; kept when the payment was recorded.
+ * `type` is Stripe's payment method type (`card`, `card_present`, `paypal`, `klarna`, ...);
+ * the card fields only for cards, the EMV fields (`aid`, `applicationLabel`, `readMethod`) only for `card_present`.
  */
 export interface ReceiptPaymentDetails {
   type: string;
@@ -349,10 +360,21 @@ export interface ReceiptPaymentDetails {
   funding?: string;
   wallet?: string;
   authorizationCode?: string;
+  /** EMV Application ID, e.g. "A0000000031010". */
+  aid?: string;
+  /** e.g. "VISA CREDIT". */
+  applicationLabel?: string;
+  readMethod?: CardReadMethod;
   /** The Stripe PaymentIntent id. */
   transactionId?: string;
   authorizedAt?: string;
 }
+
+/** The card details a card reader Payment keeps from Stripe: the receipt's details for a `card_present` card. */
+export type CardPresentDetails = ReceiptPaymentDetails &
+  Required<Pick<ReceiptPaymentDetails, "brand" | "last4" | "funding" | "readMethod" | "transactionId" | "authorizedAt">> & {
+    type: "card_present";
+  };
 
 /** `GET /receipts/:token` (public) → Receipt | 404. */
 export interface Receipt {
@@ -372,7 +394,7 @@ export interface Receipt {
   totalsByVat: ReceiptVatTotal[];
   totalCents: number;
   method: PaymentMethod;
-  /** ONLINE only, and only when Stripe could be read when the payment was recorded. */
+  /** ONLINE or CARD_READER only, and only when Stripe could be read when the payment was recorded. */
   paymentDetails?: ReceiptPaymentDetails;
   paidAt: string;
   signature: ReceiptSignature;

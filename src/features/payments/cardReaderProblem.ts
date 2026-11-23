@@ -1,52 +1,5 @@
-import type {
-  CardReader,
-  CardReaderPayment,
-  CardReaderUnavailableReason,
-  PaymentErrorBody,
-} from "../../shared/api/payments";
-import type { BillUnfrozenReason, SessionBill } from "../../shared/realtime/protocol";
+import type { PaymentErrorBody } from "../../shared/api/payments";
 import { formatCents } from "../../shared/money/formatCents";
-
-const UNAVAILABLE: Record<CardReaderUnavailableReason, string> = {
-  PAYOUT_ACCOUNT_NOT_READY: "The payout account can't take card payments yet.",
-  TSE_NOT_ACTIVE: "The TSE is not active.",
-  BILL_PAID: "Already paid.",
-  BILL_EMPTY: "Nothing to pay.",
-  PAYMENT_IN_PROGRESS: "A payment is already in progress.",
-  NO_READER_AVAILABLE: "Every card reader is offline or busy.",
-};
-
-/** What the pay panel shows for "Card reader": nothing, a greyed button with why, or a reader to start on. */
-export type CardReaderOption =
-  | { available: true; reader: CardReader }
-  | { available: false; reason: string };
-
-const canTakePayment = (reader: CardReader) => reader.status === "online" && !reader.busyWith;
-
-/**
- * The card reader option for a bill, as the API decides it; `null` when the button is hidden
- * (or the server says nothing about card readers). Until staff can pick, it is the first reader
- * that can take a payment.
- */
-export const cardReaderOption = (bill: SessionBill): CardReaderOption | null => {
-  const availability = bill.cardReader;
-  if (!availability || availability.state === "HIDDEN") {
-    return null;
-  }
-  const reader = availability.readers.find(canTakePayment);
-  if (availability.state === "OFFERED" && reader) {
-    return { available: true, reader };
-  }
-  const reason = availability.reason ? UNAVAILABLE[availability.reason] : UNAVAILABLE.NO_READER_AVAILABLE;
-  return { available: false, reason };
-};
-
-/** The card reader payment the bill is waiting on right now, if any. */
-export const cardReaderInProgress = (bill: SessionBill): CardReaderPayment | null =>
-  !bill.payment && bill.cardReaderPayment?.status === "IN_PROGRESS" ? bill.cardReaderPayment : null;
-
-/** The bill is frozen for a card reader payment (from the bill's `freeze`). */
-export const isPayingOnCardReader = (bill: Pick<SessionBill, "freeze">) => bill.freeze?.kind === "CARD_READER";
 
 const errorAnswer = (error: unknown) =>
   (error as { response?: { status?: number; data?: Partial<PaymentErrorBody> } } | null)?.response;
@@ -87,7 +40,7 @@ export const cardReaderProblem = (error: unknown): CardReaderProblem => {
       return {
         message:
           typeof tableNumber === "number"
-            ? `The card reader is taking table ${tableNumber}’s payment.`
+            ? `This reader is busy with table ${tableNumber}.`
             : "The card reader is busy with another payment.",
         reloadsBill: true,
       };
@@ -111,6 +64,12 @@ export const cardReaderProblem = (error: unknown): CardReaderProblem => {
   }
 };
 
+/** Why retrying a failed card reader payment did not start: as starting, or nothing left to retry (404). */
+export const retryProblem = (error: unknown): CardReaderProblem =>
+  errorAnswer(error)?.status === 404
+    ? { message: "There is no failed card reader payment to retry any more.", reloadsBill: true }
+    : cardReaderProblem(error);
+
 /** Why cancelling a card reader payment failed; `reloadsBill` when the bill on screen is out of date. */
 export const cancelCardReaderProblem = (error: unknown): CardReaderProblem => {
   const answer = errorAnswer(error);
@@ -125,12 +84,3 @@ export const cancelCardReaderProblem = (error: unknown): CardReaderProblem => {
   }
   return { message: "Could not cancel the card reader payment. Try again.", reloadsBill: false };
 };
-
-const ENDED: Partial<Record<BillUnfrozenReason, string>> = {
-  CANCELLED: "The card reader payment was cancelled.",
-  EXPIRED: "The card reader payment timed out: no card was presented.",
-  STAFF_PAYMENT: "The card reader payment was stopped: staff recorded a payment or closed the table.",
-};
-
-/** What staff read when a card reader payment ends unpaid (a declined card is told elsewhere). */
-export const cardReaderEndedNote = (reason: BillUnfrozenReason): string | null => ENDED[reason] ?? null;
