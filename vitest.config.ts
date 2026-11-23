@@ -18,7 +18,7 @@ export default defineConfig({
         test: {
           name: "unit",
           environment: "node",
-          include: ["src/**/*.test.ts"],
+          include: ["src/**/*.test.ts", "eslint-rules/**/*.test.js"],
           setupFiles: ["./src/test/setupMsw.ts"],
         },
       },
